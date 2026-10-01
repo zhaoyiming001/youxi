@@ -3922,9 +3922,9 @@ function render(t) {
         if (s.b.firing && (s.b.type === "laser" || BD.kind === "beam") && ghostTargetable()) { ctx.save(); ctx.lineCap = "round"; for (const [w, col, al] of [[8, BD.col || "#FF5AC8", .38], [3, s.b.type === "laser" ? "#FFE0F7" : "#FFFFFF", 1]]) { ctx.globalAlpha = al; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(G.x, G.y - 10); ctx.lineWidth = w * (.7 + s.b.ramp * .6 + (BD.tier >= 4 ? .4 : 0)); ctx.strokeStyle = col; ctx.stroke(); } ctx.restore(); }
         if (s.b.firing && BD.kind === "dot" && ghostTargetable()) { ctx.save(); ctx.globalAlpha = .5 + .2 * Math.sin(t * 9); ctx.setLineDash([4, 7]); ctx.lineDashOffset = -t * 40; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(G.x, G.y - 10); ctx.lineWidth = 4; ctx.strokeStyle = BD.look.col; ctx.stroke(); ctx.restore(); }
         if (r === mine && myTurn && homeView && canUpB(r, s.b)) arrows.push([s.x, s.y - 27]);
-      } else if (r === mine && homeView && myTurn && phase !== "end") {
+      } else if (r === mine && mine.alive && phase !== "end") {   // your own empty spots always stay visible
         const sel = sheetSel && sheetSel.slot === s;
-        ctx.save(); ctx.globalAlpha = sel ? 1 : .4 + .2 * Math.sin(t * 3); ctx.setLineDash([6, 5]); ctx.lineWidth = 2.5; ctx.strokeStyle = sel ? "#FFD23F" : "#FFFFFF";
+        ctx.save(); ctx.globalAlpha = sel ? 1 : .6; ctx.setLineDash([6, 5]); ctx.lineWidth = 2.5; ctx.strokeStyle = sel ? "#FFD23F" : "#FFFFFF";
         rrPath(ctx, s.x - 21, s.y - 21, 42, 42, 10); ctx.stroke(); ctx.setLineDash([]);
         label(ctx, "+", s.x, s.y + 1, 18, sel ? "#FFD23F" : "#FFFFFF", FONT_NUM, 800); ctx.restore();
       }
