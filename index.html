@@ -531,18 +531,18 @@ const fmt = n => n >= 1e8 ? (n / 1e8).toFixed(1) + "亿" : n >= 1e5 ? (n / 1e4).
 const fmtRate = n => n < 10 && n % 1 ? n.toFixed(1) : fmt(n);
 const BED = {
   max: 12, names: ["硬板床", "单人床", "软垫床", "席梦思", "乳胶床", "电动床", "水床", "按摩床", "云朵床", "星空床", "天宫床", "龙床"],
-  inc: lv => Math.round(2 * Math.pow(1.6, lv - 1)), cost: curve(20, 2.25, 11), en: curve(8, 2.2, 11, 3),
+  inc: lv => Math.round(2 * Math.pow(1.8, lv - 1)), cost: curve(20, 2.3, 11), en: curve(8, 2.2, 11, 3),
 };
 const DOOR = {
   max: 12, names: ["木门", "厚木门", "铁皮门", "铁门", "加固铁门", "钢门", "金门", "紫晶门", "合金门", "符文门", "传说之门", "神之门"],
-  hp: lv => nice(300 * Math.pow(1.75, lv - 1)), cost: curve(15, 2.2, 11), en: curve(8, 2.2, 11, 3),
+  hp: lv => nice(300 * Math.pow(1.9, lv - 1)), cost: curve(15, 2.3, 11), en: curve(8, 2.2, 11, 3),
 };
 const pow = (base, g) => lv => base * Math.pow(g, lv - 1);
 const lin = (base, step) => lv => base + step * (lv - 1);
 // cost[0]/en[0] = build price, cost[L]/en[L] = price to go from Lv.L to Lv.L+1.
 // Three price types: coins only, coins + power, and power only (the special buildings that make power worth saving).
 const BUILD = {
-  turret:    { name: "炮台",   cat: "atk", desc: "射程内自动开火，升级后射程变远", unit: "每发伤害", max: 10, cost: curve(40, 2.05, 10), en: curve(10, 2.1, 10, 4), val: lv => Math.round(pow(13, 1.79)(lv)), range: lin(80, 26), int: .8 },
+  turret:    { name: "炮台",   cat: "atk", desc: "射程内自动开火，升级后射程变远", unit: "每发伤害", max: 10, cost: curve(40, 2.15, 10), en: curve(10, 2.1, 10, 4), val: lv => Math.round(pow(13, 1.9)(lv)), range: lin(80, 26), int: .8 },
   cannon:    { name: "加农炮", cat: "atk", desc: "打得慢但很痛，命中能震晕鬼", unit: "每发伤害", max: 8, cost: curve(160, 2.15, 8), en: curve(5, 2.2, 8), val: lv => Math.round(pow(90, 1.85)(lv)), range: lin(90, 28), int: 2.2 },
   laser:     { name: "激光炮", cat: "atk", desc: "持续照射，照得越久伤害越高", unit: "每秒伤害", max: 8, cost: curve(380, 2.15, 8), en: curve(20, 2.2, 8), val: lv => Math.round(pow(35, 1.85)(lv)), range: lin(75, 24) },
   tesla:     { name: "闪电塔", cat: "atk", desc: "每 2 秒劈一道闪电，能麻痹鬼", unit: "每次伤害", max: 8, cost: curve(300, 2.15, 8), en: curve(15, 2.2, 8), val: lv => Math.round(pow(130, 1.85)(lv)), range: lin(90, 26), int: 2 },
@@ -576,11 +576,11 @@ Object.assign(BUILD.laser, { tier: 2 }); Object.assign(BUILD.tesla, { tier: 2 })
 function wpn(o) {
   const cont = o.kind === "beam" || o.kind === "spray" || o.kind === "dot", P0 = o.price;
   const per = cont ? o.dps : o.dps * o.int;
-  const cost = o.pay === "e" ? zeros(8) : curve(o.pay === "m" ? P0 * .75 : P0, 2.15, 8);
+  const cost = o.pay === "e" ? zeros(8) : curve(o.pay === "m" ? P0 * .75 : P0, 2.22, 8);
   const en = o.pay === "e" ? curve(P0 * .28, 2.25, 8) : o.pay === "m" ? curve(Math.max(5, P0 * .07), 2.2, 8) : curve(Math.max(5, P0 * .05), 2.2, 8, 3);
   const base = { cat: "atk", max: 8, cost, en, generic: true, unit: cont ? "每秒伤害" : o.kind === "pct" ? "每次伤害" : "每发伤害", range: lin(o.range[0], o.range[1]) };
   if (o.kind === "pct") Object.assign(base, { val: lin(o.pctv, o.pctv * .2), pct: true, suffix: "血量上限" });
-  else base.val = lv => Math.round(pow(per, 1.85)(lv));
+  else base.val = lv => Math.round(pow(per, 1.92)(lv));
   const { range, ...rest } = o;
   return Object.assign(rest, base);
 }
@@ -759,8 +759,8 @@ const diffIdx = () => Math.max(0, rankIdx() - ((meta.life.streak || 0) <= -3 ? 1
 const gdiff = () => (G && G.diff) || 1;
 const berserkAt = () => (gtal("night") ? 540 : BERSERK_AT);
 const gtal = k => !!(G && G.tal && G.tal.id === k);
-const ghostMax = (lv, ty = G.type) => Math.round(720 * Math.pow(1.415, lv - 1) * ty.hp * (gtal("thick") ? 1.12 : 1) * (gtal("giant") ? 1.2 : 1) * gdiff() * (1 + .1 * ((G && G.kills) || 0)));
-const ghostDmg = lv => Math.round(14 * Math.pow(1.335, lv - 1) * G.type.dmg * (gtal("iron") ? 1.15 : 1) * (1 + (gdiff() - 1) * .8) * (1 + .12 * ((G && G.kills) || 0)) * (G.berserk ? 1.3 + .35 * (nightT - berserkAt()) / 60 : 1));
+const ghostMax = (lv, ty = G.type) => Math.round(720 * Math.pow(1.47, lv - 1) * ty.hp * (gtal("thick") ? 1.12 : 1) * (gtal("giant") ? 1.2 : 1) * gdiff() * (1 + .1 * ((G && G.kills) || 0)));
+const ghostDmg = lv => Math.round(14 * Math.pow(1.38, lv - 1) * G.type.dmg * (gtal("iron") ? 1.15 : 1) * (1 + (gdiff() - 1) * .8) * (1 + .12 * ((G && G.kills) || 0)) * (G.berserk ? 1.3 + .35 * (nightT - berserkAt()) / 60 : 1));
 const ghostNeed = lv => Math.round(Math.min(48, 15 + lv * 5) * G.type.xp);
 const ghostR = lv => Math.min(64, 24 + lv * 2.4) * (gtal("giant") ? 1.15 : 1);
 const doorMax = r => DOOR.hp(r.doorLv) * (1 + tl(r, "door") + (r.plankB || 0));
@@ -1153,7 +1153,7 @@ function startMatch() {
 }
 
 let talentTimer = null, talOpts = [], rerolls = 1;
-const TIPS = ["鬼残血逃跑时追着打，别让它回鬼井回满血", "夜里掉下来的礼盒 14 秒内要点开", "礼盒只掉给一直在花钱建设的人，光攒钱不花就不会来", "钱多了就点左下角的「天罚」，直接劈掉猛鬼 12% 血量", "猛鬼每逃回鬼井一次，能回的血就少一截", "游戏机同时产金币和电，前期先造它", "门快破时手动修门，再升门能直接补血",
+const TIPS = ["鬼残血逃跑时追着打，别让它回鬼井回满血", "夜里掉下来的礼盒 14 秒内要点开", "礼盒只掉给一直在花钱建设的人，光攒钱不花就不会来", "钱多了就点左下角的「天罚」，直接劈掉猛鬼 12% 血量", "猛鬼每逃回鬼井一次，能回的血就少一截", "游戏机同时产金币和电，前期先造它", "门快破时升级门，耐久会直接补满",
   "「本局限定」建筑每局都不一样，开局先看看", "鬼砸门越多升级越快，弱的室友要帮一把", "会放小鬼的猛鬼放出小鬼时，点一下就能拍散", "被打时点「求救」，室友会送你金币",
   "中后期猛鬼会叫帮手，炮塔射程够远才打得到", "狙击台射程最远，适合帮邻居打鬼", "存钱罐攒得越多，利息越多", "电力能买天雷台、冰冻塔这类只要电的建筑"];
 const randTip = () => pick(TIPS);
@@ -1240,7 +1240,7 @@ const bedCost = r => Math.round(BED.cost[r.bedLv - 1] * (1 - tl(r, "nap"))), doo
 function bedUp(r) { const L = r.bedLv; if (L >= BED.max || !pay(r, bedCost(r), BED.en[L - 1])) return false; r.bedLv++; return true; }
 function doorUp(r) {
   const L = r.doorLv; if (L >= DOOR.max || r.doorHp <= 0 || !pay(r, doorCost(r), DOOR.en[L - 1])) return false;
-  const old = doorMax(r); r.doorLv++; r.doorHp += doorMax(r) - old; return true;
+  r.doorLv++; r.doorHp = doorMax(r); r.broken = false; return true;
 }
 const canUpBed = r => r.bedLv < BED.max && canPay(r, bedCost(r), BED.en[r.bedLv - 1]);
 const canUpDoor = r => r.doorLv < DOOR.max && r.doorHp > 0 && canPay(r, doorCost(r), DOOR.en[r.doorLv - 1]);
@@ -2708,7 +2708,7 @@ function renderSheet() {
       <div class="sheet-actions">
         <button class="act" type="button" data-act="door">${max ? "已满级" : upLabel(doorCost(r), DOOR.en[L - 1])}</button>
         <button class="act heal" type="button" data-act="repair" data-live="repair"></button>
-      </div><p class="note">升级会把多出来的耐久直接补上。手动修门每 ${REPAIR_CD * (tl(r, "repair") ? .5 : 1)} 秒能用一次。</p>`;
+      </div><p class="note">升级会把门的耐久直接补满。手动修门每 ${REPAIR_CD * (tl(r, "repair") ? .5 : 1)} 秒能用一次。</p>`;
   }
   $("sheet-title").textContent = title; $("sheet-body").innerHTML = h;
   refreshSheet();
