@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>运气的形状</title>
+<meta name="description" content="一部关于运气的小动画：硬币、流星、四叶草、心、骰子和祥云，摇一签看看今天的运气长什么样。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Baloo+2:wght@500;700;800&display=swap">
+<style>
+/* Layout: cartoon sky hero split into copy + living character stage → field-guide grid of six luck shapes → drop-to-catch playground → closing parade */
+:root{
+  --sky:#C9E4FF; --bg:#EEF5FF; --bg-2:#FFE4D1; --hill:#BFE6B5; --hill-2:#A6DCC0;
+  --surface:#FFFFFF; --text:#262457; --text-soft:#5F5C91; --rule:rgba(38,36,87,.16);
+  --outline:#262457; --edge:#262457; --accent:#FF7A59; --on-accent:#1E1C4A;
+  --seal:#E0483E; --on-seal:#FFFFFF; --sparkle:#FFAA1F; --cheek:rgba(255,99,125,.42);
+  --scene:day;
+  --f-display:"ZCOOL KuaiLe","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --f-body:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  --f-latin:"Baloo 2",ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sky:#0E0D2C; --bg:#1A1942; --bg-2:#3A2A6A; --hill:#2C2F66; --hill-2:#24275A;
+    --surface:#25234F; --text:#F3F0FF; --text-soft:#B9B4E8; --rule:rgba(243,240,255,.18);
+    --outline:#17153A; --edge:#0C0B26; --accent:#FFA26B; --on-accent:#17153A;
+    --seal:#FF6A5C; --on-seal:#1A1030; --sparkle:#FFE9A0; --cheek:rgba(255,120,145,.5);
+    --scene:night; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --sky:#0E0D2C; --bg:#1A1942; --bg-2:#3A2A6A; --hill:#2C2F66; --hill-2:#24275A;
+  --surface:#25234F; --text:#F3F0FF; --text-soft:#B9B4E8; --rule:rgba(243,240,255,.18);
+  --outline:#17153A; --edge:#0C0B26; --accent:#FFA26B; --on-accent:#17153A;
+  --seal:#FF6A5C; --on-seal:#1A1030; --sparkle:#FFE9A0; --cheek:rgba(255,120,145,.5);
+  --scene:night; color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--f-body);font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1180px;margin-inline:auto;padding-inline:clamp(16px,4vw,40px)}
+.latin{font-family:var(--f-latin)}
+.eyebrow{font-family:var(--f-latin);font-weight:700;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:var(--text-soft);margin:0}
+h2{font-family:var(--f-display);font-weight:400;font-size:clamp(2rem,4.4vw,3.1rem);line-height:1.15;margin:.15em 0 0;text-wrap:balance}
+p{margin:0}
+:focus-visible{outline:3px dashed var(--text);outline-offset:4px;border-radius:6px}
+
+/* ---------- nav ---------- */
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px 0;position:relative;z-index:2}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-size:1.25rem;color:var(--text);text-decoration:none}
+.mark{width:30px;height:30px;border-radius:50%;background:#F7B733;border:3px solid var(--edge);position:relative;flex:none}
+.mark::before,.mark::after{content:"";position:absolute;top:8px;width:5px;height:7px;border-radius:50%;background:var(--edge)}
+.mark::before{left:6px}.mark::after{right:6px}
+.nav ul{list-style:none;display:flex;gap:6px;margin:0;padding:0}
+.nav a.link{display:block;padding:.3em .9em;border-radius:999px;color:var(--text);text-decoration:none;font-size:.95rem;border:2px solid transparent}
+.nav a.link:hover{border-color:var(--edge);background:var(--surface)}
+
+/* ---------- hero ---------- */
+.hero{position:relative;background:linear-gradient(180deg,var(--sky) 0%,var(--bg-2) 82%);overflow:hidden;isolation:isolate}
+#sky{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:block}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"copy stage" "card stage";gap:28px 48px;padding-block:40px 130px;align-items:start}
+.copy{grid-area:copy;min-width:0;display:flex;flex-direction:column;gap:18px}
+.title{font-family:var(--f-display);font-weight:400;font-size:clamp(3.4rem,7vw,6.4rem);line-height:1.02;margin:0;letter-spacing:.02em;display:flex;flex-wrap:wrap;align-items:flex-end}
+.title span{display:inline-block;text-shadow:.06em .06em 0 var(--c);animation:bob 3.2s ease-in-out infinite;animation-delay:calc(var(--i) * -.4s);cursor:default}
+.title span.small{font-size:.58em;margin-bottom:.1em;margin-inline:.04em}
+.title span:hover{animation:jelly .6s ease}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-.07em) rotate(-4deg)}}
+@keyframes jelly{0%{transform:scale(1,1)}30%{transform:scale(1.25,.75)}50%{transform:scale(.8,1.2)}70%{transform:scale(1.1,.9)}100%{transform:scale(1,1)}}
+.lede{font-size:1.08rem;color:var(--text-soft);max-width:30em}
+.lede b{color:var(--text);font-weight:600}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-top:6px}
+.btn{font:inherit;font-family:var(--f-display);font-size:1.4rem;line-height:1.2;display:inline-flex;align-items:center;gap:.5em;padding:.62em 1.4em;border-radius:999px;border:3px solid var(--edge);background:var(--accent);color:var(--on-accent);box-shadow:0 6px 0 var(--edge);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--edge)}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--edge)}
+.btn[disabled]{cursor:progress;transform:translateY(4px);box-shadow:0 2px 0 var(--edge)}
+.btn svg{width:1em;height:1em}
+.btn.small{font-size:1rem;padding:.4em 1em;box-shadow:0 4px 0 var(--edge);background:var(--surface);color:var(--text)}
+.btn.small:hover{box-shadow:0 6px 0 var(--edge)}
+.btn.small:active{box-shadow:0 1px 0 var(--edge)}
+.hint{font-size:.9rem;color:var(--text-soft)}
+.hint kbd{font-family:var(--f-latin);font-weight:700;border:2px solid var(--rule);border-radius:6px;padding:0 .4em}
+
+.stage{grid-area:stage;min-height:600px;position:relative;cursor:pointer;align-self:stretch;-webkit-tap-highlight-color:transparent}
+.stage-label{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);white-space:nowrap;display:flex;align-items:center;gap:.5em;background:var(--surface);border:2.5px solid var(--edge);border-radius:999px;padding:.25em 1em;font-size:.95rem;box-shadow:0 4px 0 var(--edge)}
+.stage-label .dot{width:.8em;height:.8em;border-radius:50%;border:2px solid var(--edge);background:#F7B733;transition:background .3s}
+.stage-label b{font-family:var(--f-display);font-weight:400;font-size:1.15rem}
+
+/* fortune slip */
+.slip{grid-area:card;display:grid;grid-template-columns:auto minmax(0,1fr);background:var(--surface);border:3px solid var(--edge);border-radius:24px;box-shadow:0 6px 0 var(--edge);overflow:hidden;max-width:520px;transform-origin:50% 0}
+.slip-seal{background:var(--seal);color:var(--on-seal);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 14px;border-right:3px dashed var(--edge)}
+.slip-seal small{font-size:.72rem;letter-spacing:.3em;writing-mode:vertical-rl;opacity:.85}
+.slip-seal span{font-family:var(--f-display);font-size:2.2rem;line-height:1.05;writing-mode:vertical-rl;letter-spacing:.08em}
+.slip-body{padding:16px 20px 18px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.slip-meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.82rem;color:var(--text-soft)}
+.num{font-family:var(--f-latin);font-variant-numeric:tabular-nums}
+.slip-meta b{font-family:var(--f-latin);font-weight:800;color:var(--text);font-size:1rem}
+.slip-shape{display:flex;align-items:center;gap:.45em;font-family:var(--f-display);font-weight:400;font-size:1.7rem;line-height:1.2;margin:0}
+.slip-shape .dot{width:.62em;height:.62em;border-radius:50%;border:2.5px solid var(--edge);flex:none}
+.slip-line{font-size:1rem}
+.slip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;margin:4px 0 0;padding-top:10px;border-top:2px dashed var(--rule)}
+.slip-grid div{display:flex;gap:.6em;align-items:baseline;min-width:0}
+.slip-grid dt{font-size:.78rem;color:var(--text-soft);flex:none}
+.slip-grid dd{margin:0;font-weight:600;min-width:0}
+.slip-grid .swatch{display:inline-block;width:.7em;height:.7em;border-radius:50%;border:2px solid var(--edge);margin-right:.3em;vertical-align:-.05em}
+.slip.shaking{animation:shake .5s ease-in-out infinite}
+.slip.shaking .slip-body{opacity:.35;transition:opacity .2s}
+.slip.pop{animation:pop .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-1.6deg)}75%{transform:rotate(1.6deg)}}
+@keyframes pop{0%{transform:scale(.92) rotate(-2deg)}100%{transform:scale(1) rotate(0)}}
+
+/* ---------- field guide ---------- */
+.guide{padding-block:56px 40px}
+.section-head{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px 48px;align-items:end;margin-bottom:36px}
+.section-head > p{color:var(--text-soft);max-width:32em}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.card{--tint:#F7B733;background:var(--surface);border:3px solid var(--edge);border-radius:28px;box-shadow:0 6px 0 var(--edge);padding:14px 14px 20px;display:flex;flex-direction:column;gap:12px;transition:transform .25s cubic-bezier(.3,1.6,.5,1);cursor:pointer;min-width:0}
+.card:hover{transform:translateY(-5px) rotate(-.8deg)}
+.card:nth-child(even):hover{transform:translateY(-5px) rotate(.8deg)}
+.card canvas{display:block;width:100%;height:180px;border-radius:18px;background:color-mix(in srgb,var(--tint) 30%,var(--surface))}
+.card-head{display:flex;align-items:center;gap:10px;padding-inline:6px}
+.card-head h3{font-family:var(--f-display);font-weight:400;font-size:1.6rem;line-height:1.2;margin:0}
+.card-head .en{font-family:var(--f-latin);font-weight:700;font-size:.75rem;letter-spacing:.14em;color:var(--text-soft)}
+.glyph{margin-left:auto;width:2.1em;height:2.1em;display:grid;place-items:center;background:var(--seal);color:var(--on-seal);border-radius:8px;font-family:var(--f-display);font-size:1rem;transform:rotate(4deg);flex:none}
+.card p.desc{padding-inline:6px}
+.card-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 12px;padding:10px 6px 0;border-top:2px dashed var(--rule);font-size:.84rem;color:var(--text-soft)}
+.rarity{display:inline-flex;gap:3px;align-items:center}
+.rarity i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--text-soft)}
+.rarity i.on{background:var(--text);border-color:var(--text)}
+
+/* ---------- catch playground ---------- */
+.catch{padding-block:56px 40px}
+.pit{position:relative;border:3px solid var(--edge);border-radius:32px;box-shadow:0 6px 0 var(--edge);overflow:hidden;background:linear-gradient(180deg,var(--sky),var(--bg-2))}
+.pit canvas{display:block;width:100%;height:clamp(340px,44vw,460px);cursor:pointer;touch-action:manipulation}
+.pit-bar{position:absolute;top:14px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;pointer-events:none}
+.pit-bar > *{pointer-events:auto}
+.counter{background:var(--surface);border:2.5px solid var(--edge);border-radius:999px;padding:.2em 1em;font-size:.95rem}
+.counter b{font-family:var(--f-latin);font-weight:800;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.pit-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ---------- outro ---------- */
+.outro{padding-block:72px 24px}
+.outro .big{font-family:var(--f-display);font-size:clamp(2rem,5vw,3.6rem);line-height:1.3;text-wrap:balance;max-width:15em}
+#parade{display:block;width:100%;max-width:760px;height:130px;margin-top:28px}
+footer.wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;padding-block:22px 40px;color:var(--text-soft);font-size:.88rem}
+footer .line{border-top:2px dashed var(--rule)}
+
+@media (max-width:900px){
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:860px){
+  .hero-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"copy" "stage" "card";padding-block:24px 120px;gap:20px}
+  .stage{min-height:340px}
+  .section-head{grid-template-columns:minmax(0,1fr)}
+  .nav ul{display:none}
+}
+@media (max-width:560px){
+  .cards{grid-template-columns:minmax(0,1fr)}
+  .slip-seal span{font-size:1.8rem}
+  .slip-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .title span,.slip.shaking,.slip.pop{animation:none}
+}
+</style>
+</head>
+<body>
+
+<header class="hero" id="top">
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <nav class="nav wrap" aria-label="主导航">
+    <a class="brand" href="#top"><span class="mark" aria-hidden="true"></span>运气的形状</a>
+    <ul>
+      <li><a class="link" href="#guide">图鉴</a></li>
+      <li><a class="link" href="#catch">接运气</a></li>
+    </ul>
+  </nav>
+
+  <div class="hero-grid wrap">
+    <div class="copy">
+      <p class="eyebrow">The Shape of Luck · 一部关于运气的小动画</p>
+      <h1 class="title" aria-label="运气的形状">
+        <span style="--i:0;--c:#F7B733" aria-hidden="true">运</span><span style="--i:1;--c:#5CC97B" aria-hidden="true">气</span><span class="small" style="--i:2;--c:#FF7EA0" aria-hidden="true">的</span><span style="--i:3;--c:#A493FF" aria-hidden="true">形</span><span style="--i:4;--c:#FFD53D" aria-hidden="true">状</span>
+      </h1>
+      <p class="lede">运气看不见，也摸不着。可如果它有形状呢？也许是<b>一枚抛到半空的硬币</b>，一颗划过夜空的流星，或者一株藏在草丛里的四叶草。摇一签，看看今天的运气长什么样。</p>
+      <div class="actions">
+        <button class="btn" id="draw" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2.6"/><circle cx="8.5" cy="8.5" r="1.7" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/></svg>
+          <span id="draw-text">摇一签</span>
+        </button>
+        <p class="hint">也可以直接戳一下右边的小家伙</p>
+      </div>
+    </div>
+
+    <div class="stage" id="stage" role="button" tabindex="0" aria-label="戳一下运气小家伙">
+      <p class="stage-label" aria-live="polite"><span class="dot" id="stage-dot"></span>此刻的形状 <b id="stage-name">硬币</b></p>
+    </div>
+
+    <article class="slip" id="slip" aria-live="polite">
+      <div class="slip-seal"><small>运势</small><span id="slip-level">中吉</span></div>
+      <div class="slip-body">
+        <p class="slip-meta"><span id="slip-tag">今日签</span><span>第 <b id="slip-no">37</b> 签</span></p>
+        <h2 class="slip-shape"><span class="dot" id="slip-dot"></span><span id="slip-name">四叶草</span></h2>
+        <p class="slip-line" id="slip-line">藏起来的小惊喜，在你仔细找的地方。</p>
+        <dl class="slip-grid">
+          <div><dt>宜</dt><dd id="slip-yi">晒太阳 · 早点睡觉</dd></div>
+          <div><dt>忌</dt><dd id="slip-ji">熬夜</dd></div>
+          <div><dt>幸运数字</dt><dd class="num" id="slip-lucky">7</dd></div>
+          <div><dt>幸运色</dt><dd id="slip-color"><i class="swatch"></i>三月绿</dd></div>
+        </dl>
+      </div>
+    </article>
+  </div>
+</header>
+
+<main>
+  <section class="guide wrap" id="guide">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Field Guide · 运气图鉴</p>
+        <h2>运气最常见的六种形状</h2>
+      </div>
+      <p>它们会在不同的日子，出现在不同的人身边。有的很常见，有的要等很久。把鼠标放上去，或者点一下，它们会跳起来跟你打招呼。</p>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="catch wrap" id="catch">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Playground · 接运气</p>
+        <h2>点一下，掉下来一份运气</h2>
+      </div>
+      <p>在下面的草地上方随便点。运气会掉下来、弹几下、挤在一起，还会一直看着你。装太满的时候，最早来的那份会自己飘走。</p>
+    </div>
+    <div class="pit">
+      <canvas id="pit" aria-label="接运气的草地，点击任意位置掉落一个运气形状"></canvas>
+      <div class="pit-bar">
+        <p class="counter">已接住 <b id="count">0</b> 份运气</p>
+        <div class="pit-actions">
+          <button class="btn small" type="button" id="drop">掉一份</button>
+          <button class="btn small" type="button" id="release">全部放走</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="outro wrap">
+    <p class="eyebrow">The End · 片尾</p>
+    <p class="big">运气没有固定的形状，<br>它会变成你需要的样子。</p>
+    <canvas id="parade" aria-hidden="true"></canvas>
+  </section>
+</main>
+
+<div class="line"></div>
+<footer class="wrap">
+  <span>运气的形状 · The Shape of Luck · 2026</span>
+  <span>所有角色都由 Canvas 实时绘制</span>
+</footer>
+
+<script>
+(() => {
+"use strict";
+const TAU = Math.PI * 2, N = 144;
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const easeOutBack = k => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+const easeOutCubic = k => 1 - Math.pow(1 - k, 3);
+
+/* ---------------- shapes ---------------- */
+function normalize(pts) {
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const [x, y] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, s = Math.max(x1 - x0, y1 - y0) / 2;
+  for (const p of pts) { p[0] = (p[0] - cx) / s; p[1] = (p[1] - cy) / s; }
+  return pts;
+}
+// f = 0 points straight up; increasing f runs clockwise on screen
+function polar(fn, sx = 1, sy = 1) {
+  const pts = [];
+  for (let i = 0; i < N; i++) { const f = i / N * TAU, r = fn(f); pts.push([Math.sin(f) * r * sx, -Math.cos(f) * r * sy]); }
+  return normalize(pts);
+}
+function heart() {
+  const pts = [];
+  for (let i = 0; i < N; i++) {
+    const t = i / N * TAU;
+    pts.push([16 * Math.pow(Math.sin(t), 3), -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))]);
+  }
+  return normalize(pts);
+}
+
+const SHAPES = [
+  { id: "coin", name: "硬币", glyph: "圆", en: "COIN", color: "#F7B733", colorName: "琥珀金",
+    pts: polar(() => 1), face: { ex: .28, ey: -.08, er: .16 },
+    desc: "抛向空中的那一秒，你会突然知道自己希望它落在哪一面。",
+    where: "路口、菜单前、拿不定主意的时候", rarity: 2,
+    line: "拿不定的主意，今天做决定会很顺。" },
+  { id: "star", name: "流星", glyph: "星", en: "SHOOTING STAR", color: "#FFD53D", colorName: "柠檬黄",
+    pts: polar(f => .52 + .48 * Math.pow((Math.cos(5 * f) + 1) / 2, 2.2)), face: { ex: .2, ey: .02, er: .13 },
+    desc: "它只亮一秒，所以愿望最好提前想好，短一点也没关系。",
+    where: "晴朗的夏夜、山顶、刚好抬头的时候", rarity: 4,
+    line: "想要的东西会突然出现，记得抬头看看。" },
+  { id: "clover", name: "四叶草", glyph: "叶", en: "FOUR-LEAF CLOVER", color: "#5CC97B", colorName: "三月绿",
+    pts: polar(f => .4 + .6 * Math.sqrt(Math.abs(Math.sin(2 * f))) - .16 * Math.pow(Math.max(0, -Math.cos(4 * f)), 10)),
+    face: { ex: .19, ey: -.07, er: .12 },
+    desc: "大约一万株三叶草里，才有一株长出四片叶子。愿意蹲下来慢慢找的人，常常找得到。",
+    where: "草地、公园角落、低头的瞬间", rarity: 5,
+    line: "藏起来的小惊喜，就在你仔细找的地方。" },
+  { id: "heart", name: "心", glyph: "心", en: "HEART", color: "#FF7EA0", colorName: "樱桃粉",
+    pts: heart(), face: { ex: .3, ey: -.14, er: .15 },
+    desc: "有人记得你爱吃什么、几点下班。被人惦记着，本身就是一种好运。",
+    where: "便利贴、晚饭桌、未读消息里", rarity: 3,
+    line: "今天会被人温柔地记挂着。" },
+  { id: "dice", name: "骰子", glyph: "方", en: "DICE", color: "#A493FF", colorName: "薰衣草紫",
+    pts: polar(f => Math.pow(Math.pow(Math.abs(Math.cos(f)), 4) + Math.pow(Math.abs(Math.sin(f)), 4), -.25)),
+    face: { ex: .27, ey: -.1, er: .15 },
+    desc: "六个面，每一面都是六分之一。它不偏心任何人，这是运气最老实的样子。",
+    where: "桌游、大富翁、需要一点勇气的时候", rarity: 2,
+    line: "随便选一个，结果都不会差。" },
+  { id: "cloud", name: "祥云", glyph: "云", en: "LUCKY CLOUD", color: "#FFFFFF", colorName: "云朵白",
+    pts: polar(f => .8 + .2 * Math.sqrt(Math.abs(Math.cos(3 * f))), 1.18, .92), face: { ex: .28, ey: -.04, er: .15 },
+    desc: "飘着飘着就到了。今天没等到也没关系，明天它还会路过。",
+    where: "午后的天空、窗边、发呆的时候", rarity: 1,
+    line: "不必用力，事情会自己慢慢变好。" },
+];
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+SHAPES.forEach(s => s.rgb = hexRgb(s.color));
+const buf = () => Array.from({ length: N }, () => [0, 0]);
+function mixPts(a, b, k, out) { for (let i = 0; i < N; i++) { out[i][0] = a[i][0] + (b[i][0] - a[i][0]) * k; out[i][1] = a[i][1] + (b[i][1] - a[i][1]) * k; } return out; }
+const copyPts = (a, out) => mixPts(a, a, 0, out);
+const mixFace = (a, b, k) => ({ ex: a.ex + (b.ex - a.ex) * k, ey: a.ey + (b.ey - a.ey) * k, er: a.er + (b.er - a.er) * k });
+const rgbStr = c => `rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`;
+
+/* ---------------- theme ---------------- */
+const root = document.documentElement;
+let TH = {};
+function readTheme() {
+  const cs = getComputedStyle(root), g = n => cs.getPropertyValue(n).trim();
+  TH = { outline: g("--outline"), bg: g("--bg"), hill: g("--hill"), hill2: g("--hill-2"), scene: g("--scene"), cheek: g("--cheek"), sparkle: g("--sparkle") };
+}
+readTheme();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readTheme);
+new MutationObserver(readTheme).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+
+/* ---------------- drawing ---------------- */
+function trace(ctx, pts, s, wob, t, seed) {
+  const P = trace.P || (trace.P = buf());
+  for (let i = 0; i < N; i++) {
+    const a = i / N * TAU;
+    const w = 1 + wob * Math.sin(a * 3 + t * 2.1 + seed) + wob * .6 * Math.sin(a * 5 - t * 1.7 + seed * 2);
+    P[i][0] = pts[i][0] * s * w; P[i][1] = pts[i][1] * s * w;
+  }
+  ctx.beginPath();
+  ctx.moveTo((P[N - 1][0] + P[0][0]) / 2, (P[N - 1][1] + P[0][1]) / 2);
+  for (let i = 0; i < N; i++) { const p = P[i], q = P[(i + 1) % N]; ctx.quadraticCurveTo(p[0], p[1], (p[0] + q[0]) / 2, (p[1] + q[1]) / 2); }
+  ctx.closePath();
+}
+function sparkle(ctx, x, y, r, color) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
+  ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r);
+  ctx.fillStyle = color; ctx.fill();
+}
+function blinkAt(t, seed) { const period = 3 + (seed * 1.37) % 2.2, ph = (t + seed * 7) % period; return ph < .16 ? Math.sin(ph / .16 * Math.PI) : 0; }
+
+function drawChar(ctx, c) {
+  const s = c.size, lw = c.lw || Math.max(1.6, s * .06), acc = c.acc || {}, O = TH.outline;
+  ctx.save();
+  ctx.globalAlpha = c.alpha == null ? 1 : c.alpha;
+  ctx.translate(c.x, c.y); ctx.rotate(c.rot || 0); ctx.scale(c.sx || 1, c.sy || 1);
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  if (acc.clover > .02) { // stem
+    ctx.save(); ctx.globalAlpha *= acc.clover;
+    ctx.beginPath(); ctx.moveTo(0, s * .3); ctx.quadraticCurveTo(s * .04, s * .82, s * .36, s * 1.04);
+    ctx.strokeStyle = O; ctx.lineWidth = lw * 3.2; ctx.stroke();
+    ctx.strokeStyle = "#45B567"; ctx.lineWidth = lw * 1.3; ctx.stroke(); ctx.restore();
+  }
+  const wob = c.simple ? .015 : .022;
+  trace(ctx, c.pts, s, wob, c.t, c.seed);
+  ctx.fillStyle = c.color; ctx.fill();
+  ctx.save(); ctx.clip();
+  ctx.fillStyle = "rgba(20,18,60,.12)";
+  ctx.beginPath(); ctx.ellipse(s * .18, s * 1.05, s * 1.15, s * .55, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.55)";
+  ctx.beginPath(); ctx.ellipse(-s * .4, -s * .46, s * .2, s * .1, -.7, 0, TAU); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = O; ctx.lineWidth = lw; ctx.stroke();
+  if (acc.coin > .02) { ctx.save(); ctx.globalAlpha *= acc.coin * .35; ctx.beginPath(); ctx.arc(0, 0, s * .76, 0, TAU); ctx.lineWidth = lw * .7; ctx.stroke(); ctx.restore(); }
+  if (acc.dice > .02 && !c.simple) {
+    ctx.save(); ctx.globalAlpha *= acc.dice * .85; ctx.fillStyle = O;
+    for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { ctx.beginPath(); ctx.arc(dx * s * .6, dy * s * .6, s * .075, 0, TAU); ctx.fill(); }
+    ctx.restore();
+  }
+  drawFace(ctx, c, c.face, lw);
+  ctx.restore();
+}
+function drawFace(ctx, c, f, lw) {
+  const s = c.size, ex = f.ex * s, ey = f.ey * s, er = f.er * s, lk = c.look || { x: 0, y: 0 }, bl = c.blink || 0, O = TH.outline;
+  if (c.simple) {
+    ctx.fillStyle = O;
+    for (const sd of [-1, 1]) { ctx.beginPath(); ctx.ellipse(sd * ex + lk.x * er * .3, ey + lk.y * er * .3, er * .45, er * .55 * Math.max(.15, 1 - bl), 0, 0, TAU); ctx.fill(); }
+    return;
+  }
+  for (const sd of [-1, 1]) {
+    ctx.save(); ctx.translate(sd * ex, ey); ctx.scale(1, Math.max(.08, 1 - bl));
+    ctx.beginPath(); ctx.ellipse(0, 0, er * .86, er, 0, 0, TAU);
+    ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = lw * .6; ctx.strokeStyle = O; ctx.stroke();
+    const px = lk.x * er * .36, py = lk.y * er * .4;
+    ctx.beginPath(); ctx.arc(px, py, er * .54, 0, TAU); ctx.fillStyle = O; ctx.fill();
+    ctx.beginPath(); ctx.arc(px - er * .18, py - er * .2, er * .17, 0, TAU); ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.restore();
+  }
+  ctx.fillStyle = TH.cheek;
+  for (const sd of [-1, 1]) { ctx.beginPath(); ctx.ellipse(sd * (ex + er * .95), ey + er * 1.2, er * .55, er * .32, 0, 0, TAU); ctx.fill(); }
+  const my = ey + er * 1.35;
+  ctx.strokeStyle = O; ctx.fillStyle = O; ctx.lineWidth = lw * .8;
+  if (c.mood === "wow") {
+    ctx.beginPath(); ctx.ellipse(0, my + er * .25, er * .3, er * .4, 0, 0, TAU); ctx.fill();
+  } else if (c.mood === "grin") {
+    ctx.beginPath(); ctx.moveTo(-er * .62, my); ctx.quadraticCurveTo(0, my + er * 1.3, er * .62, my); ctx.closePath(); ctx.fill();
+    ctx.save(); ctx.clip(); ctx.fillStyle = "#FF6F8E"; ctx.beginPath(); ctx.ellipse(0, my + er * .75, er * .36, er * .26, 0, 0, TAU); ctx.fill(); ctx.restore();
+  } else {
+    ctx.beginPath(); ctx.moveTo(-er * .48, my); ctx.quadraticCurveTo(0, my + er * .62, er * .48, my); ctx.stroke();
+  }
+}
+function shadow(ctx, x, y, w, a) { ctx.save(); ctx.fillStyle = TH.outline; ctx.globalAlpha = a; ctx.beginPath(); ctx.ellipse(x, y, w, w * .22, 0, 0, TAU); ctx.fill(); ctx.restore(); }
+function shapeChar(i, o) { const S = SHAPES[i]; return Object.assign({ pts: S.pts, face: S.face, color: S.color, acc: { [S.id]: 1 } }, o); }
+
+/* ---------------- canvas views ---------------- */
+const views = new Map();
+const ro = new ResizeObserver(entries => {
+  for (const e of entries) {
+    const v = views.get(e.target); if (!v) continue;
+    const d = Math.min(2, window.devicePixelRatio || 1);
+    v.w = e.contentRect.width; v.h = e.contentRect.height; v.d = d;
+    e.target.width = Math.max(1, Math.round(v.w * d)); e.target.height = Math.max(1, Math.round(v.h * d));
+    v.onResize && v.onResize(v);
+  }
+});
+const io = new IntersectionObserver(es => { for (const e of es) { const v = views.get(e.target); if (v) { v.visible = e.isIntersecting; if (v.visible && v.onShow) v.onShow(v); } } }, { rootMargin: "120px" });
+function view(canvas, opts = {}) {
+  const v = Object.assign({ canvas, ctx: canvas.getContext("2d"), w: 0, h: 0, d: 1, visible: true }, opts);
+  views.set(canvas, v); ro.observe(canvas); io.observe(canvas); return v;
+}
+function begin(v) { const c = v.ctx; c.setTransform(v.d, 0, 0, v.d, 0, 0); c.clearRect(0, 0, v.w, v.h); v.rect = v.canvas.getBoundingClientRect(); return c; }
+
+/* ---------------- pointer & look ---------------- */
+const ptr = { x: 0, y: 0, active: false, last: -1e9 };
+const onPtr = e => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.active = true; ptr.last = performance.now(); };
+addEventListener("pointermove", onPtr, { passive: true });
+addEventListener("pointerdown", onPtr, { passive: true });
+document.addEventListener("mouseout", e => { if (!e.relatedTarget) ptr.active = false; });
+function lookAt(v, x, y, t, seed) {
+  if (!ptr.active || performance.now() - ptr.last > 5000) return { x: Math.sin(t * .6 + seed) * .7, y: Math.cos(t * .45 + seed * 1.3) * .45 };
+  const dx = ptr.x - (v.rect.left + x), dy = ptr.y - (v.rect.top + y), d = Math.hypot(dx, dy) || 1, m = Math.min(1, d / 110);
+  return { x: dx / d * m, y: dy / d * m };
+}
+function springStep(o, dt) { const a = -230 * o.sq - 13 * o.sqv; o.sqv += a * dt; o.sq = clamp(o.sq + o.sqv * dt, -.38, .38); }
+function hopStep(o, dt) {
+  o.hopv += 2300 * dt; o.hop += o.hopv * dt;
+  if (o.hop > 0) { if (o.hopv > 160) o.sqv += o.hopv / 260; o.hop = 0; o.hopv = 0; }
+  springStep(o, dt);
+}
+
+/* ---------------- fortune ---------------- */
+const LEVELS = [["大吉", 12], ["中吉", 22], ["小吉", 28], ["吉", 26], ["末吉", 12]];
+const YI = ["出门散步", "给老朋友发消息", "晒太阳", "早点睡觉", "尝试新口味", "整理书桌", "许一个愿", "开始一个新计划", "喝一杯热可可", "穿亮色的衣服", "夸夸别人", "抬头看云"];
+const JI = ["熬夜", "翻旧账", "犹豫太久", "空腹喝咖啡", "和自己较劲", "把话说太满", "错过晚霞"];
+function rngFrom(seed) { let a = seed >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function makeFortune(rng, shape) {
+  let r = rng() * 100, level = LEVELS[0][0];
+  for (const [name, w] of LEVELS) { if (r < w) { level = name; break; } r -= w; }
+  const yi = YI.slice().sort(() => rng() - .5).slice(0, 2);
+  return { level, shape, no: 1 + Math.floor(rng() * 100), yi, ji: JI[Math.floor(rng() * JI.length)], lucky: 1 + Math.floor(rng() * 99) };
+}
+function fillSlip(f, tag) {
+  const S = SHAPES[f.shape];
+  $("slip-level").textContent = f.level;
+  $("slip-tag").textContent = tag;
+  $("slip-no").textContent = f.no;
+  $("slip-dot").style.background = S.color;
+  $("slip-name").textContent = S.name;
+  $("slip-line").textContent = S.line;
+  $("slip-yi").textContent = f.yi.join(" · ");
+  $("slip-ji").textContent = f.ji;
+  $("slip-lucky").textContent = f.lucky;
+  $("slip-color").innerHTML = `<i class="swatch" style="background:${S.color}"></i>${S.colorName}`;
+}
+const today = new Date();
+const todayRng = rngFrom(today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate());
+const todayShape = Math.floor(todayRng() * 6);
+fillSlip(makeFortune(todayRng, todayShape), `今日签 · ${today.getMonth() + 1}月${today.getDate()}日`);
+
+/* ---------------- hero ---------------- */
+const hero = document.querySelector(".hero"), stage = $("stage"), slip = $("slip"), drawBtn = $("draw");
+let floaters = [], stars = [], clouds = [], confetti = [];
+const sky = view($("sky"), { onResize: v => {
+  const n = Math.round(clamp(v.w * v.h / 70000, 8, 16));
+  floaters = Array.from({ length: n }, (_, i) => ({ x: Math.random() * v.w, y: Math.random() * v.h, size: 9 + Math.random() * 15, shape: i % 6, seed: Math.random() * 10, speed: 8 + Math.random() * 14, rot: Math.random() * TAU, vr: (Math.random() - .5) * .5 }));
+  stars = Array.from({ length: Math.round(v.w / 12) }, () => ({ x: Math.random() * v.w, y: Math.random() * v.h * .7, r: .6 + Math.random() * 1.5, p: Math.random() * TAU }));
+  clouds = Array.from({ length: 4 }, () => ({ x: Math.random() * v.w, y: 40 + Math.random() * v.h * .4, s: 26 + Math.random() * 30, speed: 5 + Math.random() * 8 }));
+} });
+
+const M = { to: todayShape, from: SHAPES[todayShape].id, fromPts: buf(), cur: buf(), fromFace: SHAPES[todayShape].face, face: SHAPES[todayShape].face,
+  fromRGB: SHAPES[todayShape].rgb.slice(), rgb: SHAPES[todayShape].rgb.slice(), k: 1, ek: 1, t0: 0, dur: .7,
+  rot: 0, sq: 0, sqv: 0, hop: 0, hopv: 0, mood: "smile", moodUntil: 0, mode: "auto", nextAuto: 3, roll: null, draws: 0 };
+copyPts(SHAPES[todayShape].pts, M.cur);
+function setLabel(i) { $("stage-name").textContent = SHAPES[i].name; $("stage-dot").style.background = SHAPES[i].color; }
+setLabel(todayShape);
+function morphTo(i, t, dur) {
+  copyPts(M.cur, M.fromPts); M.fromFace = M.face; M.fromRGB = M.rgb.slice(); M.from = SHAPES[M.to].id;
+  M.to = i; M.t0 = t; M.dur = dur; M.k = 0;
+}
+function morphStep(t) {
+  M.k = Math.min(1, (t - M.t0) / M.dur);
+  const e = reduce ? easeOutCubic(M.k) : easeOutBack(M.k), S = SHAPES[M.to];
+  mixPts(M.fromPts, S.pts, e, M.cur);
+  M.face = mixFace(M.fromFace, S.face, e);
+  const kc = Math.min(1, M.k * 1.6);
+  for (let j = 0; j < 3; j++) M.rgb[j] = M.fromRGB[j] + (S.rgb[j] - M.fromRGB[j]) * kc;
+  M.ek = Math.min(1, M.k * 1.4);
+}
+function setMood(m, t, dur) { M.mood = m; M.moodUntil = t + dur; }
+const now = () => performance.now() / 1000;
+
+function burst(x, y, n) {
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (Math.random() - .5) * Math.PI * 1.3, sp = 260 + Math.random() * 380;
+    confetti.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: Math.random() * TAU, vr: (Math.random() - .5) * 8, shape: Math.floor(Math.random() * 6), size: 6 + Math.random() * 7, life: 0, max: 1.4 + Math.random() * .9, seed: Math.random() * 9, spark: Math.random() < .35 });
+  }
+}
+function startDraw() {
+  if (M.mode === "roll") return;
+  const t = now();
+  let final = Math.floor(Math.random() * 6);
+  if (final === M.to) final = (final + 1 + Math.floor(Math.random() * 5)) % 6;
+  M.mode = "roll"; M.roll = { t0: t, end: t + (reduce ? .6 : 1.7), next: t, final };
+  setMood("wow", t, 99);
+  drawBtn.disabled = true; $("draw-text").textContent = "摇呀摇……";
+  $("stage-name").textContent = "？"; $("stage-dot").style.background = "transparent";
+  slip.classList.remove("pop"); slip.classList.add("shaking");
+}
+function endDraw(t) {
+  const fin = M.roll.final;
+  morphTo(fin, t, .9); M.rot = 0; M.sqv += 5; M.mode = "result";
+  setMood("grin", t, 1.8); setLabel(fin);
+  M.draws++;
+  fillSlip(makeFortune(Math.random, fin), `第 ${M.draws} 次摇签`);
+  slip.classList.remove("shaking"); void slip.offsetWidth; slip.classList.add("pop");
+  drawBtn.disabled = false; $("draw-text").textContent = "再摇一签";
+  if (!reduce) burst(M.cx, M.cy - M.size * .3, 26);
+}
+drawBtn.addEventListener("click", startDraw);
+function poke() {
+  if (M.mode === "roll") return;
+  const t = now();
+  if (M.hop >= -2) { M.hopv = reduce ? 0 : -720; M.sqv -= 3; }
+  setMood("wow", t, .35);
+  setTimeout(() => setMood("grin", now(), 1), 350);
+  if (!reduce) burst(M.cx, M.cy, 8);
+}
+stage.addEventListener("click", poke);
+stage.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); poke(); } });
+
+function drawHills(ctx, w, h, t) {
+  ctx.fillStyle = TH.hill2; ctx.beginPath(); ctx.moveTo(0, h);
+  for (let x = 0; x <= w + 8; x += 8) ctx.lineTo(x, h - 78 - Math.sin(x / w * TAU * 1.1 + .6) * 22 - Math.sin(x / 160) * 6);
+  ctx.lineTo(w, h); ctx.fill();
+  ctx.fillStyle = TH.bg; ctx.beginPath(); ctx.moveTo(0, h);
+  for (let x = 0; x <= w + 8; x += 8) ctx.lineTo(x, h - 38 - Math.sin(x / w * TAU * .75 + 2.2) * 16);
+  ctx.lineTo(w, h); ctx.fill();
+}
+function drawHero(t, dt) {
+  const v = sky, ctx = begin(v), W = v.w, H = v.h;
+  const hr = hero.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+  // backdrop
+  if (TH.scene === "night") {
+    for (const s of stars) { ctx.globalAlpha = .35 + .65 * (.5 + .5 * Math.sin(t * 1.6 + s.p)); ctx.fillStyle = "#FFF6D8"; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  } else {
+    ctx.fillStyle = "rgba(255,255,255,.75)";
+    for (const c of clouds) {
+      if (!reduce) { c.x += c.speed * dt; if (c.x - c.s * 3 > W) c.x = -c.s * 3; }
+      ctx.beginPath(); ctx.arc(c.x, c.y, c.s, 0, TAU); ctx.arc(c.x + c.s * 1.1, c.y + c.s * .25, c.s * .8, 0, TAU); ctx.arc(c.x - c.s * 1.05, c.y + c.s * .3, c.s * .7, 0, TAU); ctx.fill();
+    }
+  }
+  // floaters
+  for (const f of floaters) {
+    if (!reduce) { f.y -= f.speed * dt; f.x += Math.sin(t * .5 + f.seed) * 10 * dt; f.rot += f.vr * dt; if (f.y < -40) { f.y = H + 40; f.x = Math.random() * W; } }
+    drawChar(ctx, shapeChar(f.shape, { x: f.x, y: f.y, size: f.size, rot: Math.sin(t * .7 + f.seed) * .3 + f.rot * .2, t, seed: f.seed, simple: true, alpha: .8, blink: blinkAt(t, f.seed), look: { x: Math.sin(t * .5 + f.seed) * .6, y: .2 } }));
+  }
+  drawHills(ctx, W, H, t);
+
+  // main character
+  const size = clamp(Math.min(sr.width, sr.height) * .27, 66, 170);
+  const cx = sr.left - hr.left + sr.width / 2, ground = sr.top - hr.top + sr.height * .78, cy = ground - size * 1.08;
+  M.cx = cx; M.cy = cy; M.size = size;
+
+  if (M.mode === "auto" && t > M.nextAuto) { morphTo((M.to + 1) % 6, t, .8); setLabel(M.to); M.sqv += 2.5; M.nextAuto = t + (reduce ? 5 : 2.8); }
+  let rollHop = 0;
+  if (M.mode === "roll") {
+    const R = M.roll, p = clamp((t - R.t0) / (R.end - R.t0), 0, 1);
+    if (t >= R.next) { let i = Math.floor(Math.random() * 6); if (i === M.to) i = (i + 1) % 6; morphTo(i, t, .14); R.next = t + .07 + .26 * p * p; }
+    M.rot = reduce ? 0 : easeOutCubic(p) * TAU * 3;
+    rollHop = reduce ? 0 : -Math.abs(Math.sin(p * Math.PI * 4)) * size * .45 * (1 - p * .6);
+    if (t >= R.end) endDraw(t);
+  }
+  if (M.mode !== "roll" && t > M.moodUntil) M.mood = "smile";
+  morphStep(t);
+  hopStep(M, dt);
+
+  const bob = reduce ? 0 : Math.sin(t * 1.7) * size * .04;
+  const lift = M.hop + rollHop + bob;
+  shadow(ctx, cx, ground, size * (.95 + lift / size * .3), .16);
+  // orbiting sparkles
+  if (!reduce) for (let i = 0; i < 4; i++) {
+    const a = t * .5 + i * TAU / 4, tw = .5 + .5 * Math.sin(t * 2.4 + i * 1.7);
+    sparkle(ctx, cx + Math.cos(a) * size * 1.65, cy + lift + Math.sin(a) * size * 1.1, 4 + tw * 7, TH.sparkle);
+  }
+  const S = SHAPES[M.to], acc = { [M.from]: 1 - M.ek }; acc[S.id] = M.from === S.id ? 1 : M.ek;
+  drawChar(ctx, {
+    pts: M.cur, face: M.face, color: rgbStr(M.rgb), acc,
+    x: cx, y: cy + lift + size * M.sq * .95, size, rot: M.rot + (reduce ? 0 : Math.sin(t * 1.1) * .05),
+    sx: 1 + M.sq, sy: 1 - M.sq, t, seed: 1.3, mood: M.mood,
+    look: lookAt(v, cx, cy + lift, t, 2), blink: M.mode === "roll" ? 0 : blinkAt(t, 1.3), lw: Math.max(3, size * .05)
+  });
+
+  // confetti
+  for (let i = confetti.length - 1; i >= 0; i--) {
+    const c = confetti[i];
+    c.life += dt; c.vy += 820 * dt; c.vx *= .985; c.x += c.vx * dt; c.y += c.vy * dt; c.rot += c.vr * dt;
+    const a = 1 - c.life / c.max;
+    if (a <= 0 || c.y > H + 30) { confetti.splice(i, 1); continue; }
+    if (c.spark) { ctx.globalAlpha = a; sparkle(ctx, c.x, c.y, c.size * .9, TH.sparkle); ctx.globalAlpha = 1; }
+    else drawChar(ctx, shapeChar(c.shape, { x: c.x, y: c.y, size: c.size, rot: c.rot, t, seed: c.seed, simple: true, alpha: a, lw: 1.6 }));
+  }
+}
+
+/* ---------------- field guide ---------------- */
+const cardsEl = $("cards"), minis = [];
+SHAPES.forEach((S, i) => {
+  const card = document.createElement("article");
+  card.className = "card"; card.style.setProperty("--tint", S.color === "#FFFFFF" ? "#9FD3F5" : S.color);
+  card.tabIndex = 0;
+  card.innerHTML = `<canvas aria-hidden="true"></canvas>
+    <div class="card-head"><div><h3>${S.name}</h3><span class="en">${S.en}</span></div><span class="glyph" aria-hidden="true">${S.glyph}</span></div>
+    <p class="desc">${S.desc}</p>
+    <div class="card-foot"><span>出没：${S.where}</span><span class="rarity" aria-label="稀有度 ${S.rarity} / 5">稀有度 ${[1, 2, 3, 4, 5].map(n => `<i class="${n <= S.rarity ? "on" : ""}"></i>`).join("")}</span></div>`;
+  cardsEl.appendChild(card);
+  const v = view(card.querySelector("canvas"), { shape: i, hop: 0, hopv: 0, sq: 0, sqv: 0, hover: false, nextHop: 0, seed: i * 1.9 + .4,
+    dots: Array.from({ length: 5 }, () => ({ x: Math.random(), y: Math.random() * .6, p: Math.random() * TAU })) });
+  const jump = () => { if (v.hop >= -1) { v.hopv = reduce ? 0 : -460; v.sqv -= 2.5; v.nextHop = now() + .9; } };
+  card.addEventListener("pointerenter", () => { v.hover = true; jump(); });
+  card.addEventListener("pointerleave", () => { v.hover = false; });
+  card.addEventListener("click", jump);
+  card.addEventListener("focus", () => { v.hover = true; jump(); });
+  card.addEventListener("blur", () => { v.hover = false; });
+  minis.push(v);
+});
+function drawMini(v, t, dt) {
+  const ctx = begin(v), W = v.w, H = v.h, size = Math.min(W, H) * .28;
+  if (v.hover && t > v.nextHop) { v.hopv = reduce ? 0 : -460; v.sqv -= 2.5; v.nextHop = t + .9; }
+  hopStep(v, dt);
+  for (const d of v.dots) { ctx.globalAlpha = .3 + .5 * (.5 + .5 * Math.sin(t * 2 + d.p)); sparkle(ctx, d.x * W, 12 + d.y * H, 5, TH.outline); }
+  ctx.globalAlpha = 1;
+  const ground = H * .86, cy = ground - size * 1.05;
+  shadow(ctx, W / 2, ground, size * .9, .14);
+  drawChar(ctx, shapeChar(v.shape, { x: W / 2, y: cy + v.hop + size * v.sq * .95, size, sx: 1 + v.sq, sy: 1 - v.sq,
+    rot: reduce ? 0 : Math.sin(t * 1.3 + v.seed) * .06, t, seed: v.seed, mood: v.hover ? "grin" : "smile",
+    look: lookAt(v, W / 2, cy, t, v.seed), blink: blinkAt(t, v.seed), lw: Math.max(2.4, size * .055) }));
+}
+
+/* ---------------- catch playground ---------------- */
+const pit = view($("pit"), { onResize: v => { if (!v.settled) { v.settled = true; for (let i = 0; i < 240; i++) stepBodies(v.w, v.h, 1 / 120); } }, onShow: v => { if (!v.seeded) { v.seeded = true; for (let i = 0; i < 4; i++) setTimeout(() => drop(v.w * (.2 + .6 * Math.random())), 300 + i * 380); } } });
+const bodies = [];
+let caught = 0;
+function drop(x) {
+  const W = pit.w || 600, size = 17 + Math.random() * 15;
+  bodies.push({ x: clamp(x, size, W - size), y: -size * 1.2, vx: (Math.random() - .5) * 140, vy: 0, r: size * 1.02, size, shape: Math.floor(Math.random() * 6), rot: (Math.random() - .5) * .8, vr: (Math.random() - .5) * 3, seed: Math.random() * 9, sq: 0, sqv: 0, wow: 0, leaving: false, alpha: 1 });
+  caught++; $("count").textContent = caught;
+  const staying = bodies.filter(b => !b.leaving);
+  if (staying.length > 30) staying[0].leaving = true;
+}
+// a few residents already resting on the grass at load
+for (let i = 0; i < 6; i++) { drop(80 + i * 90); bodies[i].y = 200 + Math.random() * 80; }
+caught = 0; $("count").textContent = "0";
+pit.canvas.addEventListener("pointerdown", e => { const r = pit.canvas.getBoundingClientRect(); drop(e.clientX - r.left); });
+$("drop").addEventListener("click", () => drop(pit.w * (.15 + .7 * Math.random())));
+$("release").addEventListener("click", () => bodies.forEach(b => { b.leaving = true; b.vy = Math.min(b.vy, -60); }));
+
+function stepBodies(W, H, dt) {
+  const ground = H - 34;
+  for (const b of bodies) {
+    if (b.leaving) { b.vy -= 520 * dt; b.vx *= .99; b.alpha -= dt * .55; }
+    else b.vy += 1500 * dt;
+    b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vr * dt;
+    b.wow = Math.max(0, b.wow - dt);
+    springStep(b, dt);
+    if (b.leaving) continue;
+    if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx) * .5; }
+    if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx) * .5; }
+    if (b.y > ground - b.r) {
+      b.y = ground - b.r;
+      if (b.vy > 280) { b.wow = .45; b.sqv += b.vy / 1100; }
+      b.vy = Math.abs(b.vy) < 50 ? 0 : -b.vy * .42;
+      b.vx *= .9; b.vr = b.vr * .6 + b.vx / b.r * .4;
+    }
+  }
+  for (let i = 0; i < bodies.length; i++) {
+    const a = bodies[i]; if (a.leaving) continue;
+    for (let j = i + 1; j < bodies.length; j++) {
+      const b = bodies[j]; if (b.leaving) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = a.r + b.r;
+      if (d >= min || d === 0) continue;
+      const nx = dx / d, ny = dy / d, o = (min - d) / 2;
+      a.x -= nx * o; a.y -= ny * o; b.x += nx * o; b.y += ny * o;
+      const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+      if (rv < 0) {
+        const jn = -1.3 * rv / 2;
+        a.vx -= jn * nx; a.vy -= jn * ny; b.vx += jn * nx; b.vy += jn * ny;
+        if (-rv > 320) { a.wow = b.wow = .35; }
+        const tv = (b.vx - a.vx) * -ny + (b.vy - a.vy) * nx;
+        a.vr += tv * .004; b.vr -= tv * .004;
+      }
+    }
+  }
+  for (const b of bodies) if (!b.leaving) { b.vr *= .985; b.vx *= .998; }
+  for (let i = bodies.length - 1; i >= 0; i--) if (bodies[i].alpha <= 0 || bodies[i].y < -120) bodies.splice(i, 1);
+}
+function drawPit(t, dt) {
+  const v = pit, ctx = begin(v), W = v.w, H = v.h, ground = H - 34;
+  const steps = 3;
+  for (let s = 0; s < steps; s++) stepBodies(W, H, dt / steps);
+  // grass
+  ctx.fillStyle = TH.hill; ctx.beginPath(); ctx.moveTo(0, H);
+  for (let x = 0; x <= W + 6; x += 6) ctx.lineTo(x, ground - Math.sin(x / 38) * 3);
+  ctx.lineTo(W, H); ctx.fill();
+  ctx.strokeStyle = TH.outline; ctx.globalAlpha = .25; ctx.lineWidth = 2; ctx.lineCap = "round";
+  for (let x = 14; x < W; x += 46) { const sw = reduce ? 0 : Math.sin(t * 1.5 + x) * 2; ctx.beginPath(); ctx.moveTo(x, ground + 8); ctx.quadraticCurveTo(x + 1, ground, x + 3 + sw, ground - 6); ctx.moveTo(x + 6, ground + 8); ctx.quadraticCurveTo(x + 7, ground + 1, x + 10 + sw, ground - 3); ctx.stroke(); }
+  ctx.globalAlpha = 1;
+  for (const b of bodies) {
+    if (!b.leaving) shadow(ctx, b.x, ground, b.size * clamp(1 - (ground - b.y - b.r) / 400, .35, 1) * .85, .1 * b.alpha);
+    drawChar(ctx, shapeChar(b.shape, { x: b.x, y: b.y + b.size * b.sq * .9, size: b.size, rot: b.rot, sx: 1 + b.sq, sy: 1 - b.sq, t, seed: b.seed,
+      mood: b.leaving ? "grin" : b.wow > 0 ? "wow" : "smile", look: lookAt(v, b.x, b.y, t, b.seed), blink: blinkAt(t, b.seed), alpha: clamp(b.alpha, 0, 1), lw: Math.max(2, b.size * .065) }));
+  }
+}
+
+/* ---------------- closing parade ---------------- */
+const parade = view($("parade"));
+function drawParade(t) {
+  const v = parade, ctx = begin(v), W = v.w, H = v.h;
+  const size = Math.min(H * .24, W / 15), gap = Math.min((W - size * 2) / 5, size * 3.4), ground = H - 10;
+  for (let i = 0; i < 6; i++) {
+    const x = size * 1.2 + i * gap, hop = reduce ? 0 : -Math.max(0, Math.sin(t * 3.2 - i * .7)) * H * .22;
+    shadow(ctx, x, ground, size * (.85 + hop / H * .4), .13);
+    drawChar(ctx, shapeChar(i, { x, y: ground - size * 1.05 + hop, size, rot: reduce ? 0 : Math.sin(t * 3.2 - i * .7) * .08, t, seed: i * 2.1,
+      mood: hop < -H * .12 ? "grin" : "smile", look: lookAt(v, x, ground - size, t, i), blink: blinkAt(t, i * 2.1), lw: Math.max(2.2, size * .06) }));
+  }
+}
+
+/* ---------------- loop ---------------- */
+let last = performance.now();
+function frame(ms) {
+  const dt = Math.min(.05, (ms - last) / 1000); last = ms;
+  const t = ms / 1000;
+  // off-screen canvases still get painted once so the page is complete at rest
+  const due = v => v.w && (v.visible || !v.drawn) && (v.drawn = true);
+  if (due(sky)) drawHero(t, dt);
+  for (const m of minis) if (due(m)) drawMini(m, t, dt);
+  if (due(pit)) drawPit(t, dt);
+  if (due(parade)) drawParade(t);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
