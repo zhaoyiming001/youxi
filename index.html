@@ -60,9 +60,6 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .xbar{height:4px;border-radius:99px;background:#100D26;overflow:hidden}
 .xbar i{display:block;height:100%;width:0;background:var(--rage);border-radius:99px;transition:width .2s}
 #gstate{font-size:.74rem;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw;text-align:right}
-.ghostbar.g2{padding:2px 10px}
-.ghostbar.g2 .gname{font-size:.9rem}
-.ghostbar.g2 .bar i{background:linear-gradient(90deg,#3DBE8B,#8CFF7A)}
 .ghostbar.alarm{animation:alarm .5s ease-in-out infinite alternate;border-color:#5A0F1F}
 @keyframes alarm{from{box-shadow:0 3px 0 var(--edge),0 0 0 0 rgba(255,77,109,0)}to{box-shadow:0 3px 0 var(--edge),0 0 22px 3px rgba(255,77,109,.6)}}
 .visit{pointer-events:auto;display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;background:var(--panel);border:2.5px solid var(--edge);border-radius:16px;padding:6px 8px;box-shadow:0 3px 0 var(--edge);animation:pop .25s cubic-bezier(.3,1.5,.5,1)}
@@ -372,11 +369,6 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
     <span class="gname"><span id="gname">猛鬼</span> <b id="glv">Lv.1</b><span class="gtal" id="gtal" hidden></span></span>
     <div class="bars"><div class="bar"><i id="ghp"></i></div><div class="xbar" title="砸门越多升级越快"><i id="gxp"></i></div></div>
     <span id="gstate">还没出动</span>
-  </div>
-  <div class="ghostbar g2" id="ghostbar2" hidden>
-    <span class="gname">僵尸 <b id="glv2">Lv.1</b><span class="gtal" id="gtal2"></span></span>
-    <div class="bars"><div class="bar"><i id="ghp2"></i></div></div>
-    <span id="gstate2"></span>
   </div>
   <div class="visit" id="visit" hidden>
     <img id="visit-av" alt="">
@@ -3900,15 +3892,6 @@ function updateHud(dt) {
   if (phase === "select") st = "马上出动";
   $("gstate").textContent = st;
   $("ghostbar").classList.toggle("alarm", phase === "night" && !!r && G.target === r && G.state === "attack");
-  { const J = ghostsAll.find(g => g.jiang), b2 = $("ghostbar2"); b2.hidden = !(J && phase === "night");
-    if (J && phase === "night") {
-      $("glv2").textContent = "Lv." + J.lv; $("ghp2").style.width = (J.state === "hidden" ? 100 : clamp(J.hp / J.max * 100, 0, 100)) + "%";
-      const gt2 = $("gtal2"); gt2.textContent = J.tal.name + (J.kills ? ` · 吞噬${J.kills}` : "");
-      let st2 = J.state === "hidden" ? `${Math.max(0, Math.ceil(J.spawnAt - nightT))} 秒后从 3 楼路口进来` : J.state === "dead" ? "被打死了" : gt < J.frozenUntil ? "被冻住了" : STATE_TXT[J.state] || "";
-      if (J.state === "attack" && J.target) st2 = "正在砸 " + (J.target === r ? "你的门！" : J.target.occupant.name);
-      if (J.state === "retreat") st2 = "残血逃回楼顶！"; if (J.state === "heal") st2 = "在楼顶回血";
-      $("gstate2").textContent = st2; b2.classList.toggle("alarm", !!r && J.target === r && J.state === "attack");
-    } }
   const mrA = r && r.alive && inBed && phase === "night";
   const sb = $("sos"), showSos = mrA && !!ghostAt(r);
   sb.hidden = !showSos; if (showSos) { const cd = Math.ceil(sosCd - gt); sb.disabled = cd > 0; const txt = cd > 0 ? `求救 ${cd}秒` : "求救", st = $("sos-t"); if (st.textContent !== txt) st.textContent = txt; }
