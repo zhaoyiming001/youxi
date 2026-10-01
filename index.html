@@ -131,7 +131,8 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .opt[disabled]{cursor:not-allowed}
 .opt[disabled] > *{opacity:.5}
 .opt img{width:44px;height:44px;display:block}
-.opt b{font-size:1rem;display:flex;align-items:center;gap:6px}
+.opt b{font-size:1rem;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.opt b i.tier{background:transparent;color:var(--tc);border:2px solid var(--tc);padding:0 5px}
 .opt b i{font-style:normal;font-size:.64rem;font-weight:700;padding:1px 6px;border-radius:99px;background:#16345A;color:var(--volt);white-space:nowrap}
 .opt b i.c{background:#4A3A10;color:var(--coin)}
 .opt b i.m{background:#2E2A50;color:#D8D2FF}
@@ -560,21 +561,72 @@ const BUILD = {
   seal:      { name: "镇鬼阵", cat: "aux", desc: "鬼砸你的门时，有几率涨不了经验", unit: "镇住几率", max: 8, cost: zeros(8), en: curve(100, 2.25, 8), val: lin(25, 7), pct: true },
   scarecrow: { name: "稻草人", cat: "aux", desc: "门快破时把鬼骗去别人家", unit: "冷却", max: 6, cost: zeros(6), en: curve(120, 2.3, 6), val: lv => 70 - lv * 6 },
 };
+// ---- weapon roster: five quality tiers, three ways to pay; each match deals a random handful ----
+const TIERS = [{ n: "普通", c: "#C9C4E0", w: 30 }, { n: "精良", c: "#5CE08A", w: 28 }, { n: "稀有", c: "#4FB6FF", w: 22 }, { n: "史诗", c: "#C27BFF", w: 13 }, { n: "传说", c: "#FFB020", w: 7 }];
+Object.assign(BUILD.turret, { tier: 0 }); Object.assign(BUILD.cannon, { tier: 1 }); Object.assign(BUILD.flame, { tier: 1 });
+Object.assign(BUILD.laser, { tier: 2 }); Object.assign(BUILD.tesla, { tier: 2 }); Object.assign(BUILD.sniper, { tier: 2 }); Object.assign(BUILD.poison, { tier: 2 }); Object.assign(BUILD.thunder, { tier: 3 });
+// price = lv.1 cost in coin terms; dps = lv.1 damage per second. pay: c = coins only, m = coins + power, e = power only
+function wpn(o) {
+  const cont = o.kind === "beam" || o.kind === "spray" || o.kind === "dot", P0 = o.price;
+  const per = cont ? o.dps : o.dps * o.int;
+  const cost = o.pay === "e" ? zeros(8) : curve(o.pay === "m" ? P0 * .75 : P0, 2.15, 8);
+  const en = o.pay === "e" ? curve(P0 * .28, 2.25, 8) : o.pay === "m" ? curve(Math.max(5, P0 * .07), 2.2, 8) : curve(Math.max(5, P0 * .05), 2.2, 8, 3);
+  const base = { cat: "atk", max: 8, cost, en, generic: true, unit: cont ? "每秒伤害" : o.kind === "pct" ? "每次伤害" : "每发伤害", range: lin(o.range[0], o.range[1]) };
+  if (o.kind === "pct") Object.assign(base, { val: lin(o.pctv, o.pctv * .2), pct: true, suffix: "血量上限" });
+  else base.val = lv => Math.round(pow(per, 1.85)(lv));
+  const { range, ...rest } = o;
+  return Object.assign(rest, base);
+}
+Object.assign(BUILD, {
+  sling:   wpn({ name: "弹弓台", tier: 0, pay: "c", kind: "bullet", int: 1, dps: 14, price: 90, range: [85, 24], col: "#E8C77A", size: 5, desc: "便宜好用的木头弹弓", look: { base: "sq", bc: "#A9744A", gun: "y", col: "#E8C77A" } }),
+  water:   wpn({ name: "水枪", tier: 0, pay: "c", kind: "spray", dps: 16, price: 120, range: [65, 16], col: "#9FE8FF", slow: .15, desc: "滋鬼一脸水，打中会减速", look: { base: "round", bc: "#3B8FD8", gun: "wide", col: "#9FE8FF" } }),
+  nail:    wpn({ name: "钉枪", tier: 0, pay: "c", kind: "bullet", int: .35, dps: 22, price: 150, range: [75, 22], col: "#D8DEEA", size: 3, sp: 900, desc: "哒哒哒连发小钉子", look: { base: "sq", bc: "#6B7894", gun: "needle", col: "#D8DEEA" } }),
+  cracker: wpn({ name: "鞭炮架", tier: 0, pay: "m", kind: "bullet", int: 1.6, dps: 25, price: 170, range: [80, 24], col: "#FF4D3D", size: 5, splash: true, snd: "cannon", desc: "噼里啪啦，炸到旁边的小鬼和帮手", look: { base: "sq", bc: "#B8302A", gun: "triple", col: "#FFD23F" } }),
+  sock:    wpn({ name: "臭袜炮", tier: 0, pay: "c", kind: "bullet", int: 2, dps: 18, price: 140, range: [80, 22], col: "#B4D86A", size: 7, vuln: .12, desc: "熏得鬼受到的伤害变高", look: { base: "round", bc: "#7A8A4A", gun: "sock", col: "#FFFFFF" } }),
+  twin:    wpn({ name: "双管炮", tier: 1, pay: "c", kind: "bullet", n: 2, int: .9, dps: 34, price: 210, range: [85, 26], col: "#FFE26A", size: 5, desc: "一次打两发", look: { base: "sq", bc: "#4A5A8E", gun: "twin", col: "#FFD23F" } }),
+  icicle:  wpn({ name: "冰锥塔", tier: 1, pay: "m", kind: "bullet", int: 1.4, dps: 36, price: 260, range: [95, 26], col: "#BDEBFF", size: 5, slow: .25, desc: "冰锥打中让鬼变慢", look: { base: "hex", bc: "#3B5BA8", gun: "needle", col: "#BDEBFF" } }),
+  boomer:  wpn({ name: "回旋镖", tier: 1, pay: "m", kind: "bullet", n: 2, int: 1.6, dps: 42, price: 280, range: [100, 28], col: "#FF9A3C", size: 6, desc: "飞出去再飞回来，打两下", look: { base: "round", bc: "#7A4A2A", gun: "bow", col: "#FF9A3C" } }),
+  coil:    wpn({ name: "电磁线圈", tier: 1, pay: "e", kind: "arc", int: 1.2, dps: 44, price: 300, range: [85, 24], col: "#7FE7FF", stun: .3, stunP: .12, snd: "zap", desc: "放电打鬼，偶尔电晕", look: { base: "hex", bc: "#2E3354", gun: "coil", col: "#7FE7FF" } }),
+  rocket:  wpn({ name: "火箭筒", tier: 1, pay: "m", kind: "bullet", int: 2.6, dps: 50, price: 320, range: [110, 30], col: "#FF6B3D", size: 7, sp: 420, splash: true, stun: .2, snd: "cannon", desc: "火箭爆炸，震一下鬼", look: { base: "sq", bc: "#5A6B3A", gun: "tube", col: "#FF6B3D" } }),
+  gatling: wpn({ name: "加特林", tier: 2, pay: "m", kind: "bullet", int: .15, dps: 74, price: 420, range: [90, 26], col: "#FFE26A", size: 3.5, sp: 900, desc: "转起来就停不下来", look: { base: "sq", bc: "#3A3F55", gun: "gat", col: "#FFE26A" } }),
+  shotgun: wpn({ name: "霰弹炮", tier: 2, pay: "c", kind: "bullet", n: 5, int: 1.4, dps: 80, price: 380, range: [70, 18], col: "#FFB15A", size: 3.5, snd: "cannon", desc: "射程短，贴脸一喷五发", look: { base: "sq", bc: "#6B4A33", gun: "wide", col: "#FFB15A" } }),
+  plasma:  wpn({ name: "等离子炮", tier: 2, pay: "m", kind: "bullet", int: 2, dps: 72, price: 450, range: [100, 28], col: "#C27BFF", size: 8, vuln: .15, snd: "laser", desc: "打中后鬼受到的伤害变高", look: { base: "round", bc: "#3A2458", gun: "plasma", col: "#C27BFF" } }),
+  frostray:wpn({ name: "冰霜射线", tier: 2, pay: "e", kind: "beam", dps: 60, price: 420, range: [85, 24], col: "#9FE8FF", slow: .3, desc: "持续冰冻射线，鬼被照着就变慢", look: { base: "hex", bc: "#2B4A7A", gun: "dish", col: "#9FE8FF" } }),
+  acid:    wpn({ name: "酸液喷射", tier: 2, pay: "m", kind: "spray", dps: 70, price: 380, range: [70, 18], col: "#8CFF7A", vuln: .1, desc: "酸液腐蚀，鬼更怕疼", look: { base: "round", bc: "#3C6E3A", gun: "wide", col: "#8CFF7A" } }),
+  sonic:   wpn({ name: "声波炮", tier: 2, pay: "m", kind: "arc", int: 2.2, dps: 66, price: 440, range: [95, 26], col: "#FF8FB8", stun: .4, stunP: .25, snd: "disrupt", desc: "大喇叭震晕鬼", look: { base: "sq", bc: "#5A2A4A", gun: "horn", col: "#FF8FB8" } }),
+  railgun: wpn({ name: "轨道炮", tier: 3, pay: "e", kind: "bullet", int: 4.5, dps: 110, price: 700, range: [190, 32], col: "#7FE7FF", size: 4, sp: 2600, snd: "sniper", desc: "超远射程的电磁炮", look: { base: "sq", bc: "#2A3A4A", gun: "rail", col: "#7FE7FF" } }),
+  thor:    wpn({ name: "雷神锤", tier: 3, pay: "m", kind: "arc", int: 2.6, dps: 130, price: 760, range: [100, 28], col: "#FFE26A", stun: .6, stunP: .4, snd: "thunder", desc: "雷霆一击，常常把鬼劈晕", look: { base: "hex", bc: "#4A4466", gun: "hammer", col: "#FFE26A" } }),
+  hole:    wpn({ name: "黑洞发生器", tier: 3, pay: "e", kind: "dot", dps: 85, price: 680, range: [95, 26], slow: .2, desc: "吸住鬼不停掉血，还会减速", look: { base: "round", bc: "#1A1030", gun: "hole", col: "#B98CFF" } }),
+  missile: wpn({ name: "导弹巢", tier: 3, pay: "m", kind: "bullet", n: 3, int: 3, dps: 140, price: 820, range: [140, 32], col: "#FF6B3D", size: 6, sp: 380, splash: true, snd: "cannon", desc: "一次放三枚追踪导弹", look: { base: "sq", bc: "#4A5A3A", gun: "pod", col: "#FF6B3D" } }),
+  prism:   wpn({ name: "光棱塔", tier: 3, pay: "m", kind: "beam", dps: 95, price: 740, range: [100, 28], col: "#FFFFFF", ramp: 2.5, desc: "照得越久越痛，最高 2.5 倍", look: { base: "hex", bc: "#3A2F5E", gun: "crystal", col: "#BFF4FF" } }),
+  doom:    wpn({ name: "末日炮", tier: 4, pay: "e", kind: "bullet", int: 5, dps: 260, price: 1300, range: [150, 34], col: "#FF3355", size: 12, sp: 500, splash: true, stun: .6, snd: "thunder", desc: "一炮下去天崩地裂", look: { base: "round", bc: "#2A1420", gun: "doom", col: "#FF3355" } }),
+  angel:   wpn({ name: "天使之翼", tier: 4, pay: "m", kind: "beam", dps: 220, price: 1200, range: [110, 30], col: "#FFF3B0", heal: .04, desc: "圣光照鬼，还会给你的门回血", look: { base: "round", bc: "#E8E4FF", gun: "wing", col: "#FFE26A" } }),
+  fox:     wpn({ name: "九尾狐火", tier: 4, pay: "m", kind: "bullet", n: 3, int: 1.2, dps: 240, price: 1250, range: [120, 30], col: "#FF8A3C", size: 6, burn: .3, desc: "狐火追着鬼烧，还会留下灼烧", look: { base: "round", bc: "#5A2A1A", gun: "fox", col: "#FF8A3C" } }),
+  rift:    wpn({ name: "时空裂隙", tier: 4, pay: "e", kind: "pct", int: 8, pctv: 3, price: 1400, range: [120, 30], col: "#C27BFF", slow: .3, desc: "每 8 秒撕开裂隙，按鬼的血量上限算伤害并减速", look: { base: "hex", bc: "#1A1030", gun: "swirl", col: "#C27BFF" } }),
+  dragon:  wpn({ name: "龙息炮", tier: 4, pay: "m", kind: "spray", dps: 280, price: 1250, range: [80, 20], col: "#FF6B3D", burn: .3, desc: "龙息喷射，鬼走开还会继续烧", look: { base: "sq", bc: "#3A1A1A", gun: "dragon", col: "#FF6B3D" } }),
+});
 const CATS = [["atk", "输出"], ["eco", "经济"], ["def", "防御"], ["aux", "控制"]];
-const ATTACKERS = ["turret", "cannon", "laser", "tesla", "thunder", "sniper", "flame", "poison"];
+const ATTACKERS = Object.keys(BUILD).filter(k => BUILD[k].cat === "atk");
+const priceOf = k => BUILD[k].cost[0] + BUILD[k].en[0] * 3;
 // basic buildings are in every match; the rest is a random pool so each match plays differently
-const CORE = ["turret", "arcade", "dynamo", "cat", "repair", "fridge"], POOL_PICK = 11;
+const CORE = ["turret", "arcade", "dynamo", "cat", "repair", "fridge"], WEAPON_PICK = 6, OTHER_PICK = 7;
 let avail = new Set(Object.keys(BUILD));
+// weapons are drawn by quality weight (legendary is rare), so some nights you get a great arsenal and some nights you make do
 function rollPool() {
-  const pool = Object.keys(BUILD).filter(k => !CORE.includes(k));
-  let pickd;
-  for (let tries = 0; tries < 60; tries++) {
-    pickd = shuffle(pool).slice(0, POOL_PICK);
-    const atk = pickd.filter(k => ATTACKERS.includes(k)).length, volt = pickd.filter(k => !BUILD[k].cost[0]).length;
-    if (atk >= 3 && volt >= 2 && CATS.every(([c]) => pickd.some(k => BUILD[k].cat === c))) break;
+  let weps = [];
+  for (let tries = 0; tries < 40; tries++) {
+    let pool = ATTACKERS.filter(k => !CORE.includes(k)); weps = [];
+    while (weps.length < WEAPON_PICK && pool.length) {
+      let r = Math.random() * pool.reduce((a, k) => a + TIERS[BUILD[k].tier].w, 0), k = pool[pool.length - 1];
+      for (const x of pool) { if ((r -= TIERS[BUILD[x].tier].w) < 0) { k = x; break; } }
+      weps.push(k); pool = pool.filter(x => x !== k);
+    }
+    if (weps.some(k => BUILD[k].cost[0]) && weps.some(k => !BUILD[k].cost[0] || BUILD[k].en[0])) break;
   }
-  avail = new Set([...CORE, ...pickd]);
-  return pickd;
+  weps.sort((a, b) => BUILD[a].tier - BUILD[b].tier || priceOf(a) - priceOf(b));
+  const oth = shuffle(Object.keys(BUILD).filter(k => !CORE.includes(k) && BUILD[k].cat !== "atk")).slice(0, OTHER_PICK);
+  avail = new Set([...CORE, ...weps, ...oth]);
+  return { weps, oth };
 }
 const valText = (type, lv) => {
   const D = BUILD[type], v = D.val(lv);
@@ -897,12 +949,13 @@ let phase = "title", paused = false, gt = 0, selT = SELECT_LEN, nightT = 0, me, 
 let gift = null, giftT = 0;
 let stats, camMode = "overview", visit = null, shake = 0, flash = 0, sheetSel = null, buildTab = "atk", lastAlarm = -99, ended = false, deaths = 0;
 const free = { x: W / 2, y: H / 2, s: 1 };
-const PLAN = ["bed", "door", "arcade", "turret", "bed", "door", "turret", "arcade", "bed", "door", "up:turret", "repair", "door", "bed", "cat", "flame", "up:turret",
-  "up:arcade", "door", "speaker", "bed", "turret", "piggy", "up:repair", "cannon", "sniper", "up:turret", "door", "bell", "fridge", "up:cat", "bed", "door", "dynamo", "tesla",
-  "up:turret", "frost", "vine", "mirror", "door", "poison", "up:cannon", "bed", "fence", "up:tesla", "thunder", "barrier", "door", "up:turret", "up:speaker", "talisman", "tree", "seal", "scarecrow",
-  "laser", "up:dynamo", "bed", "door", "up:turret", "up:cannon", "up:tesla", "up:thunder", "up:laser", "up:repair", "door", "bed", "up:arcade", "up:bell",
+// "atk" = build one of this match's weapons (cheapest one not built yet), "up:atk" = upgrade the weakest weapon
+const PLAN = ["bed", "door", "arcade", "turret", "bed", "door", "turret", "arcade", "bed", "door", "up:turret", "repair", "door", "bed", "cat", "atk", "up:turret",
+  "up:arcade", "door", "speaker", "bed", "turret", "piggy", "up:repair", "atk", "atk", "up:turret", "door", "bell", "fridge", "up:cat", "bed", "door", "dynamo", "atk",
+  "up:turret", "frost", "vine", "mirror", "door", "atk", "up:atk", "bed", "fence", "up:atk", "atk", "barrier", "door", "up:turret", "up:speaker", "talisman", "tree", "seal", "scarecrow",
+  "atk", "up:dynamo", "bed", "door", "up:turret", "up:atk", "up:atk", "up:atk", "up:atk", "up:repair", "door", "bed", "up:arcade", "up:bell",
   "up:frost", "up:fridge", "up:mirror", "up:fence", "up:barrier", "up:talisman", "up:cat", "up:speaker",
-  "up:sniper", "up:flame", "up:poison", "up:piggy", "up:tree", "up:vine", "up:seal"];
+  "up:atk", "up:atk", "up:atk", "up:piggy", "up:tree", "up:vine", "up:seal"];
 const LOOP_FROM = 20;
 // give each roommate a slightly different build order so rooms don't look identical
 function personalPlan() {
@@ -946,7 +999,8 @@ function newGame() {
   phase = "select"; buildStrip();
   const mt = $("me-tal"); mt.hidden = !me.tal; if (me.tal) { mt.innerHTML = uiImg(me.tal.ic, ""); mt.title = me.tal.name; }
   banner("20 秒内抢一间宿舍！", "info");
-  feed("本局限定建筑：" + special.map(k => BUILD[k].name).join("、"), "good");
+  feed("本局武器：" + special.weps.map(k => `${BUILD[k].name}(${TIERS[BUILD[k].tier].n})`).join("、"), "good");
+  feed("本局其他限定建筑：" + special.oth.map(k => BUILD[k].name).join("、"), "good");
   if (me.tal) feed(`本局天赋「${me.tal.name}」：${me.tal.desc}`, "good");
 }
 
@@ -1164,6 +1218,21 @@ function hitGhost(dmg, mine, quiet) {
   G.hp -= dmg; G.hurt = .12; if (mine) stats.dmg += dmg;
   if (!quiet) floatText(G.x + rand(-14, 14), G.y - ghostR(G.lv) - 10, "-" + fmt(dmg), mine ? "#FFE26A" : "#FFFFFF", mine ? 16 : 12);
   if (G.hp <= 0) { G.hp = 0; G.state = "dead"; burst(G.x, G.y, "#F1EEFF", 50, 280); burst(G.x, G.y, "#FFD23F", 30, 220); slowmo = 1.2; flash = .5; endGame(true); }
+}
+function timedSlow(v, sec) { if (gt >= (G.slowT || 0) || v >= G.slowV) { G.slowV = Math.max(v, gt < (G.slowT || 0) ? G.slowV : 0); G.slowT = Math.max(G.slowT || 0, gt + sec); } G.slow = Math.max(G.slow, v); }
+function timedVuln(v, sec) { G.vulnV = Math.max(v, gt < (G.vulnT || 0) ? G.vulnV : 0); G.vulnT = Math.max(G.vulnT || 0, gt + sec); G.vuln = Math.max(G.vuln, v); }
+function burnGhost(dps, mine) { if (dps > (gt < G.poisonUntil ? G.poisonDps : 0)) { G.poisonDps = dps; G.poisonMine = mine; } G.poisonUntil = Math.max(G.poisonUntil, gt + 3); }
+function splashAt(x, y, dmg) {
+  for (const h of helpers) if (Math.hypot(h.x - x, h.y - y) < 80) { h.hp -= dmg * .6; h.hurt = .1; }
+  for (let i = minions.length - 1; i >= 0; i--) { const m = minions[i]; if (Math.hypot(m.x - x, m.y - y) < 70) { m.hp -= dmg; if (m.hp <= 0) { burst(m.x, m.y, "#E9DAFF", 12, 140); minions.splice(i, 1); } } }
+  rings.push({ x, y, r: 8, max: 60, life: 0, col: "#FFB15A" });
+}
+function hitFx(D, dmg, mine, r) {
+  if (D.stun && Math.random() < (D.stunP || 1)) stun(D.stun);
+  if (D.slow) timedSlow(D.slow, 2); if (D.vuln) timedVuln(D.vuln, 3);
+  if (D.burn) burnGhost(dmg * D.burn, mine);
+  if (D.splash) splashAt(G.x, G.y - 10, dmg);
+  if (D.heal && r && r.doorHp > 0) r.doorHp = Math.min(doorMax(r), r.doorHp + dmg * D.heal);
 }
 function stun(d) { if (gt < G.stunImmune || G.state === "heal") return; G.stunUntil = Math.max(G.stunUntil, gt + d); G.stunImmune = gt + d + STUN_IMMUNE; }
 function damageDoor(r, dmg) {
@@ -1448,6 +1517,16 @@ $("visit-give").addEventListener("click", () => { auInit(); giveCoins(); });
 function npcStep(r, step) {
   if (step === "bed") return r.bedLv >= BED.max ? true : bedUp(r);
   if (step === "door") return r.doorLv >= DOOR.max ? true : doorUp(r);
+  if (step === "atk") {
+    const weps = [...avail].filter(k => BUILD[k].cat === "atk" && k !== "turret").sort((a, b) => priceOf(a) - priceOf(b)); if (!weps.length) return true;
+    const pickW = weps.find(k => !r.slots.some(sl => sl.b && sl.b.type === k)) || weps[0];
+    const slot = bestSlot(r, pickW); if (!slot) return true;
+    return build(r, slot, pickW);
+  }
+  if (step === "up:atk") {
+    const list = r.slots.filter(sl => sl.b && BUILD[sl.b.type].cat === "atk" && sl.b.type !== "turret" && sl.b.lv < BUILD[sl.b.type].max);
+    if (!list.length) return true; list.sort((a, b) => a.b.lv - b.b.lv); return upBuild(r, list[0]);
+  }
   if (step.startsWith("up:")) {
     const type = step.slice(3); if (!avail.has(type)) return true;
     const list = r.slots.filter(s => s.b && s.b.type === type && s.b.lv < BUILD[type].max);
@@ -1484,7 +1563,7 @@ function update(dt) {
   }
   if (phase === "select" || phase === "night") {
     if (phase === "night") nightT += dt;
-    G.slow = 0; G.vuln = 0;
+    G.slow = gt < (G.slowT || 0) ? G.slowV : 0; G.vuln = gt < (G.vulnT || 0) ? G.vulnV : 0;
     const live = ghostTargetable(), gx = G.x, gy = G.y - 10;
     const atDoorOf = G.state === "attack" ? G.target : null;
     let poisonNow = 0, poisonMine = false;
@@ -1556,7 +1635,34 @@ function update(dt) {
               if (b.cd > 0) b.cd -= dt * rate;
               if (!inRange) { b.ramp = 0; break; }
               const want = Math.atan2(gy - s.y, gx - s.x); let da = want - b.aim; da = Math.atan2(Math.sin(da), Math.cos(da)); b.aim += da * Math.min(1, dt * 12);
-              if (b.type === "flame") {
+              if (D.generic) {
+                const k = D.kind;
+                if (k === "beam" || k === "spray") {
+                  b.firing = true;
+                  if (k === "beam" && D.ramp) b.ramp = Math.min(1, b.ramp + dt / 3);
+                  const d = val * rate * dt * (D.ramp ? 1 + b.ramp * (D.ramp - 1) : 1); b.acc += d; hitGhost(d, mine, true);
+                  if (D.slow) timedSlow(D.slow, .6); if (D.vuln) timedVuln(D.vuln, .6);
+                  if (D.burn) burnGhost(val * D.burn, mine);
+                  if (D.heal && r.doorHp > 0) r.doorHp = Math.min(doorMax(r), r.doorHp + d * D.heal);
+                  if (k === "spray" && Math.random() < dt * 40) { const a = b.aim + rand(-.25, .25), v = rand(170, 260); parts.push({ x: s.x + Math.cos(b.aim) * 20, y: s.y + Math.sin(b.aim) * 20, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 50, life: rand(.25, .4), t: 0, color: Math.random() < .3 ? "#FFFFFF" : D.col, size: rand(4, 7) }); }
+                  if (b.acc > val * .8) { floatText(G.x + rand(-10, 10), G.y - ghostR(G.lv) - 4, "-" + fmt(b.acc), D.col, 12); b.acc = 0; if (mine) sfx(k === "spray" ? "flame" : "laser"); }
+                } else if (k === "dot") {
+                  b.firing = true; poisonNow += val * rate; if (mine) poisonMine = true; if (D.slow) timedSlow(D.slow, .6);
+                  b.fx -= dt; if (b.fx <= 0) { b.fx = .4; for (let q = 0; q < 4; q++) { const a = rand(0, TAU); parts.push({ x: gx + Math.cos(a) * 34, y: gy + Math.sin(a) * 34, vx: -Math.cos(a) * 80, vy: -Math.sin(a) * 80 - 20, life: .45, t: 0, color: D.look.col, size: rand(3, 6) }); } }
+                } else if (b.cd <= 0) {
+                  b.cd = D.int; b.flash = .15;
+                  if (k === "bullet") {
+                    const n = D.n || 1;
+                    for (let q = 0; q < n; q++) { const a = b.aim + (n > 1 ? (q - (n - 1) / 2) * .2 : 0); bullets.push({ x: s.x + Math.cos(a) * 22, y: s.y + Math.sin(a) * 22, dmg: val / n, mine, sp: (D.sp || 620) * (n > 1 ? rand(.9, 1.1) : 1), kind: "g", col: D.col, size: D.size || 5, D, r }); }
+                    if (mine) sfx(D.snd || "shot");
+                  } else if (k === "arc") {
+                    fx.push({ type: "arc", x1: s.x, y1: s.y - 14, x2: gx, y2: gy, life: .25, t: 0, col: D.col }); hitGhost(val, mine); hitFx(D, val, mine, r); if (mine) sfx(D.snd || "tesla");
+                  } else if (k === "pct") {
+                    fx.push({ type: "bolt", x: G.x, y: G.y, life: .45, t: 0, col: D.col }); hitGhost(G.max * val / 100 / (1 + G.vuln), mine); hitFx(D, 0, mine, r);
+                    if (mine) { flash = .25; shake = 6; sfx("thunder"); }
+                  }
+                }
+              } else if (b.type === "flame") {
                 b.firing = true; const d = val * rate * dt; b.acc += d; hitGhost(d, mine, true);
                 if (Math.random() < dt * 40) { const a = b.aim + rand(-.25, .25), v = rand(170, 260); parts.push({ x: s.x + Math.cos(b.aim) * 20, y: s.y + Math.sin(b.aim) * 20, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: rand(.25, .4), t: 0, color: pick(["#FF8A3C", "#FFD23F", "#FF4D3D"]), size: rand(4, 7) }); }
                 if (b.acc > val * .8) { floatText(G.x + rand(-10, 10), G.y - ghostR(G.lv) - 4, "-" + fmt(b.acc), "#FFB15A", 12); b.acc = 0; }
@@ -1598,7 +1704,8 @@ function update(dt) {
     const tx = G.x, ty = G.y - 10, dx = tx - b.x, dy = ty - b.y, L = Math.hypot(dx, dy), step = b.sp * dt;
     if (L < ghostR(G.lv) * .6 + step) {
       bullets.splice(i, 1); hitGhost(b.dmg, b.mine);
-      if (b.kind === "c") { burst(b.x, b.y, "#FFB15A", 12, 160); stun(.3); } else if (b.kind === "s") burst(b.x, b.y, "#BFF4FF", 10, 200); else burst(b.x, b.y, "#FFE26A", 4, 90);
+      if (b.kind === "g") { burst(b.x, b.y, b.col, b.size > 7 ? 18 : 6, b.size > 7 ? 200 : 100); hitFx(b.D, b.dmg, b.mine, b.r); }
+      else if (b.kind === "c") { burst(b.x, b.y, "#FFB15A", 12, 160); stun(.3); } else if (b.kind === "s") burst(b.x, b.y, "#BFF4FF", 10, 200); else burst(b.x, b.y, "#FFE26A", 4, 90);
       continue;
     }
     b.x += dx / L * step; b.y += dy / L * step;
@@ -1725,7 +1832,7 @@ const ACHS = [
   { id: "pop10", name: "拍鬼达人", desc: "累计拍散 10 只小鬼", reward: 80 },
   { id: "rich", name: "万元户", desc: "一局里攒到 10 万金币", reward: 80 },
   { id: "games20", name: "宿舍常客", desc: "累计玩 20 局", reward: 100 },
-  { id: "collector", name: "收藏家", desc: `造过全部 ${Object.keys(BUILD).length} 种建筑`, reward: 200 },
+  { id: "collector", name: "收藏家", desc: "累计造过 20 种不同的建筑", reward: 200 },
 ];
 const DAILY = [
   { id: "play", text: "玩 2 局", goal: 2, reward: 30 },
@@ -1761,7 +1868,7 @@ function track(k, v) {
   if (k === "build") {
     dailyAdd("build"); if (!CORE.includes(v)) dailyAdd("limited");
     if (!L.built.includes(v)) L.built.push(v);
-    if (Object.keys(BUILD).every(t => L.built.includes(t))) unlock("collector");
+    if (L.built.length >= 20) unlock("collector");
     if (me.room && me.room.slots.every(sl => sl.b)) unlock("full");
   } else if (k === "gift") { L.gifts++; dailyAdd("gift"); if (L.gifts >= 20) unlock("gift20"); }
   else if (k === "help") { L.helps++; dailyAdd("help"); if (L.helps >= 10) unlock("help10"); }
@@ -2208,8 +2315,8 @@ function renderSheet() {
   if (s.kind === "slot" && !s.slot.b) {
     title = "造点什么";
     h = `<div class="tabs">${CATS.map(([k, n]) => `<button type="button" data-tab="${k}" aria-pressed="${k === buildTab}">${n}</button>`).join("")}</div>
-      <div class="opts">${Object.entries(BUILD).filter(([k, D]) => D.cat === buildTab && avail.has(k)).map(([k, D]) =>
-        `<button class="opt" type="button" data-act="build:${k}"><img src="${ICONS[k]}" alt=""><span><b>${D.name}${payTag(k)}</b><small>${CORE.includes(k) ? "" : '<span class="ltd">本局限定</span>'}${D.desc}${D.range ? `，射程 ${D.range(1)}` : ""}</small></span>${costHtml(D.cost[0], D.en[0])}</button>`).join("")}</div>
+      <div class="opts">${Object.entries(BUILD).filter(([k, D]) => D.cat === buildTab && avail.has(k)).sort(([a, A], [b2, B]) => (A.tier || 0) - (B.tier || 0) || priceOf(a) - priceOf(b2)).map(([k, D]) =>
+        `<button class="opt" type="button" data-act="build:${k}"><img src="${ICONS[k]}" alt=""><span><b>${D.name}${D.tier != null ? `<i class="tier" style="--tc:${TIERS[D.tier].c}">${TIERS[D.tier].n}</i>` : ""}${payTag(k)}</b><small>${CORE.includes(k) ? "" : '<span class="ltd">本局限定</span>'}${D.desc}${D.range ? `，射程 ${D.range(1)}` : ""}</small></span>${costHtml(D.cost[0], D.en[0])}</button>`).join("")}</div>
       <p class="note">输出建筑射程从门口算起，升级后能帮隔壁打鬼。电力靠游戏机和发电机，特殊建筑只能用电力买。标着「本局限定」的建筑每局随机出现。</p>`;
   } else if (s.kind === "slot") {
     const b = s.slot.b, D = BUILD[b.type], max = b.lv >= D.max;
@@ -2220,7 +2327,7 @@ function renderSheet() {
       <div class="sheet-actions">
         <button class="act" type="button" data-act="up">${max ? "已满级" : upLabel(D.cost[b.lv], D.en[b.lv])}</button>
         <button class="act alt" type="button" data-act="sell">拆掉 ${b.spent ? `+<i class="coin"></i><span class="num">${fmt(b.spent * .5)}</span>` : ""}${b.spentE ? ` +<i class="volt"></i><span class="num">${fmt(b.spentE * .5)}</span>` : ""}</button>
-      </div><p class="note">${D.desc}。${cdLeft}${b.offUntil > gt ? "正被鬼干扰，暂时停摆。" : ""}拆掉返还一半花费。</p>`;
+      </div><p class="note">${D.tier != null ? `品质：${TIERS[D.tier].n}。` : ""}${D.desc}。${cdLeft}${b.offUntil > gt ? "正被鬼干扰，暂时停摆。" : ""}拆掉返还一半花费。</p>`;
   } else if (s.kind === "bed") {
     const L = r.bedLv, max = L >= BED.max;
     title = `${BED.names[L - 1]} · Lv.${L}`;
@@ -2496,7 +2603,10 @@ function drawBuilding(c, type, lv, x, y, s, st, t, icon) {
       c.beginPath(); c.moveTo(-h * .6, -h * .58); c.lineTo(0, -h * 1.05); c.lineTo(h * .6, -h * .58); c.closePath(); c.fillStyle = "#C9A44A"; c.fill(); c.stroke();
       c.fillStyle = EDGE; c.fillRect(-h * .22, -h * .46, 3, 3); c.fillRect(h * .1, -h * .46, 3, 3); break;
   }
+  if (BUILD[type] && BUILD[type].look) drawLook(c, BUILD[type].look, h, s, st, t, icon);
   if (!icon) {
+    const trr = BUILD[type] && BUILD[type].tier;
+    if (trr >= 1) { c.beginPath(); c.moveTo(-h + 2, h - 9); c.lineTo(-h + 8, h - 3); c.lineTo(-h + 2, h + 3); c.lineTo(-h - 4, h - 3); c.closePath(); c.fillStyle = TIERS[trr].c; c.fill(); c.lineWidth = 2; c.strokeStyle = EDGE; c.stroke(); }
     if (st.charge != null && st.charge < 1) { c.beginPath(); c.arc(0, 0, h + 3, -Math.PI / 2, -Math.PI / 2 + TAU * st.charge); c.strokeStyle = "rgba(159,232,255,.85)"; c.lineWidth = 3; c.stroke(); }
     if (st.offUntil > gt) {
       c.beginPath(); c.arc(0, 0, h * .95, 0, TAU); c.fillStyle = "rgba(60,20,90,.55)"; c.fill();
@@ -2513,7 +2623,55 @@ function drawBuilding(c, type, lv, x, y, s, st, t, icon) {
   }
   c.restore();
 }
-const chargeOf = b => { const D = BUILD[b.type]; if (b.type === "thunder" || b.type === "sniper") return clamp(1 - b.cd / D.int, 0, 1); if (D.cdv) return clamp(1 - b.cd2 / D.cdv(b.lv), 0, 1); if (b.type === "scarecrow") return clamp(1 - b.cd2 / D.val(b.lv), 0, 1); return null; };
+function drawLook(c, L, h, s, st, t, icon) {
+  c.lineWidth = 2.5; c.strokeStyle = EDGE; c.fillStyle = L.bc;
+  if (L.base === "round") { c.beginPath(); c.arc(0, 0, h * .92, 0, TAU); }
+  else if (L.base === "hex") { c.beginPath(); for (let k = 0; k < 6; k++) { const a = k * TAU / 6 + Math.PI / 6; c.lineTo(Math.cos(a) * h * .98, Math.sin(a) * h * .98); } c.closePath(); }
+  else rrPath(c, -h * .9, -h * .9, s * .9, s * .9, 9);
+  c.fill(); c.stroke();
+  const dark = "#262B44", fire = (len, w) => { if (st.flash > 0) { c.beginPath(); c.arc(len + 5, 0, w, 0, TAU); c.fillStyle = "#FFF3B0"; c.fill(); } };
+  const tube = (y, len, w, col) => { rrPath(c, 0, y - w / 2, len, w, Math.min(4, w / 2)); c.fillStyle = col; c.fill(); c.stroke(); };
+  const spin = icon ? 0 : t;
+  c.save(); c.rotate(st.aim || 0);
+  switch (L.gun) {
+    case "y": c.lineWidth = 5; c.strokeStyle = "#5A3E2A"; c.beginPath(); c.moveTo(0, 0); c.lineTo(h * .6, 0); c.moveTo(h * .6, 0); c.lineTo(h * 1.05, -h * .4); c.moveTo(h * .6, 0); c.lineTo(h * 1.05, h * .4); c.stroke();
+      c.lineWidth = 2; c.strokeStyle = "#FFF1D6"; c.beginPath(); c.moveTo(h * 1.05, -h * .4); c.lineTo(h * (st.flash > 0 ? 1.05 : .8), 0); c.lineTo(h * 1.05, h * .4); c.stroke(); break;
+    case "wide": tube(0, h * 1.05, 16, dark); rrPath(c, h * .85, -10, 7, 20, 3); c.fillStyle = L.col; c.fill(); c.stroke(); fire(h * 1.05, 8); break;
+    case "needle": tube(0, h * 1.6, 5, dark); rrPath(c, h * .1, -4, h * .5, 8, 3); c.fillStyle = L.col; c.fill(); c.stroke(); fire(h * 1.6, 4); break;
+    case "triple": for (const a of [-.32, 0, .32]) { c.save(); c.rotate(a); tube(0, h * 1.1, 6, a ? dark : "#B8302A"); c.restore(); } fire(h * 1.1, 6); break;
+    case "sock": c.save(); c.translate(h * .3, 0); rrPath(c, 0, -6, h * .75, 12, 5); c.fillStyle = L.col; c.fill(); c.stroke(); c.beginPath(); c.ellipse(h * .78, 5, 7, 6, 0, 0, TAU); c.fill(); c.stroke(); c.fillStyle = "#FF6B6B"; c.fillRect(2, -6, 4, 12); c.restore(); break;
+    case "twin": tube(-5, h * 1.15, 7, dark); tube(5, h * 1.15, 7, dark); fire(h * 1.15, 6); break;
+    case "bow": c.beginPath(); c.arc(h * .35, 0, h * .7, -1.1, 1.1); c.lineWidth = 6; c.strokeStyle = EDGE; c.stroke(); c.lineWidth = 3; c.strokeStyle = L.col; c.stroke();
+      c.lineWidth = 1.5; c.strokeStyle = "#FFF1D6"; c.beginPath(); c.moveTo(h * .35 + Math.cos(-1.1) * h * .7, Math.sin(-1.1) * h * .7); c.lineTo(h * .2, 0); c.lineTo(h * .35 + Math.cos(1.1) * h * .7, Math.sin(1.1) * h * .7); c.stroke(); break;
+    case "coil": for (let k = 0; k < 3; k++) { c.beginPath(); c.ellipse(h * (.25 + k * .3), 0, 4, h * (.5 - k * .08), 0, 0, TAU); c.fillStyle = k % 2 ? L.col : "#B87333"; c.fill(); c.lineWidth = 2; c.strokeStyle = EDGE; c.stroke(); } break;
+    case "tube": tube(0, h * 1.25, 14, "#7A8A4A"); c.fillStyle = L.col; c.fillRect(h * .9, -7, 4, 14); c.fillRect(h * .3, -7, 4, 14); fire(h * 1.25, 8); break;
+    case "gat": tube(0, h * 1.15, 18, dark);
+      for (let k = 0; k < 3; k++) { const yy = Math.sin(spin * (st.firing || st.flash > 0 ? 30 : 2) + k * TAU / 3) * 5; c.beginPath(); c.moveTo(h * .3, yy); c.lineTo(h * 1.15, yy); c.lineWidth = 2.5; c.strokeStyle = "#8D98AE"; c.stroke(); }
+      c.strokeStyle = EDGE; fire(h * 1.15, 6); break;
+    case "plasma": tube(0, h * 1.1, 12, "#2A1A40"); c.beginPath(); c.arc(h * .55, 0, 7, 0, TAU); c.fillStyle = L.col; c.fill(); c.stroke(); fire(h * 1.1, 8); break;
+    case "dish": c.beginPath(); c.arc(-h * .05, 0, h * .7, -1.05, 1.05); c.closePath(); c.fillStyle = "#D8DEEA"; c.fill(); c.stroke(); c.beginPath(); c.moveTo(h * .2, 0); c.lineTo(h * .85, 0); c.stroke(); c.beginPath(); c.arc(h * .9, 0, 5, 0, TAU); c.fillStyle = L.col; c.fill(); c.stroke(); break;
+    case "horn": c.beginPath(); c.moveTo(h * .1, -5); c.lineTo(h * 1.05, -h * .55); c.lineTo(h * 1.05, h * .55); c.lineTo(h * .1, 5); c.closePath(); c.fillStyle = L.col; c.fill(); c.stroke(); c.beginPath(); c.ellipse(h * 1.05, 0, 4, h * .55, 0, 0, TAU); c.fillStyle = "#FFFFFF"; c.fill(); c.stroke(); break;
+    case "rail": tube(-6, h * 1.6, 4, "#8D98AE"); tube(6, h * 1.6, 4, "#8D98AE"); if (!icon) { c.beginPath(); c.moveTo(h * .3, 0); c.lineTo(h * 1.5, 0); c.lineWidth = 2; c.strokeStyle = L.col; c.globalAlpha = .5 + .5 * Math.sin(t * 10); c.stroke(); c.globalAlpha = 1; c.strokeStyle = EDGE; } fire(h * 1.6, 5); break;
+    case "hammer": tube(0, h * .8, 6, "#94653A"); rrPath(c, h * .62, -h * .45, h * .42, h * .9, 4); c.fillStyle = "#8D98AE"; c.fill(); c.stroke(); c.beginPath(); c.moveTo(h * .9, -h * .3); c.lineTo(h * .76, 0); c.lineTo(h * .9, 0); c.lineTo(h * .78, h * .3); c.lineWidth = 2; c.strokeStyle = L.col; c.stroke(); c.strokeStyle = EDGE; break;
+    case "pod": rrPath(c, -h * .2, -h * .6, h * 1.15, h * 1.2, 5); c.fillStyle = "#3A4A2A"; c.fill(); c.stroke(); for (const yy of [-h * .3, 0, h * .3]) { c.beginPath(); c.arc(h * .8, yy, 4, 0, TAU); c.fillStyle = st.flash > 0 ? "#FFF3B0" : L.col; c.fill(); c.lineWidth = 1.5; c.stroke(); } c.lineWidth = 2.5; break;
+    case "doom": tube(0, h * 1.2, 20, "#1A0A10"); rrPath(c, h * .95, -12, 8, 24, 3); c.fillStyle = L.col; c.fill(); c.stroke(); c.beginPath(); c.arc(h * .45, 0, 6, 0, TAU); c.fillStyle = L.col; c.fill(); c.stroke(); fire(h * 1.2, 10); break;
+    default: break;
+  }
+  c.restore();
+  // non-rotating heads
+  switch (L.gun) {
+    case "hole": { c.beginPath(); c.arc(0, -h * .1, h * .55, 0, TAU); c.fillStyle = "#05030C"; c.fill(); c.stroke(); c.save(); c.rotate(spin * 2); c.beginPath(); c.ellipse(0, 0, h * .8, h * .25, 0, 0, TAU); c.lineWidth = 3; c.strokeStyle = L.col; c.stroke(); c.restore(); break; }
+    case "crystal": { c.beginPath(); c.moveTo(0, -h * 1.05); c.lineTo(h * .4, -h * .2); c.lineTo(0, h * .5); c.lineTo(-h * .4, -h * .2); c.closePath(); c.fillStyle = st.firing ? "#FFFFFF" : L.col; c.fill(); c.stroke(); c.beginPath(); c.moveTo(0, -h * 1.05); c.lineTo(0, h * .5); c.lineWidth = 1.5; c.stroke(); break; }
+    case "wing": { for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 4, 0); c.quadraticCurveTo(sd * h * 1.1, -h * .9, sd * h * .9, h * .1); c.quadraticCurveTo(sd * h * .6, -h * .1, sd * 4, h * .25); c.closePath(); c.fillStyle = "#FFFFFF"; c.fill(); c.stroke(); }
+      c.beginPath(); c.ellipse(0, -h * .75, h * .4, h * .12, 0, 0, TAU); c.lineWidth = 3; c.strokeStyle = L.col; c.stroke(); c.strokeStyle = EDGE; c.lineWidth = 2.5; break; }
+    case "fox": { for (let k = 0; k < 3; k++) { const a = spin * 2.4 + k * TAU / 3, ox = Math.cos(a) * h * .62, oy = Math.sin(a) * h * .62; c.beginPath(); c.moveTo(ox, oy - 7); c.quadraticCurveTo(ox + 6, oy, ox, oy + 5); c.quadraticCurveTo(ox - 6, oy, ox, oy - 7); c.fillStyle = L.col; c.fill(); c.lineWidth = 2; c.stroke(); } c.lineWidth = 2.5; break; }
+    case "swirl": { c.save(); c.rotate(spin * 1.5); c.beginPath(); for (let k = 0; k < 40; k++) { const a = k * .35, rr = 2 + k * .45; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.lineWidth = 4; c.strokeStyle = EDGE; c.stroke(); c.lineWidth = 2; c.strokeStyle = L.col; c.stroke(); c.restore(); c.strokeStyle = EDGE; c.lineWidth = 2.5; return; }
+    case "dragon": { c.save(); c.rotate(st.aim || 0); c.beginPath(); c.moveTo(-h * .2, -h * .45); c.lineTo(h * 1.1, -h * .15); c.lineTo(h * 1.1, h * .15); c.lineTo(-h * .2, h * .45); c.closePath(); c.fillStyle = "#B8302A"; c.fill(); c.stroke();
+      c.beginPath(); c.arc(h * .35, -h * .18, 3, 0, TAU); c.fillStyle = "#FFE26A"; c.fill(); for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(0, sd * h * .4); c.lineTo(-h * .35, sd * h * .75); c.lineTo(h * .15, sd * h * .45); c.closePath(); c.fillStyle = "#FFB15A"; c.fill(); c.stroke(); } c.restore(); break; }
+  }
+  if (!["hole", "crystal", "wing", "swirl"].includes(L.gun)) { c.beginPath(); c.arc(0, 0, h * .3, 0, TAU); c.fillStyle = L.col; c.fill(); c.stroke(); }
+}
+const chargeOf = b => { const D = BUILD[b.type]; if (b.type === "thunder" || b.type === "sniper" || (D.generic && D.int >= 3)) return clamp(1 - b.cd / D.int, 0, 1); if (D.cdv) return clamp(1 - b.cd2 / D.cdv(b.lv), 0, 1); if (b.type === "scarecrow") return clamp(1 - b.cd2 / D.val(b.lv), 0, 1); return null; };
 
 // static background, rendered once
 let BG = null;
@@ -2785,7 +2943,9 @@ function render(t) {
         const born = gt - s.b.born;
         drawBuilding(ctx, s.b.type, s.b.lv, s.x, s.y + (born < .3 ? -Math.sin(born / .3 * Math.PI) * 8 : 0), 42,
           { aim: s.b.aim, flash: s.b.flash, active: s.b.active, offUntil: s.b.offUntil, firing: s.b.firing, charge: phase === "night" ? chargeOf(s.b) : null }, t, false);
-        if (s.b.firing && s.b.type === "laser" && ghostTargetable()) { ctx.save(); ctx.lineCap = "round"; for (const [w, col] of [[8, "rgba(255,90,200,.35)"], [3, "#FFE0F7"]]) { ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(G.x, G.y - 10); ctx.lineWidth = w * (.7 + s.b.ramp * .6); ctx.strokeStyle = col; ctx.stroke(); } ctx.restore(); }
+        const BD = BUILD[s.b.type];
+        if (s.b.firing && (s.b.type === "laser" || BD.kind === "beam") && ghostTargetable()) { ctx.save(); ctx.lineCap = "round"; for (const [w, col, al] of [[8, BD.col || "#FF5AC8", .38], [3, s.b.type === "laser" ? "#FFE0F7" : "#FFFFFF", 1]]) { ctx.globalAlpha = al; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(G.x, G.y - 10); ctx.lineWidth = w * (.7 + s.b.ramp * .6 + (BD.tier >= 4 ? .4 : 0)); ctx.strokeStyle = col; ctx.stroke(); } ctx.restore(); }
+        if (s.b.firing && BD.kind === "dot" && ghostTargetable()) { ctx.save(); ctx.globalAlpha = .5 + .2 * Math.sin(t * 9); ctx.setLineDash([4, 7]); ctx.lineDashOffset = -t * 40; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(G.x, G.y - 10); ctx.lineWidth = 4; ctx.strokeStyle = BD.look.col; ctx.stroke(); ctx.restore(); }
         if (r === mine && myTurn && homeView && canUpB(r, s.b)) arrows.push([s.x, s.y - 27]);
       } else if (r === mine && homeView && myTurn && phase !== "end") {
         const sel = sheetSel && sheetSel.slot === s;
@@ -2816,7 +2976,7 @@ function render(t) {
     const R2 = rangeOf(mine, sheetSel.slot.b);
     ctx.save(); ctx.beginPath(); ctx.arc(mine.doorC.x, mine.doorC.y, R2, 0, TAU); ctx.fillStyle = "rgba(255,210,63,.08)"; ctx.fill(); ctx.setLineDash([8, 6]); ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(255,210,63,.75)"; ctx.stroke(); ctx.restore();
   }
-  for (const g of rings) { ctx.globalAlpha = 1 - g.life / .7; ctx.lineWidth = 3; ctx.strokeStyle = "#9FE8FF"; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, TAU); ctx.stroke(); }
+  for (const g of rings) { ctx.globalAlpha = 1 - g.life / .7; ctx.lineWidth = 3; ctx.strokeStyle = g.col || "#9FE8FF"; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, TAU); ctx.stroke(); }
   ctx.globalAlpha = 1;
   if (phase === "select") for (const ch of players) if (ch.state === "walk" || ch.state === "idle") drawWalker(ch, t);
   if (myTurn && phase === "night") {
@@ -2833,11 +2993,12 @@ function render(t) {
   if (gift && phase === "night") drawGift(gift, t);
   for (const b of bullets) {
     if (b.kind === "s") { const a = Math.atan2(G.y - 10 - b.y, G.x - b.x); ctx.save(); ctx.lineCap = "round"; for (const [w, col] of [[7, "rgba(160,240,255,.4)"], [3, "#FFFFFF"]]) { ctx.beginPath(); ctx.moveTo(b.x - Math.cos(a) * 26, b.y - Math.sin(a) * 26); ctx.lineTo(b.x, b.y); ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke(); } ctx.restore(); continue; }
+    if (b.kind === "g") { if (b.size > 7) { ctx.save(); ctx.globalAlpha = .35; ctx.beginPath(); ctx.arc(b.x, b.y, b.size * 1.8, 0, TAU); ctx.fillStyle = b.col; ctx.fill(); ctx.restore(); } ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, TAU); ctx.fillStyle = b.col; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = EDGE; ctx.stroke(); continue; }
     ctx.beginPath(); ctx.arc(b.x, b.y, b.kind === "c" ? 8 : 5, 0, TAU); ctx.fillStyle = b.kind === "c" ? "#2E2A36" : "#FFE26A"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = b.kind === "c" ? "#FF8A3C" : EDGE; ctx.stroke(); }
   for (const f of fx) {
     const a = 1 - f.t / f.life; ctx.globalAlpha = a; ctx.lineCap = "round";
-    if (f.type === "arc") for (const [w, col] of [[7, "rgba(120,200,255,.5)"], [3, "#EFFFFF"]]) { jagged(f.x1, f.y1, f.x2, f.y2, 7, 9); ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke(); }
-    if (f.type === "bolt") for (const [w, col] of [[12, "rgba(255,226,106,.5)"], [5, "#FFFDE8"]]) { jagged(f.x + rand(-20, 20), f.y - 320, f.x, f.y - 10, 9, 18); ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke(); }
+    if (f.type === "arc") for (const [w, col] of [[7, f.col ? f.col : "rgba(120,200,255,.5)"], [3, "#EFFFFF"]]) { ctx.save(); if (f.col && w > 5) ctx.globalAlpha = a * .55; jagged(f.x1, f.y1, f.x2, f.y2, 7, 9); ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke(); ctx.restore(); }
+    if (f.type === "bolt") for (const [w, col] of [[12, f.col || "rgba(255,226,106,.5)"], [5, "#FFFDE8"]]) { jagged(f.x + rand(-20, 20), f.y - 320, f.x, f.y - 10, 9, 18); ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke(); }
     if (f.type === "spark") for (let k3 = 0; k3 < 4; k3++) { jagged(f.x, f.y - 10, f.x + rand(-40, 40), f.y + rand(-40, 30), 4, 6); ctx.lineWidth = 2.5; ctx.strokeStyle = "#FFE26A"; ctx.stroke(); }
     if (f.type === "decoy") drawBuilding(ctx, "scarecrow", 1, f.x, f.y - f.t * 40, 44, {}, t, true);
   }
