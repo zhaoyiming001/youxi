@@ -1099,7 +1099,7 @@ function makePlayers() {
   const bots = names.map(name => {
     const a = weighted(ARCHETYPES);
     return { name, kind: a.kind, av: randomAvatar(), x: CX + rand(-50, 50), y: rand(60, MAP_H - 60), path: [], state: "idle", room: null, speed: rand(120, 170),
-      delay: rand(...a.delay), think: rand(1, 3), thinkMul: a.think, noRepair: !!a.noRepair, pi: 0, stuck: 0, lazy: rand(...a.lazy), mult: rand(...a.mult), plan: personalPlan(), face: 1, tal: pick(TALENTS), skin: { bed: botSkin("bed"), door: botSkin("door") }, frame: botSkin("frame") };
+      delay: rand(...a.delay) * (Math.random() < .3 ? .35 : 1), think: rand(1, 3), thinkMul: a.think, noRepair: !!a.noRepair, pi: 0, stuck: 0, lazy: rand(...a.lazy), mult: rand(...a.mult), plan: personalPlan(), face: 1, tal: pick(TALENTS), pickStyle: weighted([{ k: "grab", w: 30 }, { k: "hesitate", w: 25 }, { k: "normal", w: 45 }]).k, skin: { bed: botSkin("bed"), door: botSkin("door") }, frame: botSkin("frame") };
   });
   players = [me, ...bots];
   for (const p of players) { p.img = avatarCanvas(p.av); p.url = avatarURL(p.av); }
@@ -1287,13 +1287,36 @@ const slotReach = (r, sl) => Math.round(Math.hypot(sl.x - r.doorOuter.x, sl.y - 
 const powerScore = r => r.bedLv + r.doorLv * 2 + r.slots.reduce((a, s) => a + (s.b ? s.b.lv * 2 : 0), 0);
 
 /* ================= room selection ================= */
+// several people can run for the same room; whoever lies down first gets it
 function claim(ch, r) {
-  if (ch.room && ch.room !== r) ch.room.reserved = null;
-  r.reserved = ch; ch.room = r; ch.state = "walk"; route(ch, { kind: "bed", room: r });
+  if (ch.room && ch.room !== r && ch.room.reserved === ch) ch.room.reserved = null;
+  if (!r.reserved || r.reserved === ch || r.reserved.room !== r) r.reserved = ch;
+  ch.room = r; ch.state = "walk"; route(ch, { kind: "bed", room: r });
 }
-const freeRooms = () => rooms.filter(r => !r.reserved);
+const freeRooms = () => rooms.filter(r => !r.reserved && !r.occupant);
+const openRooms = () => rooms.filter(r => !r.occupant);
+function giveUpRoom(o, winner) {
+  if (o.room && o.room.reserved === o) o.room.reserved = winner || null;
+  o.room = null; o.state = "idle"; o.path = [];
+  if (o.isPlayer) { banner(`${winner ? winner.name : "别人"} 抢先躺下了！快换一间`, "danger"); sfx("error"); }
+  else { o.delay = rand(.3, 1.2); if (Math.random() < .7) bubble(o, pick(["被抢了…", "手慢了", "可恶！", "算了换一间"])); }
+}
+function botPick(ch) {
+  const open = openRooms(); if (!open.length) return;
+  let r;
+  if (ch.pickStyle === "grab" && me.room && me.state === "walk" && !me.room.occupant && Math.random() < .5) { r = me.room; bubble(ch, pick(["这间我要了！", "跟你抢！", "先到先得"])); }
+  else {
+    const f = freeRooms(); r = f.length ? pick(f) : pick(open);
+    if (Math.random() < .5) bubble(ch, ch.pickStyle === "grab" ? pick(["冲！", "抢房啦", "我先！"]) : ch.pickStyle === "hesitate" ? pick(["选哪间呢…", "这间吧", "嗯…"]) : pick(["我来了", "就这间", "选好了"]));
+  }
+  ch.switchT = rand(1.2, 2.6); ch.switched = false; claim(ch, r);
+}
 function lieDown(ch) {
-  const r = ch.room; ch.state = "bed"; ch.path = []; ch.x = r.bedPt.x; ch.y = r.bedPt.y;
+  const r = ch.room;
+  if (r.occupant && r.occupant !== ch) { giveUpRoom(ch, r.occupant); return; }
+  ch.state = "bed"; ch.path = []; ch.x = r.bedPt.x; ch.y = r.bedPt.y; r.reserved = ch;
+  for (const o of players) if (o !== ch && o.room === r && o.state === "walk") giveUpRoom(o, ch);
+  if (!ch.isPlayer && phase === "select" && Math.random() < .35) bubble(ch, pick(["躺平！", "舒服了", "这间归我了", "嘿嘿"]));
   r.occupant = ch; r.mult = ch.isPlayer ? 1 : ch.mult; r.tal = ch.tal || null; r.skin = ch.skin || null;
   r.doorHp = doorMax(r);
   if (tl(r, "start")) { r.coins += 200; r.energy += 30; }
@@ -1308,15 +1331,14 @@ function lieDown(ch) {
 function choose(r) {
   if (me.state === "bed") return;
   if (r.occupant) { feed(`${r.occupant.name} 已经躺下了，换一间吧`, "bad"); sfx("error"); return; }
-  if (r === me.room) return;
+  if (r === me.room && me.state === "walk") return;
   sfx("click");
-  if (me.room) me.room.reserved = null;
-  const prev = r.reserved;
-  me.room = null; claim(me, r);
-  if (prev && prev !== me) { prev.room = null; const f = freeRooms(); if (f.length) claim(prev, pick(f)); }
+  const rival = r.reserved && r.reserved !== me && r.reserved.room === r ? r.reserved : null;
+  claim(me, r);
+  if (rival) feed(`${rival.name} 也在往这间跑，看谁先躺下！`, "");
 }
 function startNight() {
-  for (const ch of players) if (ch.state !== "bed") { if (!ch.room) { const r = freeRooms()[0]; r.reserved = ch; ch.room = r; } lieDown(ch); }
+  for (const ch of players) if (ch.state !== "bed") { if (!ch.room || ch.room.occupant) ch.room = openRooms()[0]; lieDown(ch); }
   phase = "night"; G.state = "rise"; G.rise = 0;
   banner("猛鬼出动了！", "danger"); sfx("spawn"); speak("猛鬼出动了，大家小心", true);
   feed("猛鬼从鬼井里爬出来了：它每砸一次门都会变强", "bad");
@@ -1764,8 +1786,14 @@ function update(dt) {
     selT -= dt;
     for (const ch of players) {
       if (ch.isPlayer) { if (ch.state === "walk" && moveAlong(ch, dt, ch.speed)) lieDown(ch); continue; }
-      if (ch.state === "idle") { ch.delay -= dt; if (ch.delay <= 0) { const f = freeRooms(); if (f.length) claim(ch, pick(f)); } }
-      else if (ch.state === "walk" && moveAlong(ch, dt, ch.speed)) lieDown(ch);
+      if (ch.state === "idle") { ch.delay -= dt; if (ch.delay <= 0) botPick(ch); }
+      else if (ch.state === "walk") {
+        if (ch.pickStyle === "hesitate" && !ch.switched && (ch.switchT -= dt) <= 0) {
+          ch.switched = true; const f = freeRooms().filter(o => o !== ch.room);
+          if (f.length && Math.random() < .7) { bubble(ch, pick(["算了换一间", "这间好像更好", "还是那间吧"])); claim(ch, pick(f)); }
+        }
+        if (moveAlong(ch, dt, ch.speed)) lieDown(ch);
+      }
     }
     if (selT <= 0) startNight();
   }
@@ -2313,7 +2341,16 @@ function tap(sx, sy) {
   if (camMode === "overview") { if (r) focusRoom(r); return; }
   if (gift && r === mine && Math.hypot(p.x - gift.x, p.y - gift.y) < 34) { if (visit || camMode === "free") goHome(); return openGift(); }
   if (mine.alive && nearDoor(mine, p)) { goHome(); sfx("click"); return openSheet({ kind: "door" }); }
-  if (r && r !== mine) { if (visit !== r || camMode === "free") focusRoom(r); return; }
+  if (r && r !== mine) {
+    if (visit !== r || camMode === "free") { focusRoom(r); return; }
+    if (r.occupant) {
+      const sl = r.slots.find(q => q.b && Math.abs(p.x - q.x) < 26 && Math.abs(p.y - q.y) < 26);
+      if (sl) { sfx("click"); return openSheet({ kind: "view", room: r, slot: sl }); }
+      const bd = r.bed; if (p.x > bd.x - 6 && p.x < bd.x + bd.w + 6 && p.y > bd.y - 6 && p.y < bd.y + bd.h + 6) { sfx("click"); return openSheet({ kind: "view", room: r, bed: true }); }
+      if (nearDoor(r, p)) { sfx("click"); return openSheet({ kind: "view", room: r, door: true }); }
+    }
+    closeSheet(); return;
+  }
   if (r === mine && mine.alive) {
     if (visit || camMode === "free") goHome();
     const slot = mine.slots.find(s => Math.abs(p.x - s.x) < 26 && Math.abs(p.y - s.y) < 26);
@@ -2591,7 +2628,23 @@ $("sheet-close").addEventListener("click", () => { sfx("click"); closeSheet(); }
 function renderSheet() {
   const r = me.room, s = sheetSel; if (!s || !r) return;
   let title = "", h = "";
-  if (s.kind === "slot" && !s.slot.b) {
+  if (s.kind === "view") {
+    const o = s.room, owner = o.occupant ? o.occupant.name : "";
+    if (s.slot && s.slot.b) {
+      const b = s.slot.b, D = BUILD[b.type]; title = `${D.name} · Lv.${b.lv}`;
+      h = `<div class="stats"><div class="stat"><small>${D.unit}${D.suffix ? ` · ${D.suffix}` : ""}</small><b>${valText(b.type, b.lv)}</b></div>
+        ${D.range ? `<div class="stat"><small>射程</small><b>${rangeOf(o, b)}</b></div>` : `<div class="stat"><small>等级</small><b>${b.lv} / ${D.max}</b></div>`}</div>
+        <p class="note">这是 ${owner} 的建筑。${D.tier != null ? `品质：${TIERS[D.tier].n}。` : ""}${D.desc}。${b.offUntil > gt ? "正被鬼干扰，暂时停摆。" : ""}</p>`;
+    } else if (s.bed) {
+      title = `${BED.names[o.bedLv - 1]} · Lv.${o.bedLv}`;
+      h = `<div class="stats"><div class="stat"><small>每秒总收入</small><b>${fmtRate(incomeOf(o))}</b></div><div class="stat"><small>等级</small><b>${o.bedLv} / ${BED.max}</b></div></div>
+        <p class="note">这是 ${owner} 的床。天赋：${o.tal ? `${o.tal.name}（${o.tal.desc}）` : "无"}。建筑 ${o.slots.filter(q => q.b).length} / ${o.slots.length}。</p>`;
+    } else {
+      title = `${DOOR.names[o.doorLv - 1]} · Lv.${o.doorLv}`;
+      h = `<div class="stats"><div class="stat"><small>耐久</small><b>${fmt(o.doorHp)} / ${fmt(doorMax(o))}</b></div><div class="stat"><small>等级</small><b>${o.doorLv} / ${DOOR.max}</b></div></div>
+        <p class="note">这是 ${owner} 的门。${o.barrierMax ? `护盾 ${fmt(o.barrier)} / ${fmt(o.barrierMax)}。` : ""}门快破时可以送他金币帮忙。</p>`;
+    }
+  } else if (s.kind === "slot" && !s.slot.b) {
     title = "造点什么"; const reach = slotReach(r, s.slot);
     h = `<div class="tabs">${CATS.map(([k, n]) => `<button type="button" data-tab="${k}" aria-pressed="${k === buildTab}">${n}</button>`).join("")}</div>
       <div class="opts">${Object.entries(BUILD).filter(([k, D]) => D.cat === buildTab && avail.has(k)).sort(([a, A], [b2, B]) => (A.tier || 0) - (B.tier || 0) || priceOf(a) - priceOf(b2)).map(([k, D]) =>
@@ -3307,7 +3360,7 @@ function render(t) {
   const mine = me && me.room, homeView = camMode === "focus" && !visit;
   const myTurn = mine && mine.alive && me.state === "bed" && inGame();
   const arrows = [];
-  const showRange = sheetSel && sheetSel.kind === "slot" && sheetSel.slot.b && BUILD[sheetSel.slot.b.type].range;
+  const showRange = sheetSel && (sheetSel.kind === "slot" || sheetSel.kind === "view") && sheetSel.slot && sheetSel.slot.b && BUILD[sheetSel.slot.b.type].range;
   for (const r of rooms) {
     for (const s of r.slots) {
       if (s.b) {
@@ -3330,7 +3383,12 @@ function render(t) {
     if (r === mine && myTurn && homeView && canUpBed(r)) arrows.push([r.bed.x + r.bed.w / 2 + (r.left ? 18 : -18), r.bed.y + r.bed.h / 2]);
     if (sheetSel && r === mine && sheetSel.kind === "bed") { ctx.lineWidth = 3; ctx.strokeStyle = "#FFD23F"; rrPath(ctx, r.bed.x - 9, r.bed.y - 9, r.bed.w + 18, r.bed.h + 18, 14); ctx.stroke(); }
     if (r.occupant && !r.alive) { ctx.fillStyle = "rgba(60,0,20,.45)"; ctx.fillRect(r.x0, r.y0, RW, RH); }
-    if (phase === "select" && !r.reserved && me.state !== "bed") {
+    if (phase === "select" && !r.occupant && r.reserved && r.reserved !== me && r.reserved.room === r && me.state !== "bed") {
+      ctx.save(); ctx.globalAlpha = .45 + .25 * Math.sin(t * 6); ctx.lineWidth = 4; ctx.strokeStyle = "#FF9A3C"; ctx.setLineDash([10, 9]);
+      ctx.strokeRect(r.x0 + 12, r.y0 + 12, RW - 24, RH - 24); ctx.restore();
+      label(ctx, "有人在抢 · 点我抢", r.x0 + RW / 2, r.y0 + RH / 2 + 30, 15, "#FFB15A");
+    }
+    if (phase === "select" && !r.reserved && !r.occupant && me.state !== "bed") {
       ctx.save(); ctx.globalAlpha = .5 + .3 * Math.sin(t * 4); ctx.lineWidth = 5; ctx.strokeStyle = "#FFD23F"; ctx.setLineDash([14, 9]);
       ctx.strokeRect(r.x0 + 12, r.y0 + 12, RW - 24, RH - 24); ctx.restore();
       label(ctx, "空房 · 点我", r.x0 + RW / 2, r.y0 + RH / 2 + 30, 18, "#FFD23F");
@@ -3344,7 +3402,7 @@ function render(t) {
     if (sheetSel && r === mine && sheetSel.kind === "door") { ctx.lineWidth = 3; ctx.strokeStyle = "#FFD23F"; rrPath(ctx, r.wallX - 14, r.doorY - DOOR_H / 2 - 6, 28, DOOR_H + 12, 8); ctx.stroke(); }
   }
   if (showRange) {
-    const R2 = rangeOf(mine, sheetSel.slot.b);
+    const R2 = rangeOf(sheetSel.kind === "view" ? sheetSel.room : mine, sheetSel.slot.b);
     ctx.save(); ctx.beginPath(); ctx.arc(sheetSel.slot.x, sheetSel.slot.y, R2, 0, TAU); ctx.fillStyle = "rgba(255,210,63,.08)"; ctx.fill(); ctx.setLineDash([8, 6]); ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(255,210,63,.75)"; ctx.stroke(); ctx.restore();
   }
   for (const g of rings) { ctx.globalAlpha = 1 - g.life / .7; ctx.lineWidth = 3; ctx.strokeStyle = g.col || "#9FE8FF"; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, TAU); ctx.stroke(); }
@@ -3434,6 +3492,7 @@ function updateHud(dt) {
   let hint = "";
   if (phase === "select" && !inBed) hint = me.state === "walk" ? "正在走去床边……" : "点一间<b>空宿舍</b>，抢先躺平";
   else if (phase === "select") hint = "趁鬼没来，<b>点空地</b>造游戏机和炮台";
+  else if (phase === "night" && visit && camMode === "focus") hint = "点他的<b>建筑、床和门</b>可以查看信息";
   else if (phase === "night" && camMode === "overview") hint = "点房间或底部头像去看看，拖动可以移动地图";
   else if (phase === "night" && camMode === "free") hint = "点<b>底部头像</b>快速切换房间";
   else if (phase === "night" && r && r.slots.every(s => !s.b)) hint = "点房间里的<b>空地</b>造建筑";
