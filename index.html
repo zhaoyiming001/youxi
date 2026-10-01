@@ -1554,7 +1554,7 @@ function updateGhost(dt) {
   if (gtal("regen") && G.state !== "heal" && G.state !== "rise") G.hp = Math.min(G.max, G.hp + G.max * .004 * dt);
   if (!G.berserk && nightT > berserkAt()) { G.berserk = true; banner(`${gName()}暴走了！不再逃跑`, "danger"); sfx("roar"); speak(`${gName()}暴走了，不会再逃跑`, true); feed("暴走：不会再逃回鬼井，伤害每分钟变高", "bad"); }
   // passive growth: the longer the night runs, the faster the ghost levels up on its own
-  if (G.state !== "heal") gainXp(dt * (.12 + nightT / 1000) * (G.jiang ? .85 : 1));
+  if (G.state !== "heal") gainXp(dt * Math.max(0, nightT - 120) / 700 * (G.jiang ? .85 : 1));   // kicks in after 2 minutes
   const sk = G.skill || .6, thr = G.thr || (G.thr = .12 + .2 * sk + rand(-.04, .04));
   if (!G.berserk && (G.state === "walk" || G.state === "attack") && G.hp < G.max * thr && gt >= (G.greedUntil || 0)) {
     // a sloppy ghost sometimes misreads the fight and keeps swinging a few more seconds
@@ -1763,7 +1763,7 @@ const MOB_SKILLS = [
   { id: "frost", n: "冰冻", col: "#9FE8FF", hp: 1 }, { id: "healer", n: "治疗", col: "#F4F0FF", hp: 1.1 },
   { id: "rage", n: "狂暴", col: "#FF5A6E", hp: 1 }, { id: "shield", n: "护盾", col: "#7FB8FF", hp: 1 },
 ];
-const WAVE_FIRST = 55, WAVE_GAP = 40, MOB_CAP = 240;
+const WAVE_FIRST = 90, WAVE_GAP = 40, MOB_CAP = 240;
 let mobs = [], wave = 0, waveT = WAVE_FIRST, waveQ = [], mobShots = [], mobSfxT = 0;
 const mobsAt = r => mobs.some(m => m.room === r && m.arrived);
 const mobTargetable = m => !(m.sk === "shade" && !m.arrived);
@@ -1772,7 +1772,7 @@ function resetWaves() { mobs = []; wave = 0; waveT = WAVE_FIRST; waveQ = []; mob
 function startWave() {
   wave++;
   const n = Math.min(160, 15 + wave * 10), skills = shuffle(MOB_SKILLS).slice(0, wave < 3 ? 2 : wave < 6 ? 3 : 4);
-  const diff = (G0 && G0.diff) || 1, hp = 26 * Math.pow(1.3, wave - 1) * diff, dmg = 1.6 * Math.pow(1.22, wave - 1) * diff;   // big swarms of weak little ghosts
+  const diff = (G0 && G0.diff) || 1, hp = 22 * Math.pow(1.3, wave - 1) * diff, dmg = 1.1 * Math.pow(1.25, wave - 1) * diff;   // big swarms of weak little ghosts
   for (let k = 0; k < n; k++) waveQ.push({ at: gt + k * .05, sk: Math.random() < .25 ? null : pick(skills), hp, dmg });
   banner(`第 ${wave} 波小鬼来了！`, "danger"); sfx("summon"); speak(`第${wave}波小鬼来了`, true);
   feed(`第 ${wave} 波小鬼从鬼井涌出来了，这波会：${skills.map(q => q.n).join("、")}`, "bad");
