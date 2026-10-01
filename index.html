@@ -715,6 +715,8 @@ const TALENTS = [
 const TAL_CAT = { eco: ["经济", "#FFD23F"], atk: ["输出", "#FF7A7A"], def: ["防守", "#6CB8FF"], aux: ["特殊", "#C9A0FF"] };
 const tl = (r, k) => (r && r.tal && r.tal.id === k ? r.tal.v : 0);
 const SELECT_LEN = 20, START_COINS = 40, REPAIR_CD = 12, STUN_IMMUNE = 1.5, BERSERK_AT = 720;
+// a ghost may only run home to heal a few times, each time healing less; after that it fights to the death
+const MAX_RETREATS = 3, RETREAT_CAP = [.85, .6, .4];
 // each match draws a ghost breed: some nights are a quick win, some are a long fight
 // hidden per-match temperament (never shown to players, every ghost looks the same and is called 猛鬼).
 // Most nights lean tough; how strong it really gets is decided by how many door hits the dorm lets it land.
@@ -1553,7 +1555,10 @@ function updateGhost(dt) {
   if (G.jiang && (G.state === "walk" || G.state === "attack") && G.tele <= 0) for (const sk of G.jskills) { sk.cd -= dt * (1 - (G.skillSlow || 0)); if (sk.cd <= 0) { sk.cd = JSKILLS.find(x => x.id === sk.id).cd + rand(0, 4); if (useJSkill(sk.id)) break; sk.cd = 2; } }
   if (gtal("regen") && G.state !== "heal" && G.state !== "rise") G.hp = Math.min(G.max, G.hp + G.max * .004 * dt);
   if (!G.berserk && nightT > berserkAt()) { G.berserk = true; banner(`${gName()}暴走了！不再逃跑`, "danger"); sfx("roar"); speak(`${gName()}暴走了，不会再逃跑`, true); feed("暴走：不会再逃回鬼井，伤害每分钟变高", "bad"); }
-  if (!G.berserk && (G.state === "walk" || G.state === "attack") && G.hp < G.max * .25) {
+  if (!G.berserk && !G.desperate && (G.state === "walk" || G.state === "attack") && G.hp < G.max * .25 && (G.retreats || 0) >= MAX_RETREATS) {
+    G.desperate = true; banner(`${gName()}逃不动了！`, "good"); feed(`${gName()}已经逃了 ${MAX_RETREATS} 次，再也回不去了，打死它！`, "good"); speak(`${gName()}逃不动了，打死它`, true);
+  }
+  if (!G.berserk && !G.desperate && (G.state === "walk" || G.state === "attack") && G.hp < G.max * .25) {
     if (isMine(t)) {
       const bonus = nice(25 * Math.pow(1.5, G.lv - 1) * (1 + tl(t, "bounty")));
       t.coins += bonus; banner(`击退${gName()}！+${fmt(bonus)} 金币`, "good"); sfx("repel"); speak("击退成功，快追着打");
@@ -1562,7 +1567,7 @@ function updateGhost(dt) {
     if (G.variant && G.variant.id === "split" && G.lv >= 2) { spawnHelper("imp"); spawnHelper("imp"); }
     G.retreats = (G.retreats || 0) + 1;
     G.state = "retreat"; route(G, { kind: "altar" }); G.target = null; G.tele = 0; G.enraged = false;
-    feed(`${gName()}残血了，正逃回${G.jiang ? "楼顶" : "鬼井"}！快追着打`, "good");
+    feed(`${gName()}残血了，正逃回${G.jiang ? "楼顶" : "鬼井"}！快追着打${G.retreats >= MAX_RETREATS ? "（这是它最后一次逃跑）" : `（还能逃 ${MAX_RETREATS - G.retreats} 次）`}`, "good");
     return;
   }
   if (G.lv >= 2 && (G.state === "walk" || G.state === "attack") && G.tele <= 0) { G.skillT -= dt * (1 - (G.skillSlow || 0)); if (G.skillT <= 0) variantSkill(); }
@@ -1612,7 +1617,7 @@ function updateGhost(dt) {
     case "enter": if (moveAlong(G, dt, sp * .8)) killRoom(t); break;
     case "retreat": if (moveAlong(G, dt, sp * 1.25)) G.state = "heal"; break;
     case "heal":
-      { const cap = G.sealed ? G.hp : G.max * Math.max(.45, 1.15 - .15 * (G.retreats || 1));   // every escape heals a bit less; a seal blocks it
+      { const cap = G.sealed ? G.hp : G.max * RETREAT_CAP[clamp(G.retreats || 1, 1, MAX_RETREATS) - 1];   // every escape heals less; a seal blocks it
         G.hp = Math.min(cap, G.hp + G.max * .12 * dt);
         if (Math.random() < dt * 8) parts.push({ x: G.x + rand(-30, 30), y: G.y + 20, vx: 0, vy: -60, life: .8, t: 0, color: "#FF4D6D", size: 3 });
         if (G.hp >= cap - 1) { if (G.sealed) { G.sealed = false; feed(`封印符生效：${gName()}回不了血`, "good"); } pickTarget(); } }
@@ -3566,7 +3571,7 @@ function drawGhost(t) {
     rrPath(ctx, x - bw / 2 + 1.5, by + 1.5, (bw - 3) * clamp(G.hp / G.max, 0, 1), 6, 3); ctx.fillStyle = "#FF4D6D"; ctx.fill();
     label(ctx, `${gName()} Lv.${G.lv}${G.kills ? ` · 吞噬 ${G.kills}` : ""}`, x, by - 10, 12, "#FF8FA3", FONT_CN, 800);
     if (G.tele > 0) label(ctx, "!", x + bw / 2 + 8, by - 4, 24, "#FF4D6D", FONT_NUM, 800);
-    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk && !stunned ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : G.slow > 0 ? ["减速", "#9FE8FF"] : enr ? ["狂暴", "#FF8FA3"] : null;
+    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk && !stunned ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : G.desperate ? ["逃不动了", "#FF8FA3"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : G.slow > 0 ? ["减速", "#9FE8FF"] : enr ? ["狂暴", "#FF8FA3"] : null;
     if (tag) label(ctx, tag[0], x, y + R + 14, 12, tag[1]);
   }
 }
@@ -3615,7 +3620,7 @@ function drawJiang(t) {
     rrPath(ctx, x - bw / 2, by, bw, 9, 5); ctx.fillStyle = "#100D26"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = EDGE; ctx.stroke();
     rrPath(ctx, x - bw / 2 + 1.5, by + 1.5, (bw - 3) * clamp(G.hp / G.max, 0, 1), 6, 3); ctx.fillStyle = "#3DBE8B"; ctx.fill();
     label(ctx, `僵尸 Lv.${G.lv}${G.kills ? ` · 吞噬 ${G.kills}` : ""}`, x, by - 10, 12, "#A8F0C0", FONT_CN, 800);
-    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : gt < (G.armorUntil || 0) ? ["铁甲", "#C9C4E0"] : gt < (G.frenzyUntil || 0) ? ["狂跳", "#FF8FA3"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : null;
+    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : G.desperate ? ["逃不动了", "#FF8FA3"] : gt < (G.armorUntil || 0) ? ["铁甲", "#C9C4E0"] : gt < (G.frenzyUntil || 0) ? ["狂跳", "#FF8FA3"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : null;
     if (tag) label(ctx, tag[0], x, y + R + 14, 12, tag[1]);
   }
 }
