@@ -118,6 +118,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .opt b i.c{background:#4A3A10;color:var(--coin)}
 .opt b i.m{background:#2E2A50;color:#D8D2FF}
 .opt small{display:block;font-size:.76rem;color:var(--soft);line-height:1.4}
+.opt small .ltd{display:inline-block;margin-right:5px;padding:0 6px;border-radius:99px;background:#5A1E46;color:#FF9AD5;font-size:.64rem;font-weight:800;vertical-align:1px}
 .cost{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-family:var(--f-num);font-weight:800;font-size:.95rem}
 .cost span{display:flex;align-items:center;gap:4px}
 .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
@@ -310,29 +311,51 @@ const BUILD = {
   cannon:    { name: "加农炮", cat: "atk", desc: "打得慢但很痛，命中能震晕鬼", unit: "每发伤害", max: 8, cost: curve(160, 2.15, 8), en: curve(5, 2.2, 8), val: lv => Math.round(pow(90, 1.85)(lv)), range: lin(90, 28), int: 2.2 },
   laser:     { name: "激光炮", cat: "atk", desc: "持续照射，照得越久伤害越高", unit: "每秒伤害", max: 8, cost: curve(380, 2.15, 8), en: curve(20, 2.2, 8), val: lv => Math.round(pow(35, 1.85)(lv)), range: lin(75, 24) },
   tesla:     { name: "闪电塔", cat: "atk", desc: "每 2 秒劈一道闪电，能麻痹鬼", unit: "每次伤害", max: 8, cost: curve(300, 2.15, 8), en: curve(15, 2.2, 8), val: lv => Math.round(pow(130, 1.85)(lv)), range: lin(90, 26), int: 2 },
+  sniper:    { name: "狙击台", cat: "atk", desc: "射程超远，一枪一大口血，能远程支援", unit: "每发伤害", max: 8, cost: curve(450, 2.2, 8), en: curve(25, 2.2, 8), val: lv => Math.round(pow(220, 1.85)(lv)), range: lin(160, 30), int: 3.5 },
+  flame:     { name: "喷火器", cat: "atk", desc: "射程很短，鬼贴门时火力全开", unit: "每秒伤害", max: 8, cost: curve(260, 2.15, 8), en: curve(10, 2.2, 8), val: lv => Math.round(pow(50, 1.85)(lv)), range: lin(60, 18) },
+  poison:    { name: "毒雾机", cat: "atk", desc: "喷毒雾，鬼走开后还要再掉 4 秒血", unit: "每秒毒伤", max: 8, cost: zeros(8), en: curve(80, 2.25, 8), val: lv => Math.round(pow(25, 1.85)(lv)), range: lin(90, 24) },
   thunder:   { name: "天雷台", cat: "atk", desc: "每 12 秒引一道天雷，按鬼的血量上限算伤害", unit: "每次伤害", max: 8, cost: zeros(8), en: curve(140, 2.25, 8), val: lin(4, .8), range: lin(110, 28), int: 12, pct: true, suffix: "血量上限" },
   arcade:    { name: "游戏机", cat: "eco", desc: "打游戏发电，还能顺手赚金币", unit: "每秒产出", max: 8, cost: curve(60, 2.1, 8), en: zeros(8), val: pow(1, 1.7), coin: pow(1.5, 1.6) },
   dynamo:    { name: "发电机", cat: "eco", desc: "只发电，但发得多", unit: "电力/秒", max: 8, cost: curve(250, 2.15, 8), en: zeros(8), val: pow(4, 1.7) },
   cat:       { name: "招财猫", cat: "eco", desc: "摆着就来钱，越早摆越赚", unit: "金币/秒", max: 8, cost: curve(150, 2.2, 8), en: curve(10, 2.2, 8, 2), val: pow(3, 1.65) },
+  piggy:     { name: "存钱罐", cat: "eco", desc: "每 10 秒按存款给利息，攒得越多给得越多", unit: "每 10 秒利息", max: 8, cost: curve(200, 2.2, 8), en: curve(10, 2.2, 8, 3), val: lin(4, 1), cap: lv => nice(150 * Math.pow(1.9, lv - 1)) },
+  tree:      { name: "招财树", cat: "eco", desc: "床的金币收入变多", unit: "床收入加成", max: 8, cost: zeros(8), en: curve(60, 2.2, 8), val: lin(20, 8), pct: true },
   repair:    { name: "维修台", cat: "def", desc: "一直帮你修门", unit: "修门/秒", max: 10, cost: curve(80, 2.1, 10), en: curve(8, 2.2, 10, 2), val: lv => Math.round(pow(6, 1.8)(lv)) },
   barrier:   { name: "能量罩", cat: "def", desc: "门前多一层护盾，3 秒没挨打就回充", unit: "护盾值", max: 8, cost: curve(350, 2.2, 8), en: curve(25, 2.2, 8), val: lv => nice(pow(400, 1.85)(lv)) },
   bell:      { name: "金钟",   cat: "def", desc: "门快破时自动罩住，几秒内不掉血", unit: "护住", max: 8, cost: zeros(8), en: curve(70, 2.2, 8), val: lin(3, .5), cdv: lv => Math.round(34 - lv * 1.5) },
   mirror:    { name: "镜子",   cat: "def", desc: "把鬼砸门的伤害反弹回去", unit: "反弹", max: 8, cost: curve(220, 2.2, 8), en: curve(15, 2.2, 8), val: lin(15, 7), pct: true },
   fence:     { name: "电网",   cat: "def", desc: "鬼每砸一下就被电一下，偶尔电晕", unit: "每次电击", max: 8, cost: curve(180, 2.2, 8), en: curve(10, 2.2, 8), val: lv => Math.round(pow(40, 1.85)(lv)) },
+  vine:      { name: "吸血藤", cat: "def", desc: "鬼每砸一下，按伤害给门回血", unit: "回血", max: 8, cost: curve(240, 2.2, 8), en: curve(15, 2.2, 8), val: lin(20, 6), pct: true },
   fridge:    { name: "冰箱",   cat: "aux", desc: "门口冷飕飕，鬼砸门变慢、涨经验也变慢", unit: "砸门减速", max: 8, cost: curve(160, 2.2, 8), en: curve(10, 2.2, 8), val: lin(20, 5), pct: true },
   frost:     { name: "冰冻塔", cat: "aux", desc: "鬼砸你门时，定时把它整个冻住", unit: "冻住", max: 8, cost: zeros(8), en: curve(60, 2.2, 8), val: lin(2.5, .3), cdv: lv => 20 - lv },
   talisman:  { name: "符咒台", cat: "aux", desc: "鬼在你门口时受到的伤害更高", unit: "额外伤害", max: 8, cost: zeros(8), en: curve(90, 2.2, 8), val: lin(15, 6), pct: true },
   speaker:   { name: "音响",   cat: "aux", desc: "放首燃曲，房里所有炮塔攻速变快", unit: "攻速加成", max: 8, cost: curve(200, 2.2, 8), en: curve(10, 2.2, 8, 2), val: lin(15, 5), pct: true },
+  seal:      { name: "镇鬼阵", cat: "aux", desc: "鬼砸你的门时，有几率涨不了经验", unit: "镇住几率", max: 8, cost: zeros(8), en: curve(100, 2.25, 8), val: lin(25, 7), pct: true },
   scarecrow: { name: "稻草人", cat: "aux", desc: "门快破时把鬼骗去别人家", unit: "冷却", max: 6, cost: zeros(6), en: curve(120, 2.3, 6), val: lv => 70 - lv * 6 },
 };
 const CATS = [["atk", "输出"], ["eco", "经济"], ["def", "防御"], ["aux", "控制"]];
-const ATTACKERS = ["turret", "cannon", "laser", "tesla", "thunder"];
+const ATTACKERS = ["turret", "cannon", "laser", "tesla", "thunder", "sniper", "flame", "poison"];
+// basic buildings are in every match; the rest is a random pool so each match plays differently
+const CORE = ["turret", "arcade", "dynamo", "cat", "repair", "fridge"], POOL_PICK = 11;
+let avail = new Set(Object.keys(BUILD));
+function rollPool() {
+  const pool = Object.keys(BUILD).filter(k => !CORE.includes(k));
+  let pickd;
+  for (let tries = 0; tries < 60; tries++) {
+    pickd = shuffle(pool).slice(0, POOL_PICK);
+    const atk = pickd.filter(k => ATTACKERS.includes(k)).length, volt = pickd.filter(k => !BUILD[k].cost[0]).length;
+    if (atk >= 3 && volt >= 2 && CATS.every(([c]) => pickd.some(k => BUILD[k].cat === c))) break;
+  }
+  avail = new Set([...CORE, ...pickd]);
+  return pickd;
+}
 const valText = (type, lv) => {
   const D = BUILD[type], v = D.val(lv);
   if (type === "arcade") return `电 ${fmtRate(v)} · 金 ${fmtRate(D.coin(lv))}`;
   if (type === "frost") return `${v.toFixed(1)} 秒 · 每 ${D.cdv(lv)} 秒`;
   if (type === "bell") return `${v} 秒 · 冷却 ${D.cdv(lv)} 秒`;
   if (type === "scarecrow") return `${v} 秒`;
+  if (type === "piggy") return `${v}% · 最多 ${fmt(D.cap(lv))}`;
   return D.pct ? `${Math.round(v * 10) / 10}%` : fmtRate(v);
 };
 const payTag = k => {
@@ -500,43 +523,50 @@ function auInit() {
   try {
     const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
     const c = AU.ctx = new C();
-    AU.master = c.createGain(); AU.master.gain.value = .8; AU.master.connect(c.destination);
+    // a limiter at the end lets everything play loud without clipping on phone speakers
+    const comp = c.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 6; comp.attack.value = .002; comp.release.value = .18; comp.connect(c.destination);
+    AU.master = c.createGain(); AU.master.gain.value = 1.25; AU.master.connect(comp);
     AU.sfxG = c.createGain(); AU.sfxG.gain.value = settings.sfx ? 1 : 0; AU.sfxG.connect(AU.master);
-    AU.musG = c.createGain(); AU.musG.gain.value = settings.music ? .3 : 0; AU.musG.connect(AU.master);
+    AU.musG = c.createGain(); AU.musG.gain.value = settings.music ? MUSIC_VOL : 0; AU.musG.connect(AU.master);
     const len = c.sampleRate; AU.noise = c.createBuffer(1, len, c.sampleRate);
     const d = AU.noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
     AU.next = c.currentTime + .1;
   } catch (e) { AU.ctx = null; }
 }
+const MUSIC_VOL = .6, SFX_BOOST = 2.6, MUS_BOOST = 1.6;
 function tone(f, dur, o = {}) {
   const c = AU.ctx; if (!c) return;
+  const music = o.bus && o.bus !== AU.sfxG, vol = Math.min(.95, (o.vol || .15) * (music ? MUS_BOOST : SFX_BOOST));
   const t = c.currentTime + (o.delay || 0), osc = c.createOscillator(), g = c.createGain();
   osc.type = o.type || "sine"; osc.frequency.setValueAtTime(f, t);
   if (o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
-  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || .15, t + (o.attack || .006)); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  if (o.vib) { const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = o.vib; lg.gain.value = o.vibDepth || f * .06; l.connect(lg); lg.connect(osc.frequency); l.start(t); l.stop(t + dur + .05); }
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + (o.attack || .006)); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   osc.connect(g); g.connect(o.bus || AU.sfxG); osc.start(t); osc.stop(t + dur + .05);
 }
 function noise(dur, o = {}) {
   const c = AU.ctx; if (!c) return;
+  const music = o.bus && o.bus !== AU.sfxG, vol = Math.min(.95, (o.vol || .2) * (music ? MUS_BOOST : SFX_BOOST * .9));
   const t = c.currentTime + (o.delay || 0), src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-  src.buffer = AU.noise; f.type = o.type || "lowpass"; f.frequency.setValueAtTime(o.freq || 800, t);
+  src.buffer = AU.noise; src.loop = true; f.type = o.type || "lowpass"; f.frequency.setValueAtTime(o.freq || 800, t); f.Q.value = o.q || 1;
   if (o.f2) f.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
-  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || .2, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + (o.attack || .008)); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   src.connect(f); f.connect(g); g.connect(o.bus || AU.sfxG); src.start(t, Math.random() * .5); src.stop(t + dur + .05);
 }
-const THROTTLE = { step: 380, warn: 900, shot: 60, cannon: 150, laser: 260, tesla: 120, zap: 160, hit: 80, hitfar: 160, block: 200, absorb: 180, coin: 150, join: 60, swish: 80 };
+const THROTTLE = { sniper: 200, flame: 220, poison: 420, gift: 400, step: 380, warn: 900, shot: 60, cannon: 150, laser: 260, tesla: 120, zap: 160, hit: 80, hitfar: 160, block: 200, absorb: 180, coin: 150, join: 60, swish: 80 };
 function sfx(name) {
   if (!AU.ctx || !settings.sfx) return;
   const now = performance.now(); if (THROTTLE[name] && now - (AU.last[name] || 0) < THROTTLE[name]) return; AU.last[name] = now;
   const T = (f, d, o) => tone(f, d, o), N = (d, o) => noise(d, o);
   switch (name) {
-    case "click": T(700, .06, { type: "triangle", vol: .1 }); break;
+    case "click": T(520, .07, { vol: .09, f2: 900 }); break;
     case "swish": N(.12, { type: "bandpass", freq: 900, f2: 2200, vol: .06 }); break;
     case "join": T(880, .08, { type: "triangle", vol: .08 }); T(1320, .1, { type: "triangle", vol: .07, delay: .05 }); break;
     case "matched": [523, 659, 784, 1047].forEach((f, i) => T(f, .2, { type: "triangle", vol: .1, delay: i * .08 })); break;
-    case "coin": T(1320, .07, { type: "square", vol: .035 }); T(1760, .1, { type: "square", vol: .035, delay: .06 }); break;
-    case "build": T(260, .12, { type: "square", vol: .07, f2: 520 }); T(520, .16, { type: "triangle", vol: .1, f2: 880, delay: .08 }); N(.08, { freq: 2000, vol: .08 }); break;
-    case "upgrade": [523, 659, 784, 1047].forEach((f, i) => T(f, .14, { type: "triangle", vol: .1, delay: i * .06 })); break;
+    case "coin": T(1568, .08, { type: "triangle", vol: .06 }); T(2093, .14, { type: "triangle", vol: .06, delay: .07 }); break;
+    case "build": N(.07, { freq: 900, vol: .18 }); T(160, .14, { vol: .2, f2: 90 }); N(.06, { freq: 1200, vol: .12, delay: .12 }); [659, 988].forEach((f, i) => T(f, .2, { type: "triangle", vol: .08, delay: .2 + i * .07 })); break;
+    case "upgrade": [523, 659, 784, 1047, 1319].forEach((f, i) => T(f, .18, { type: "triangle", vol: .09, delay: i * .055 })); N(.4, { type: "highpass", freq: 6000, vol: .05, delay: .2 }); break;
     case "sell": T(600, .12, { type: "triangle", vol: .08, f2: 300 }); break;
     case "error": T(200, .14, { type: "square", vol: .06, f2: 140 }); break;
     case "lie": T(392, .2, { vol: .14, f2: 523 }); T(659, .3, { vol: .1, delay: .12 }); break;
@@ -545,12 +575,12 @@ function sfx(name) {
     case "laser": T(1900, .25, { type: "sawtooth", vol: .025, f2: 1500 }); break;
     case "tesla": N(.18, { type: "bandpass", freq: 3000, f2: 600, vol: .12 }); T(1600, .18, { type: "sawtooth", vol: .04, f2: 180 }); break;
     case "zap": N(.12, { type: "highpass", freq: 2500, vol: .12 }); T(2400, .1, { type: "square", vol: .03, f2: 900 }); break;
-    case "hit": N(.12, { freq: 500, vol: .32 }); T(120, .16, { vol: .25, f2: 55 }); break;
+    case "hit": N(.14, { freq: 600, vol: .34 }); T(110, .2, { vol: .3, f2: 48 }); N(.05, { type: "highpass", freq: 2500, vol: .12, delay: .02 }); break;
     case "hitfar": N(.08, { freq: 400, vol: .05 }); break;
     case "block": T(1200, .12, { type: "triangle", vol: .08, f2: 1500 }); T(1800, .18, { vol: .05, delay: .03 }); break;
     case "absorb": T(700, .12, { vol: .07, f2: 1100 }); N(.1, { type: "bandpass", freq: 1800, vol: .05 }); break;
     case "break": N(.6, { freq: 1200, f2: 120, vol: .45 }); T(90, .5, { type: "sawtooth", vol: .12, f2: 40 }); break;
-    case "roar": T(150, .9, { type: "sawtooth", vol: .1, f2: 60, attack: .08 }); N(.8, { freq: 300, vol: .12, f2: 120 }); break;
+    case "roar": T(140, 1.1, { type: "sawtooth", vol: .12, f2: 55, attack: .08, vib: 9, vibDepth: 18 }); T(93, 1.1, { type: "sawtooth", vol: .08, f2: 40, attack: .1, vib: 7, vibDepth: 10 }); N(.9, { freq: 260, vol: .14, f2: 110 }); break;
     case "alarm": [0, 1, 2].forEach(i => T(i % 2 ? 660 : 880, .11, { type: "square", vol: .05, delay: i * .14 })); break;
     case "smash": T(80, .35, { vol: .4, f2: 35 }); N(.35, { freq: 700, vol: .4, f2: 100 }); break;
     case "fix": N(.06, { type: "bandpass", freq: 3000, vol: .15 }); N(.06, { type: "bandpass", freq: 2600, vol: .15, delay: .12 }); [523, 784].forEach((f, i) => T(f, .15, { type: "triangle", vol: .08, delay: .2 + i * .07 })); break;
@@ -560,8 +590,13 @@ function sfx(name) {
     case "decoy": N(.4, { type: "bandpass", freq: 600, f2: 2400, vol: .12 }); [700, 900, 700, 1000].forEach((f, i) => T(f, .08, { type: "triangle", vol: .06, delay: .25 + i * .07 })); break;
     case "disrupt": T(300, .5, { type: "sawtooth", vol: .06, f2: 900 }); T(900, .5, { type: "sawtooth", vol: .04, f2: 200, delay: .1 }); break;
     case "levelup": T(110, .6, { type: "sawtooth", vol: .09, f2: 220, attack: .05 }); T(165, .6, { type: "sawtooth", vol: .05, f2: 330, delay: .05 }); break;
-    case "kill": N(.5, { freq: 900, f2: 200, vol: .3 }); T(300, .6, { type: "triangle", vol: .1, f2: 80 }); break;
+    case "kill": N(.5, { freq: 900, f2: 200, vol: .3 }); T(300, .6, { type: "triangle", vol: .1, f2: 80 }); for (let i = 0; i < 4; i++) T(820 - i * 70, .1, { type: "triangle", vol: .07, delay: .5 + i * .11, vib: 28, vibDepth: 40 }); break;
     case "repel": [784, 988, 1175].forEach((f, i) => T(f, .16, { type: "triangle", vol: .1, delay: i * .07 })); break;
+    case "sniper": N(.07, { type: "highpass", freq: 2200, vol: .35 }); T(1900, .14, { type: "square", vol: .05, f2: 180 }); T(70, .25, { vol: .2, f2: 40, delay: .02 }); break;
+    case "flame": N(.25, { type: "bandpass", freq: 700, f2: 1400, vol: .12, q: .7 }); break;
+    case "poison": for (let i = 0; i < 3; i++) T(rand(320, 620), .08, { vol: .05, delay: i * .07, f2: rand(700, 900) }); break;
+    case "gift": [1568, 2093, 2637, 3136].forEach((f, i) => T(f, .2, { vol: .05, delay: i * .06 })); break;
+    case "open": N(.08, { freq: 1500, vol: .2 }); [523, 784, 1047, 1568].forEach((f, i) => T(f, .25, { type: "triangle", vol: .1, delay: .06 + i * .07 })); N(.6, { type: "highpass", freq: 5500, vol: .06, delay: .25 }); break;
     case "warn": [0, 1].forEach(i => { T(1250, .09, { type: "square", vol: .07, delay: i * .16 }); T(940, .09, { type: "square", vol: .05, delay: i * .16 + .08 }); }); break;
     case "step": T(70, .12, { vol: .22, f2: 45 }); N(.06, { freq: 300, vol: .08 }); break;
     case "spawn": T(55, 1.2, { type: "sawtooth", vol: .12, f2: 110, attack: .2 }); N(1.1, { freq: 200, f2: 900, vol: .15 }); [392, 370, 349].forEach((f, i) => T(f, .5, { type: "triangle", vol: .05, delay: .6 + i * .25 })); break;
@@ -579,8 +614,10 @@ function musicTick() {
   while (AU.next < c.currentTime + .25) {
     const bar = Math.floor(AU.step / 8) % 4, st = AU.step % 8, ch = CHORDS[bar];
     const idx = ARP[st], f = idx === 3 ? ch[0] * 2 : ch[idx], dt = AU.next - c.currentTime;
-    tone(f * 2, .5, { type: "triangle", vol: .05, delay: dt, bus: AU.musG });
-    if (st === 0) tone(ch[0] / 2, beat * 7, { vol: .07, delay: dt, bus: AU.musG, attack: .05 });
+    tone(f * 2, .55, { type: "triangle", vol: .06, delay: dt, bus: AU.musG });
+    if (st === 0) { tone(ch[0] / 2, beat * 7.5, { vol: .09, delay: dt, bus: AU.musG, attack: .05 }); for (const pf of [ch[1], ch[2]]) tone(pf, beat * 8, { type: "triangle", vol: .025, delay: dt, bus: AU.musG, attack: .4 }); }
+    if (st % 2 === 1) noise(.03, { type: "highpass", freq: 7500, vol: .025, delay: dt, bus: AU.musG });
+    if (danger && st === 0) tone(55, beat * 8, { type: "sawtooth", vol: .03, delay: dt, bus: AU.musG, attack: .3 });
     if (danger && st % 2 === 0) { tone(58, .14, { vol: .22, delay: dt, bus: AU.musG }); tone(52, .14, { vol: .16, delay: dt + .13, bus: AU.musG }); }
     AU.next += beat; AU.step++;
   }
@@ -589,18 +626,20 @@ function vibrate(p) { if (!settings.vib) return; try { navigator.vibrate && navi
 
 /* ================= state ================= */
 let phase = "title", paused = false, gt = 0, selT = SELECT_LEN, nightT = 0, me, players = [], G, bullets = [], parts = [], floats = [], rings = [], fx = [];
+let gift = null, giftT = 0;
 let stats, camMode = "overview", visit = null, shake = 0, flash = 0, sheetSel = null, buildTab = "atk", lastAlarm = -99, ended = false, deaths = 0;
 const free = { x: W / 2, y: H / 2, s: 1 };
-const PLAN = ["bed", "door", "arcade", "turret", "bed", "door", "turret", "arcade", "bed", "door", "up:turret", "repair", "door", "bed", "cat", "up:turret",
-  "up:arcade", "door", "speaker", "bed", "turret", "up:repair", "cannon", "up:turret", "door", "bell", "fridge", "up:cat", "bed", "door", "dynamo", "tesla",
-  "up:turret", "frost", "mirror", "door", "up:cannon", "bed", "fence", "up:tesla", "thunder", "barrier", "door", "up:turret", "up:speaker", "talisman", "scarecrow",
+const PLAN = ["bed", "door", "arcade", "turret", "bed", "door", "turret", "arcade", "bed", "door", "up:turret", "repair", "door", "bed", "cat", "flame", "up:turret",
+  "up:arcade", "door", "speaker", "bed", "turret", "piggy", "up:repair", "cannon", "sniper", "up:turret", "door", "bell", "fridge", "up:cat", "bed", "door", "dynamo", "tesla",
+  "up:turret", "frost", "vine", "mirror", "door", "poison", "up:cannon", "bed", "fence", "up:tesla", "thunder", "barrier", "door", "up:turret", "up:speaker", "talisman", "tree", "seal", "scarecrow",
   "laser", "up:dynamo", "bed", "door", "up:turret", "up:cannon", "up:tesla", "up:thunder", "up:laser", "up:repair", "door", "bed", "up:arcade", "up:bell",
-  "up:frost", "up:fridge", "up:mirror", "up:fence", "up:barrier", "up:talisman", "up:cat", "up:speaker"];
+  "up:frost", "up:fridge", "up:mirror", "up:fence", "up:barrier", "up:talisman", "up:cat", "up:speaker",
+  "up:sniper", "up:flame", "up:poison", "up:piggy", "up:tree", "up:vine", "up:seal"];
 const LOOP_FROM = 20;
 // give each roommate a slightly different build order so rooms don't look identical
 function personalPlan() {
   const p = PLAN.slice(), seg = [];
-  for (let i = 18; i < 48; i++) if (!p[i].startsWith("up:") && p[i] !== "bed" && p[i] !== "door") seg.push(i);
+  for (let i = 18; i < 56; i++) if (!p[i].startsWith("up:") && p[i] !== "bed" && p[i] !== "door") seg.push(i);
   const vals = shuffle(seg.map(i => p[i])); seg.forEach((i, k) => p[i] = vals[k]);
   return p;
 }
@@ -608,7 +647,7 @@ function personalPlan() {
 function resetRooms() {
   for (const r of rooms) {
     Object.assign(r, { occupant: null, reserved: null, alive: true, bedLv: 1, doorLv: 1, doorHp: DOOR.hp(1), coins: START_COINS, energy: 0, repairCd: 0,
-      tick: 0, catTick: 0, pTick: 0, mult: 1, doorShake: 0, broken: false, shieldUntil: 0, barrier: 0, barrierMax: 0, lastHit: -9, built: 0 });
+      tick: 0, catTick: 0, pTick: 0, mult: 1, doorShake: 0, broken: false, shieldUntil: 0, barrier: 0, barrierMax: 0, lastHit: -9, built: 0, boostUntil: 0, rageUntil: 0, giftT: rand(30, 50) });
     r.slots.forEach(s => s.b = null);
   }
 }
@@ -628,12 +667,15 @@ function newGame() {
   resetRooms();
   const type = (SPEED > 1 && window.__forceGhost != null && GHOSTS[+window.__forceGhost]) || weighted(GHOSTS);
   G = { type, x: ALTAR.x, y: ALTAR.y, lv: 1, xp: 0, hp: ghostMax(1, type), max: ghostMax(1, type), state: "hidden", target: null, path: [], atk: 1, rise: 0, lunge: 0, hurt: 0,
-    slow: 0, vuln: 0, attackT: 0, wait: 0, face: 1, frozenUntil: 0, stunUntil: 0, stunImmune: 0, smashT: 14, tele: 0, disruptT: 18, enrageUntil: 0, enraged: false, berserk: false };
+    slow: 0, vuln: 0, attackT: 0, wait: 0, face: 1, frozenUntil: 0, stunUntil: 0, stunImmune: 0, smashT: 14, tele: 0, disruptT: 18, enrageUntil: 0, enraged: false, berserk: false, poisonDps: 0, poisonUntil: 0, poisonMine: false, poisonAcc: 0 };
+  gift = null; giftT = rand(28, 40);
+  const special = rollPool();
   stats = { dmg: 0 }; gt = 0; selT = SELECT_LEN; nightT = 0; deaths = 0; bullets = []; parts = []; floats = []; rings = []; fx = [];
   camMode = "overview"; visit = null; shake = 0; flash = 0; ended = false; paused = false;
   closeSheet(); $("settings").hidden = true; $("feed").innerHTML = ""; $("top").hidden = false;
   phase = "select"; buildStrip();
   banner("20 秒内抢一间宿舍！", "info");
+  feed("本局限定建筑：" + special.map(k => BUILD[k].name).join("、"), "good");
 }
 
 /* ================= matchmaking (players are simulated) ================= */
@@ -713,7 +755,14 @@ function bestSlot(r, type) {
   open.sort((a, b) => front ? d(a) - d(b) : d(b) - d(a));
   return open[0];
 }
-const incomeOf = r => (BED.inc(r.bedLv) + r.slots.reduce((a, s) => a + (s.b ? (s.b.type === "cat" ? BUILD.cat.val(s.b.lv) : s.b.type === "arcade" ? BUILD.arcade.coin(s.b.lv) : 0) : 0), 0)) * r.mult;
+// per-room modifiers: speaker attack speed, money tree bed bonus, gift-box buffs
+function roomMods(r) {
+  let rate = 1, tree = 0;
+  for (const s of r.slots) if (s.b && s.b.offUntil <= gt) { if (s.b.type === "speaker") rate += BUILD.speaker.val(s.b.lv) / 100; else if (s.b.type === "tree") tree += BUILD.tree.val(s.b.lv) / 100; }
+  if (gt < r.rageUntil) rate *= 1.5;
+  return { rate, tree, boost: gt < r.boostUntil ? 2 : 1 };
+}
+const incomeOf = r => { const m = roomMods(r); return (BED.inc(r.bedLv) * (1 + m.tree) + r.slots.reduce((a, s) => a + (s.b && s.b.offUntil <= gt ? (s.b.type === "cat" ? BUILD.cat.val(s.b.lv) : s.b.type === "arcade" ? BUILD.arcade.coin(s.b.lv) : 0) : 0), 0)) * r.mult * m.boost; };
 const powerOf = r => r.slots.reduce((a, s) => a + (s.b && (s.b.type === "arcade" || s.b.type === "dynamo") && s.b.offUntil <= gt ? BUILD[s.b.type].val(s.b.lv) : 0), 0);
 const powerScore = r => r.bedLv + r.doorLv * 2 + r.slots.reduce((a, s) => a + (s.b ? s.b.lv * 2 : 0), 0);
 
@@ -784,10 +833,19 @@ function hitGhost(dmg, mine, quiet) {
 function stun(d) { if (gt < G.stunImmune || G.state === "heal") return; G.stunUntil = Math.max(G.stunUntil, gt + d); G.stunImmune = gt + d + STUN_IMMUNE; }
 function damageDoor(r, dmg) {
   if (gt < r.shieldUntil) { floatText(r.wallX, r.doorY - 30, "格挡", "#FFE26A", 14); if (isMine(r)) sfx("block"); return; }
-  gainXp(1); r.lastHit = gt;
+  let seal = 0, vine = 0;
+  for (const s of r.slots) if (s.b && s.b.offUntil <= gt) { if (s.b.type === "seal") { seal += BUILD.seal.val(s.b.lv); s.b.flash = .2; } else if (s.b.type === "vine") vine += BUILD.vine.val(s.b.lv); }
+  if (seal && Math.random() * 100 < Math.min(74, seal)) floatText(G.x, G.y - ghostR(G.lv) - 22, "镇住", "#C9A0FF", 12);
+  else gainXp(1);
+  r.lastHit = gt;
   const raw = dmg;
   if (r.barrier > 0) { const a = Math.min(r.barrier, dmg); r.barrier -= a; dmg -= a; if (isMine(r)) sfx("absorb"); floatText(r.wallX + (r.left ? 26 : -26), r.doorY - 24, "护盾 -" + fmt(a), "#8FD3FF", 12); }
   if (dmg > 0) { r.doorHp -= dmg; r.doorShake = .25; burst(r.wallX, r.doorY + rand(-20, 20), DOOR_COLORS[r.doorLv - 1], 6, 120); floatText(r.wallX + (r.left ? 30 : -30), r.doorY + rand(-10, 20), "-" + fmt(dmg), "#FF6B85", 13); }
+  if (vine && dmg > 0 && r.doorHp > 0) {
+    const h = dmg * Math.min(70, vine) / 100; r.doorHp = Math.min(doorMax(r), r.doorHp + h);
+    floatText(r.wallX + (r.left ? -26 : 26), r.doorY - 30, "+" + fmt(h), "#5CE08A", 12);
+    for (const s of r.slots) if (s.b && s.b.type === "vine") s.b.flash = .25;
+  }
   let ref = 0, shock = 0;
   for (const s of r.slots) {
     if (!s.b || s.b.offUntil > gt) continue;
@@ -882,15 +940,57 @@ function updateGhost(dt) {
 }
 const ghostTargetable = () => phase === "night" && !["hidden", "rise", "dead", "heal"].includes(G.state);
 
+/* ================= gift boxes (random items) ================= */
+const GIFTS = [
+  { w: 26, name: "金币袋", use: r => { const n = nice(Math.max(60, incomeOf(r) * 25)); r.coins += n; return `+${fmt(n)} 金币`; } },
+  { w: 20, name: "充电宝", use: r => { const n = nice(Math.max(40, powerOf(r) * 25 + 30)); r.energy += n; return `+${fmt(n)} 电力`; } },
+  { w: 16, name: "修理箱", use: r => { if (r.doorHp > 0) r.doorHp = Math.min(doorMax(r), r.doorHp + doorMax(r) * .35); return "门回了 35% 耐久"; } },
+  { w: 12, name: "加班费", use: r => { r.boostUntil = gt + 30; return "30 秒内金币收入翻倍"; } },
+  { w: 12, name: "鸡血", use: r => { r.rageUntil = gt + 20; return "20 秒内炮塔攻速 +50%"; } },
+  { w: 8, name: "冰冻弹", use: r => {
+    if (!ghostTargetable()) { const n = nice(Math.max(60, incomeOf(r) * 20)); r.coins += n; return `鬼不在，换成 ${fmt(n)} 金币`; }
+    G.frozenUntil = Math.max(G.frozenUntil, gt + 3); G.tele = 0; burst(G.x, G.y, "#9FE8FF", 24, 180); sfx("freeze"); return `${gName()}被冻住 3 秒`;
+  } },
+  { w: 6, name: "升级券", use: r => {
+    const list = r.slots.filter(s => s.b && s.b.lv < BUILD[s.b.type].max);
+    if (list.length) { const s = pick(list); s.b.lv++; s.b.born = gt; if (s.b.type === "barrier") recalcBarrier(r); burst(s.x, s.y, "#FFD23F", 16, 160); return `${BUILD[s.b.type].name}免费升到 Lv.${s.b.lv}`; }
+    if (r.bedLv < BED.max) { r.bedLv++; return `床免费升到 Lv.${r.bedLv}`; }
+    const n = nice(incomeOf(r) * 25); r.coins += n; return `+${fmt(n)} 金币`;
+  } },
+];
+function updateGifts(dt) {
+  const mr = me.room;
+  if (mr && mr.alive && me.state === "bed") {
+    if (!gift && nightT >= giftT) {
+      const p = mr.L2W(rand(165, 235), rand(118, 138));
+      gift = { x: p.x, y: p.y, t: 0, life: 14 };
+      sfx("gift"); feed("房间里掉了个礼盒，快点开它！", "good");
+    }
+    if (gift && (gift.t += dt) >= gift.life) { gift = null; giftT = nightT + rand(35, 55); }
+  }
+  // roommates open their own boxes off-screen
+  for (const r of rooms) if (r.alive && r.occupant && !r.occupant.isPlayer && nightT >= r.giftT) { r.giftT = nightT + rand(40, 60); r.coins += incomeOf(r) * 15; }
+}
+function openGift() {
+  const r = me.room, g = weighted(GIFTS), at = { x: gift.x, y: gift.y };
+  gift = null; giftT = nightT + rand(35, 55);
+  const msg = g.use(r);
+  sfx("open"); vibrate(25); burst(at.x, at.y, "#FFD23F", 24, 210); burst(at.x, at.y, "#FF7A95", 12, 160);
+  floatText(at.x, at.y - 24, g.name, "#FFFFFF", 18); floatText(at.x, at.y - 48, msg, "#FFD23F", 13);
+  feed(`礼盒开出「${g.name}」：${msg}`, "good"); speak(`开出${g.name}`);
+}
+
 /* ================= bots ================= */
 function npcStep(r, step) {
   if (step === "bed") return r.bedLv >= BED.max ? true : bedUp(r);
   if (step === "door") return r.doorLv >= DOOR.max ? true : doorUp(r);
   if (step.startsWith("up:")) {
-    const type = step.slice(3), list = r.slots.filter(s => s.b && s.b.type === type && s.b.lv < BUILD[type].max);
+    const type = step.slice(3); if (!avail.has(type)) return true;
+    const list = r.slots.filter(s => s.b && s.b.type === type && s.b.lv < BUILD[type].max);
     if (!list.length) return true;
     list.sort((a, b) => a.b.lv - b.b.lv); return upBuild(r, list[0]);
   }
+  if (!avail.has(step)) return true;
   const slot = bestSlot(r, step); if (!slot) return true;
   return build(r, slot, step);
 }
@@ -923,25 +1023,33 @@ function update(dt) {
     G.slow = 0; G.vuln = 0;
     const live = ghostTargetable(), gx = G.x, gy = G.y - 10;
     const atDoorOf = G.state === "attack" ? G.target : null;
+    let poisonNow = 0, poisonMine = false;
     for (const r of rooms) {
       if (!r.alive || !r.occupant || r.occupant.state !== "bed") continue;
-      const inc = BED.inc(r.bedLv) * r.mult, mine = isMine(r);
+      const { rate, tree, boost } = roomMods(r);
+      const inc = BED.inc(r.bedLv) * (1 + tree) * r.mult * boost, mine = isMine(r);
       r.coins += inc * dt; r.tick += dt;
       if (r.tick >= 1) { r.tick -= 1; if (mine) floatText(r.headPt.x + rand(-6, 6), r.headPt.y - 24, "+" + Math.round(inc), "#FFD23F", 14, "coin"); }
       r.doorShake = Math.max(0, r.doorShake - dt);
       if (r.barrierMax > 0 && gt - r.lastHit > 3) r.barrier = Math.min(r.barrierMax, r.barrier + r.barrierMax * .08 * dt);
       const dGhost = Math.hypot(G.x - r.doorC.x, G.y - r.doorC.y), inside = roomAt(G.x, G.y) === r, atMine = atDoorOf === r;
-      let rate = 1, extra = 0, pw = 0;
-      for (const s of r.slots) if (s.b && s.b.type === "speaker" && s.b.offUntil <= gt) rate += BUILD.speaker.val(s.b.lv) / 100;
+      let extra = 0, pw = 0;
       for (const s of r.slots) {
         const b = s.b; if (!b) continue;
         const D = BUILD[b.type], val = D.val(b.lv), off = b.offUntil > gt;
         b.flash = Math.max(0, b.flash - dt); b.firing = false; b.cd2 = Math.max(0, b.cd2 - dt);
         if (off) { b.ramp = 0; continue; }
         switch (b.type) {
-          case "arcade": { r.energy += val * dt; pw += val; const c = D.coin(b.lv) * r.mult; r.coins += c * dt; extra += c; break; }
+          case "arcade": { r.energy += val * dt; pw += val; const c = D.coin(b.lv) * r.mult * boost; r.coins += c * dt; extra += c; break; }
           case "dynamo": r.energy += val * dt; pw += val; break;
-          case "cat": { const c = val * r.mult; r.coins += c * dt; extra += c; break; }
+          case "cat": { const c = val * r.mult * boost; r.coins += c * dt; extra += c; break; }
+          case "piggy":
+            b.fx += dt;
+            if (b.fx >= 10) {
+              b.fx -= 10; const g = Math.min(D.cap(b.lv), r.coins * val / 100);
+              if (g >= 1) { r.coins += g; b.flash = .35; if (mine) { floatText(s.x, s.y - 28, "+" + fmt(g), "#FFD23F", 14, "coin"); sfx("coin"); } }
+            }
+            break;
           case "repair":
             b.active = r.doorHp > 0 && r.doorHp < doorMax(r);
             if (b.active) { r.doorHp = Math.min(doorMax(r), r.doorHp + val * dt); if (Math.random() < dt * 3) parts.push({ x: r.wallX, y: r.doorY + rand(-30, 30), vx: r.left ? -40 : 40, vy: 0, life: .7, t: 0, color: "#5CE08A", size: 3.5 }); }
@@ -974,15 +1082,24 @@ function update(dt) {
             if (!ATTACKERS.includes(b.type)) break;
             {
               const inRange = live && (inside || dGhost <= D.range(b.lv));
-              if (b.type !== "laser") b.cd -= dt * rate;
+              if (b.cd > 0) b.cd -= dt * rate;
               if (!inRange) { b.ramp = 0; break; }
               const want = Math.atan2(gy - s.y, gx - s.x); let da = want - b.aim; da = Math.atan2(Math.sin(da), Math.cos(da)); b.aim += da * Math.min(1, dt * 12);
-              if (b.type === "laser") {
+              if (b.type === "flame") {
+                b.firing = true; const d = val * rate * dt; b.acc += d; hitGhost(d, mine, true);
+                if (Math.random() < dt * 40) { const a = b.aim + rand(-.25, .25), v = rand(170, 260); parts.push({ x: s.x + Math.cos(b.aim) * 20, y: s.y + Math.sin(b.aim) * 20, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: rand(.25, .4), t: 0, color: pick(["#FF8A3C", "#FFD23F", "#FF4D3D"]), size: rand(4, 7) }); }
+                if (b.acc > val * .8) { floatText(G.x + rand(-10, 10), G.y - ghostR(G.lv) - 4, "-" + fmt(b.acc), "#FFB15A", 12); b.acc = 0; }
+                if (mine) sfx("flame");
+              } else if (b.type === "poison") {
+                b.firing = true; poisonNow += val * rate; if (mine) poisonMine = true;
+                b.fx -= dt; if (b.fx <= 0) { b.fx = .5; for (let k = 0; k < 3; k++) parts.push({ x: gx + rand(-20, 20), y: gy + rand(-10, 20), vx: rand(-20, 20), vy: rand(-90, -50), life: rand(.5, .8), t: 0, color: pick(["#8CFF7A", "#5CE08A", "#B4FF6A"]), size: rand(4, 7) }); }
+              } else if (b.type === "laser") {
                 b.firing = true; b.ramp = Math.min(1, b.ramp + dt / 3);
                 const d = val * (1 + b.ramp) * rate * dt; b.acc += d; hitGhost(d, mine, true);
                 if (b.acc > val * .8) { floatText(G.x + rand(-10, 10), G.y - ghostR(G.lv) - 4, "-" + fmt(b.acc), "#FF9AF0", 12); b.acc = 0; if (mine) sfx("laser"); }
               } else if (b.cd <= 0) {
                 b.cd = D.int; b.flash = b.type === "turret" ? .08 : .2;
+                if (b.type === "sniper") { bullets.push({ x: s.x + Math.cos(b.aim) * 26, y: s.y + Math.sin(b.aim) * 26, dmg: val, mine, sp: 1500, kind: "s" }); if (mine) sfx("sniper"); }
                 if (b.type === "turret") { bullets.push({ x: s.x + Math.cos(b.aim) * 22, y: s.y + Math.sin(b.aim) * 22, dmg: val, mine, sp: 650, kind: "b" }); if (mine) sfx("shot"); }
                 if (b.type === "cannon") { bullets.push({ x: s.x + Math.cos(b.aim) * 24, y: s.y + Math.sin(b.aim) * 24, dmg: val, mine, sp: 520, kind: "c" }); if (mine) sfx("cannon"); }
                 if (b.type === "tesla") { fx.push({ type: "arc", x1: s.x, y1: s.y - 16, x2: gx, y2: gy, life: .25, t: 0 }); hitGhost(val, mine); if (Math.random() < .3) stun(.4); if (mine) sfx("tesla"); }
@@ -996,7 +1113,12 @@ function update(dt) {
         if (pw) { r.pTick += dt; if (r.pTick >= 3) { r.pTick = 0; const ps = r.slots.find(s => s.b && (s.b.type === "arcade" || s.b.type === "dynamo")); if (ps) floatText(ps.x + 6, ps.y - 12, "+" + fmtRate(pw * 3), "#4FE3FF", 13, "volt"); } }
       }
     }
-    if (phase === "night") { updateGhost(dt); for (const p of players) if (!p.isPlayer) updateBot(p, dt); }
+    if (poisonNow > 0) { G.poisonDps = poisonNow; G.poisonUntil = gt + 4; G.poisonMine = poisonMine; }
+    if (phase === "night" && gt < G.poisonUntil && G.hp > 0 && !["hidden", "rise", "dead", "heal"].includes(G.state)) {
+      const d = G.poisonDps * dt; hitGhost(d, G.poisonMine, true); G.poisonAcc += d;
+      if (G.poisonAcc > G.poisonDps) { floatText(G.x + rand(-12, 12), G.y - ghostR(G.lv) - 8, "-" + fmt(G.poisonAcc), "#8CFF7A", 12); G.poisonAcc = 0; if (G.poisonMine) sfx("poison"); }
+    }
+    if (phase === "night") { updateGhost(dt); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); }
   }
   if (phase === "title" || phase === "match") { G.x = CX + Math.sin(gt * .5) * 40; G.y = MAP_H * .5 + Math.sin(gt * .3) * MAP_H * .4; G.face = Math.cos(gt * .5) > 0 ? 1 : -1; }
   for (let i = bullets.length - 1; i >= 0; i--) {
@@ -1005,7 +1127,7 @@ function update(dt) {
     const tx = G.x, ty = G.y - 10, dx = tx - b.x, dy = ty - b.y, L = Math.hypot(dx, dy), step = b.sp * dt;
     if (L < ghostR(G.lv) * .6 + step) {
       bullets.splice(i, 1); hitGhost(b.dmg, b.mine);
-      if (b.kind === "c") { burst(b.x, b.y, "#FFB15A", 12, 160); stun(.3); } else burst(b.x, b.y, "#FFE26A", 4, 90);
+      if (b.kind === "c") { burst(b.x, b.y, "#FFB15A", 12, 160); stun(.3); } else if (b.kind === "s") burst(b.x, b.y, "#BFF4FF", 10, 200); else burst(b.x, b.y, "#FFE26A", 4, 90);
       continue;
     }
     b.x += dx / L * step; b.y += dy / L * step;
@@ -1082,6 +1204,7 @@ function tap(sx, sy) {
   if (me.state !== "bed") { if (r && phase === "select") choose(r); return; }
   const mine = me.room;
   if (camMode === "overview") { if (r) focusRoom(r); return; }
+  if (gift && r === mine && Math.hypot(p.x - gift.x, p.y - gift.y) < 34) { if (visit || camMode === "free") goHome(); return openGift(); }
   if (mine.alive && nearDoor(mine, p)) { goHome(); sfx("click"); return openSheet({ kind: "door" }); }
   if (r && r !== mine) { if (visit !== r || camMode === "free") focusRoom(r); return; }
   if (r === mine && mine.alive) {
@@ -1166,9 +1289,9 @@ function renderSheet() {
   if (s.kind === "slot" && !s.slot.b) {
     title = "造点什么";
     h = `<div class="tabs">${CATS.map(([k, n]) => `<button type="button" data-tab="${k}" aria-pressed="${k === buildTab}">${n}</button>`).join("")}</div>
-      <div class="opts">${Object.entries(BUILD).filter(([, D]) => D.cat === buildTab).map(([k, D]) =>
-        `<button class="opt" type="button" data-act="build:${k}"><img src="${ICONS[k]}" alt=""><span><b>${D.name}${payTag(k)}</b><small>${D.desc}${D.range ? `，射程 ${D.range(1)}` : ""}</small></span>${costHtml(D.cost[0], D.en[0])}</button>`).join("")}</div>
-      <p class="note">输出建筑射程从门口算起，升级后能帮隔壁打鬼。电力靠游戏机和发电机，特殊建筑只能用电力买。</p>`;
+      <div class="opts">${Object.entries(BUILD).filter(([k, D]) => D.cat === buildTab && avail.has(k)).map(([k, D]) =>
+        `<button class="opt" type="button" data-act="build:${k}"><img src="${ICONS[k]}" alt=""><span><b>${D.name}${payTag(k)}</b><small>${CORE.includes(k) ? "" : '<span class="ltd">本局限定</span>'}${D.desc}${D.range ? `，射程 ${D.range(1)}` : ""}</small></span>${costHtml(D.cost[0], D.en[0])}</button>`).join("")}</div>
+      <p class="note">输出建筑射程从门口算起，升级后能帮隔壁打鬼。电力靠游戏机和发电机，特殊建筑只能用电力买。标着「本局限定」的建筑每局随机出现。</p>`;
   } else if (s.kind === "slot") {
     const b = s.slot.b, D = BUILD[b.type], max = b.lv >= D.max;
     title = `${D.name} · Lv.${b.lv}`;
@@ -1242,7 +1365,7 @@ $("sheet-body").addEventListener("click", e => {
 /* ================= pause & settings ================= */
 function syncToggles() {
   for (const k of ["music", "sfx", "voice", "vib"]) $("t-" + k).setAttribute("aria-pressed", String(settings[k]));
-  if (AU.ctx) { AU.musG.gain.value = settings.music ? .3 : 0; AU.sfxG.gain.value = settings.sfx ? 1 : 0; }
+  if (AU.ctx) { AU.musG.gain.value = settings.music ? MUSIC_VOL : 0; AU.sfxG.gain.value = settings.sfx ? 1 : 0; }
 }
 for (const k of ["music", "sfx", "voice", "vib"]) $("t-" + k).addEventListener("click", () => { auInit(); settings[k] = !settings[k]; if (k === "voice" && !settings.voice) { try { speechSynthesis.cancel(); } catch (e) { /* ignore */ } } store.set("tpfy-settings", settings); syncToggles(); sfx("click"); });
 function inGame() { return phase === "select" || phase === "night"; }
@@ -1380,6 +1503,56 @@ function drawBuilding(c, type, lv, x, y, s, st, t, icon) {
       c.beginPath(); c.arc(0, h * .28, h * .42 * pulse, 0, TAU); c.fillStyle = "#FF8FB8"; c.fill(); c.stroke();
       c.beginPath(); c.arc(0, h * .28, h * .14, 0, TAU); c.fillStyle = EDGE; c.fill(); break;
     }
+    case "sniper":
+      rrPath(c, -h * .85, -h * .85, s * .85, s * .85, 8); c.fillStyle = "#2F4A3A"; c.fill(); c.stroke();
+      c.save(); c.rotate(st.aim || 0);
+      rrPath(c, 0, -3, h * 1.6, 6, 2); c.fillStyle = "#1A2420"; c.fill(); c.stroke();
+      rrPath(c, h * .15, -9, h * .6, 6, 3); c.fillStyle = "#4A6B58"; c.fill(); c.stroke();
+      if (st.flash > 0) { c.beginPath(); c.arc(h * 1.6 + 5, 0, 5, 0, TAU); c.fillStyle = "#FFFFFF"; c.fill(); }
+      c.restore();
+      c.beginPath(); c.arc(0, 0, h * .3, 0, TAU); c.fillStyle = "#FF4D6D"; c.fill(); c.stroke(); break;
+    case "flame":
+      rrPath(c, -h * .7, -h * .9, s * .7, s * .9, 10); c.fillStyle = "#C8432F"; c.fill(); c.stroke();
+      c.fillStyle = "#FFD23F"; rrPath(c, -h * .45, -h * .55, h * .9, 5, 2); c.fill();
+      c.save(); c.rotate(st.aim || 0); rrPath(c, 0, -5, h * 1.05, 10, 3); c.fillStyle = "#545066"; c.fill(); c.stroke();
+      if (st.firing && !icon) { c.beginPath(); c.ellipse(h * 1.3, 0, 9 + Math.sin(t * 40) * 2, 6, 0, 0, TAU); c.fillStyle = "#FFB15A"; c.fill(); c.beginPath(); c.ellipse(h * 1.25, 0, 5, 3.5, 0, 0, TAU); c.fillStyle = "#FFF3B0"; c.fill(); }
+      c.restore();
+      c.beginPath(); c.arc(0, h * .35, h * .22, 0, TAU); c.fillStyle = "#FFB15A"; c.fill(); c.stroke(); break;
+    case "poison":
+      rrPath(c, -h * .72, -h * .8, s * .72, s * .95, 9); c.fillStyle = "#3C6E3A"; c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(-h * .72, -h * .35); c.lineTo(h * .72, -h * .35); c.moveTo(-h * .72, h * .4); c.lineTo(h * .72, h * .4); c.stroke();
+      c.beginPath(); c.arc(0, h * .02, h * .28, 0, TAU); c.fillStyle = "#B4FF6A"; c.fill(); c.stroke();
+      c.fillStyle = EDGE; c.beginPath(); c.arc(-h * .1, -h * .02, 2.2, 0, TAU); c.arc(h * .1, -h * .02, 2.2, 0, TAU); c.fill();
+      for (let k = 0; k < 3; k++) { const ph = icon ? k * .33 : (t * .8 + k * .33) % 1; c.globalAlpha = icon ? 1 : 1 - ph; c.beginPath(); c.arc(-h * .3 + k * h * .3, -h * .9 - ph * h * .6, 3 + k, 0, TAU); c.fillStyle = "#8CFF7A"; c.fill(); c.lineWidth = 1.5; c.stroke(); }
+      c.globalAlpha = 1; c.lineWidth = 2.5; break;
+    case "piggy":
+      c.beginPath(); c.ellipse(0, h * .1, h * .85, h * .68, 0, 0, TAU); c.fillStyle = "#FF9EC4"; c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(-h * .45, -h * .45); c.lineTo(-h * .2, -h * .85); c.lineTo(-h * .05, -h * .5); c.closePath(); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(h * .62, h * .12, h * .2, h * .24, 0, 0, TAU); c.fillStyle = "#FF7AAE"; c.fill(); c.stroke();
+      c.fillStyle = EDGE; c.beginPath(); c.arc(h * .58, h * .05, 1.6, 0, TAU); c.arc(h * .66, h * .2, 1.6, 0, TAU); c.fill();
+      c.beginPath(); c.arc(h * .25, -h * .12, 2.4, 0, TAU); c.fill();
+      rrPath(c, -h * .3, -h * .5, h * .45, 4, 2); c.fill();
+      if (st.flash > 0) { c.beginPath(); c.arc(-h * .08, -h * .78, 6, 0, TAU); c.fillStyle = "#FFD23F"; c.fill(); c.lineWidth = 2; c.stroke(); } break;
+    case "tree":
+      rrPath(c, -h * .45, h * .4, h * .9, h * .55, 5); c.fillStyle = "#B8603C"; c.fill(); c.stroke();
+      rrPath(c, -3.5, -h * .1, 7, h * .55, 2); c.fillStyle = "#7A4A2A"; c.fill(); c.stroke();
+      c.beginPath(); c.arc(0, -h * .38, h * .62, 0, TAU); c.fillStyle = "#4E9A5E"; c.fill(); c.stroke();
+      for (const [cx, cy] of [[-h * .3, -h * .45], [h * .25, -h * .6], [h * .1, -h * .15]]) { c.beginPath(); c.arc(cx, cy + (icon ? 0 : Math.sin(t * 3 + cx) * 1.5), 4.5, 0, TAU); c.fillStyle = "#FFD23F"; c.fill(); c.lineWidth = 1.5; c.stroke(); }
+      c.lineWidth = 2.5; break;
+    case "vine": {
+      rrPath(c, -h * .55, h * .45, h * 1.1, h * .5, 5); c.fillStyle = "#6B4A33"; c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(0, h * .45); c.bezierCurveTo(-h * .7, h * .1, h * .7, -h * .3, 0, -h * .8); c.lineWidth = 5; c.strokeStyle = "#3E8E4A"; c.stroke(); c.lineWidth = 2.5; c.strokeStyle = EDGE;
+      for (const [lx, ly, sd] of [[-h * .3, h * .15, -1], [h * .3, -h * .25, 1]]) { c.beginPath(); c.ellipse(lx, ly, h * .26, h * .13, sd * .6, 0, TAU); c.fillStyle = "#6FCF6A"; c.fill(); c.stroke(); }
+      c.beginPath(); c.arc(0, -h * .82, h * .22 * (st.flash > 0 ? 1.3 : 1), 0, TAU); c.fillStyle = "#E0304E"; c.fill(); c.stroke(); break;
+    }
+    case "seal": {
+      c.beginPath(); c.arc(0, 0, h * .88, 0, TAU); c.fillStyle = "#3A2458"; c.fill(); c.stroke();
+      c.save(); c.rotate(icon ? 0 : t * .8);
+      c.beginPath(); for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + k * TAU * 2 / 5; c.lineTo(Math.cos(a) * h * .62, Math.sin(a) * h * .62); } c.closePath();
+      c.strokeStyle = st.flash > 0 ? "#FFFFFF" : "#FFD23F"; c.lineWidth = 2.5; c.stroke(); c.restore();
+      c.beginPath(); c.arc(0, 0, h * .72, 0, TAU); c.strokeStyle = "#C9A0FF"; c.lineWidth = 2; c.stroke();
+      c.strokeStyle = EDGE; c.lineWidth = 2.5; break;
+    }
     case "scarecrow":
       c.beginPath(); c.moveTo(0, -h * .2); c.lineTo(0, h * .95); c.moveTo(-h * .75, h * .15); c.lineTo(h * .75, h * .15); c.lineWidth = 5; c.strokeStyle = "#94653A"; c.stroke(); c.lineWidth = 2.5; c.strokeStyle = EDGE;
       c.beginPath(); c.arc(0, -h * .4, h * .38, 0, TAU); c.fillStyle = "#E8C77A"; c.fill(); c.stroke();
@@ -1398,7 +1571,7 @@ function drawBuilding(c, type, lv, x, y, s, st, t, icon) {
   }
   c.restore();
 }
-const chargeOf = b => { const D = BUILD[b.type]; if (b.type === "thunder") return clamp(1 - b.cd / D.int, 0, 1); if (D.cdv) return clamp(1 - b.cd2 / D.cdv(b.lv), 0, 1); if (b.type === "scarecrow") return clamp(1 - b.cd2 / D.val(b.lv), 0, 1); return null; };
+const chargeOf = b => { const D = BUILD[b.type]; if (b.type === "thunder" || b.type === "sniper") return clamp(1 - b.cd / D.int, 0, 1); if (D.cdv) return clamp(1 - b.cd2 / D.cdv(b.lv), 0, 1); if (b.type === "scarecrow") return clamp(1 - b.cd2 / D.val(b.lv), 0, 1); return null; };
 
 // static background, rendered once
 let BG = null;
@@ -1583,9 +1756,23 @@ function drawGhost(t) {
     rrPath(ctx, x - bw / 2 + 1.5, by + 1.5, (bw - 3) * clamp(G.hp / G.max, 0, 1), 6, 3); ctx.fillStyle = "#FF4D6D"; ctx.fill();
     label(ctx, `猛鬼 Lv.${G.lv}`, x, by - 10, 12, "#FF8FA3", FONT_CN, 800);
     if (G.tele > 0) label(ctx, "!", x + bw / 2 + 8, by - 4, 24, "#FF4D6D", FONT_NUM, 800);
-    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk && !stunned ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : G.slow > 0 ? ["减速", "#9FE8FF"] : enr ? ["狂暴", "#FF8FA3"] : null;
+    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk && !stunned ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : G.slow > 0 ? ["减速", "#9FE8FF"] : enr ? ["狂暴", "#FF8FA3"] : null;
     if (tag) label(ctx, tag[0], x, y + R + 14, 12, tag[1]);
   }
+}
+function drawGift(g, t) {
+  const pop = Math.min(1, g.t / .3), bob = reduce ? 0 : Math.sin(t * 4) * 3, left = g.life - g.t;
+  ctx.save(); ctx.translate(g.x, g.y + bob - (1 - pop) * 30); ctx.scale(pop, pop);
+  const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 40); glow.addColorStop(0, `rgba(255,226,106,${.45 + .2 * Math.sin(t * 6)})`); glow.addColorStop(1, "rgba(255,226,106,0)");
+  ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(0, 0, 40, 0, TAU); ctx.fill();
+  if (left < 4 && Math.sin(t * 16) > 0) ctx.globalAlpha = .45;
+  ctx.lineJoin = "round"; ctx.lineWidth = 2.5; ctx.strokeStyle = EDGE;
+  rrPath(ctx, -14, -6, 28, 20, 4); ctx.fillStyle = "#FF5A7A"; ctx.fill(); ctx.stroke();
+  ctx.save(); ctx.rotate(reduce ? 0 : Math.sin(t * 7) * .06); rrPath(ctx, -16, -13, 32, 9, 3); ctx.fillStyle = "#FF7A95"; ctx.fill(); ctx.stroke(); ctx.restore();
+  ctx.fillStyle = "#FFD23F"; ctx.fillRect(-3, -12, 6, 25); ctx.strokeRect(-3, -12, 6, 25);
+  for (const sd of [-1, 1]) { ctx.beginPath(); ctx.ellipse(sd * 6, -17, 6, 4, sd * .5, 0, TAU); ctx.fillStyle = "#FFD23F"; ctx.fill(); ctx.stroke(); }
+  ctx.globalAlpha = 1; ctx.restore();
+  label(ctx, "点我", g.x, g.y - 34 + bob, 12, "#FFE26A");
 }
 function jagged(x1, y1, x2, y2, segs, amp) {
   ctx.beginPath(); ctx.moveTo(x1, y1);
@@ -1627,7 +1814,7 @@ function render(t) {
         const born = gt - s.b.born;
         drawBuilding(ctx, s.b.type, s.b.lv, s.x, s.y + (born < .3 ? -Math.sin(born / .3 * Math.PI) * 8 : 0), 42,
           { aim: s.b.aim, flash: s.b.flash, active: s.b.active, offUntil: s.b.offUntil, firing: s.b.firing, charge: phase === "night" ? chargeOf(s.b) : null }, t, false);
-        if (s.b.firing && ghostTargetable()) { ctx.save(); ctx.lineCap = "round"; for (const [w, col] of [[8, "rgba(255,90,200,.35)"], [3, "#FFE0F7"]]) { ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(G.x, G.y - 10); ctx.lineWidth = w * (.7 + s.b.ramp * .6); ctx.strokeStyle = col; ctx.stroke(); } ctx.restore(); }
+        if (s.b.firing && s.b.type === "laser" && ghostTargetable()) { ctx.save(); ctx.lineCap = "round"; for (const [w, col] of [[8, "rgba(255,90,200,.35)"], [3, "#FFE0F7"]]) { ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(G.x, G.y - 10); ctx.lineWidth = w * (.7 + s.b.ramp * .6); ctx.strokeStyle = col; ctx.stroke(); } ctx.restore(); }
         if (r === mine && myTurn && homeView && canUpB(r, s.b)) arrows.push([s.x, s.y - 27]);
       } else if (r === mine && homeView && myTurn && phase !== "end") {
         const sel = sheetSel && sheetSel.slot === s;
@@ -1661,10 +1848,19 @@ function render(t) {
   for (const g of rings) { ctx.globalAlpha = 1 - g.life / .7; ctx.lineWidth = 3; ctx.strokeStyle = "#9FE8FF"; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, TAU); ctx.stroke(); }
   ctx.globalAlpha = 1;
   if (phase === "select") for (const ch of players) if (ch.state === "walk" || ch.state === "idle") drawWalker(ch, t);
+  if (myTurn && phase === "night") {
+    const tags = [];
+    if (gt < mine.boostUntil) tags.push([`收入×2 ${Math.ceil(mine.boostUntil - gt)}秒`, "#FFD23F"]);
+    if (gt < mine.rageUntil) tags.push([`攻速↑ ${Math.ceil(mine.rageUntil - gt)}秒`, "#FF8A3C"]);
+    tags.forEach(([txt, col], k) => label(ctx, txt, mine.x0 + RW / 2 + (tags.length > 1 ? (k ? 62 : -62) : 0), mine.y0 + 158, 13, col));
+  }
   drawGhost(t);
   for (const r of rooms) drawPlaque(r, t);
   for (const [ax, ay] of arrows) upArrow(ax, ay, t);
-  for (const b of bullets) { ctx.beginPath(); ctx.arc(b.x, b.y, b.kind === "c" ? 8 : 5, 0, TAU); ctx.fillStyle = b.kind === "c" ? "#2E2A36" : "#FFE26A"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = b.kind === "c" ? "#FF8A3C" : EDGE; ctx.stroke(); }
+  if (gift && phase === "night") drawGift(gift, t);
+  for (const b of bullets) {
+    if (b.kind === "s") { const a = Math.atan2(G.y - 10 - b.y, G.x - b.x); ctx.save(); ctx.lineCap = "round"; for (const [w, col] of [[7, "rgba(160,240,255,.4)"], [3, "#FFFFFF"]]) { ctx.beginPath(); ctx.moveTo(b.x - Math.cos(a) * 26, b.y - Math.sin(a) * 26); ctx.lineTo(b.x, b.y); ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke(); } ctx.restore(); continue; }
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.kind === "c" ? 8 : 5, 0, TAU); ctx.fillStyle = b.kind === "c" ? "#2E2A36" : "#FFE26A"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = b.kind === "c" ? "#FF8A3C" : EDGE; ctx.stroke(); }
   for (const f of fx) {
     const a = 1 - f.t / f.life; ctx.globalAlpha = a; ctx.lineCap = "round";
     if (f.type === "arc") for (const [w, col] of [[7, "rgba(120,200,255,.5)"], [3, "#EFFFFF"]]) { jagged(f.x1, f.y1, f.x2, f.y2, 7, 9); ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke(); }
@@ -1766,7 +1962,7 @@ function frame(ms) {
   requestAnimationFrame(frame);
 }
 if (SPEED > 1) window.__dbg = { get me() { return me; }, get G() { return G; }, get phase() { return phase; }, get nightT() { return nightT; }, get players() { return players; }, get cam() { return { camMode, visit: visit && visit.i }; },
-  rooms, npcStep, PLAN, repairDoor, toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
+  rooms, npcStep, PLAN, repairDoor, get avail() { return avail; }, get gift() { return gift; }, openGift: () => gift && openGift(), toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
 $("start").addEventListener("click", startMatch);
 $("again").addEventListener("click", startMatch);
 $("home").addEventListener("click", () => { sfx("click"); showTitle(); });
