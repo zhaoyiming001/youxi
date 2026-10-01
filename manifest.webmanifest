@@ -1,0 +1,17 @@
+{
+  "name": "眠仓计划",
+  "short_name": "眠仓计划",
+  "description": "6 人宿舍塔防：躺下赚钱，造塔守门，把鬼打死。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#15122B",
+  "theme_color": "#15122B",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

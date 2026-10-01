@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#15122B">
 <title>眠仓计划</title>
-<meta name="description" content="匹配 6 人宿舍，躺下赚金币和电力，造 18 种建筑，每局来的鬼都不一样，赶在它越砸越强之前把它打死。">
+<meta name="description" content="匹配 6 人宿舍，躺下赚金币和电力，造 25 种建筑，每局随机天赋、随机建筑和不同的猛鬼，赶在它越砸越强之前把它打死。">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="眠仓计划">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&family=Baloo+2:wght@600;800&display=swap">
@@ -80,11 +87,22 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .pb .atk{display:none;position:absolute;top:-8px;left:-4px;font-size:.6rem;font-weight:800;line-height:1.3;background:var(--danger);color:#fff;border-radius:6px;padding:0 4px;border:2px solid var(--edge);z-index:1}
 .pb.target .atk{display:block}
 @keyframes target{from{box-shadow:0 0 0 0 rgba(255,77,109,0)}to{box-shadow:0 0 14px 3px rgba(255,77,109,.85);border-color:#7A1630}}
+.pb .bub{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translate(-50%,4px);background:#fff;color:#1A1534;font-size:.62rem;font-weight:800;line-height:1.35;padding:1px 6px;border-radius:8px;border:2px solid var(--edge);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:2}
+.pb .bub::after{content:"";position:absolute;left:50%;top:100%;margin-left:-4px;border:4px solid transparent;border-top-color:var(--edge)}
+.pb .bub.show{opacity:1;transform:translate(-50%,0)}
+.pb .bub.sos{background:var(--danger);color:#fff;animation:sosBob .5s ease-in-out infinite alternate}
+@keyframes sosBob{to{transform:translate(-50%,-3px)}}
+.sos-btn{position:fixed;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 98px);z-index:6;pointer-events:auto;border:3px solid var(--edge);background:var(--danger);color:#fff;font-weight:800;font-size:.95rem;border-radius:999px;padding:8px 14px;box-shadow:0 4px 0 var(--edge);cursor:pointer;animation:pop .25s cubic-bezier(.3,1.5,.5,1)}
+.sos-btn[disabled]{background:#5A3A4A;color:#E8C8D0;cursor:default}
+.sos-btn:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+.visit .vbtns{display:flex;gap:6px}
+.visit button.give{background:#FF8FB8;color:#3A0A20}
+.visit button[disabled]{opacity:.5}
 .mapbtn{flex:0 0 50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:2.5px solid var(--edge);border-radius:12px;background:#3B3170;cursor:pointer;box-shadow:0 3px 0 var(--edge)}
 .mapbtn svg{width:22px;height:22px}
 .mapbtn b{font-size:.68rem;font-weight:700}
 .mapbtn:active,.pb:active{transform:translateY(2px)}
-.feed{position:fixed;left:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 124px);list-style:none;margin:0;padding:0;display:flex;flex-direction:column-reverse;gap:4px;pointer-events:none;z-index:3;max-width:min(330px,74vw)}
+.feed{position:fixed;left:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 124px);list-style:none;margin:0;padding:0;display:flex;flex-direction:column-reverse;gap:4px;pointer-events:none;z-index:3;max-width:min(330px,70vw)}
 .feed li{background:rgba(11,9,29,.78);border-radius:10px;padding:3px 10px;font-size:.76rem;color:var(--soft);animation:feedIn .3s ease}
 .feed li.bad{color:#FFB3C0}.feed li.good{color:#A8F0C0}
 @keyframes feedIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
@@ -135,6 +153,21 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .act:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
 .note{font-size:.76rem;color:var(--soft);margin:8px 2px 0;line-height:1.5}
 .toggles{display:grid;gap:8px;margin-bottom:12px}
+.slider{display:grid;grid-template-columns:5.5em minmax(0,1fr) 2.6em;align-items:center;gap:10px;padding:8px 12px;border-radius:14px;background:var(--panel-3);font-size:1rem}
+.slider b{font-family:var(--f-num);font-weight:800;text-align:right;font-size:.95rem}
+.slider input{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:99px;background:linear-gradient(90deg,var(--heal) var(--p,50%),#3A3466 var(--p,50%));border:2px solid var(--edge);margin:0}
+.slider input::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--edge);cursor:pointer}
+.slider input::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--edge);cursor:pointer}
+.me-wrap{position:relative;flex:none;display:block}
+.me-tal{position:absolute;right:-6px;bottom:-5px;font-size:.8rem;line-height:1;background:var(--panel-2);border:2px solid var(--edge);border-radius:50%;width:20px;height:20px;display:grid;place-items:center}
+.talents{display:grid;gap:10px;width:100%}
+.tal{display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;gap:12px;text-align:left;padding:12px 14px;border-radius:18px;border:3px solid var(--edge);background:var(--panel-2);box-shadow:0 5px 0 var(--edge);cursor:pointer;animation:pop .3s cubic-bezier(.3,1.5,.5,1) both}
+.tal:nth-child(2){animation-delay:.08s}.tal:nth-child(3){animation-delay:.16s}
+.tal:active{transform:translateY(4px);box-shadow:0 1px 0 var(--edge)}
+.tal .em{font-size:2rem;width:52px;height:52px;display:grid;place-items:center;border-radius:14px;background:var(--panel-3)}
+.tal b{display:block;font-family:var(--f-display);font-weight:400;font-size:1.3rem;letter-spacing:.04em;color:var(--coin)}
+.tal small{display:block;color:var(--soft);font-size:.86rem;line-height:1.4}
+.tal.picked{border-color:var(--coin);background:#4A3A10}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:var(--panel-3);cursor:pointer;border:0;width:100%;text-align:left;font-size:1rem}
 .toggle i{width:46px;height:26px;border-radius:99px;background:#3A3466;position:relative;flex:none;border:2px solid var(--edge);transition:background .2s}
 .toggle i::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
@@ -143,6 +176,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 
 /* ---------- overlays ---------- */
 .overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:radial-gradient(ellipse at 50% 30%,rgba(43,30,90,.72),rgba(10,8,24,.94));overflow:auto}
+#shareview,#meta{z-index:11}
 #title{background:radial-gradient(ellipse at 50% 45%,rgba(13,10,32,.62),rgba(10,8,24,.88) 75%)}
 .card{width:min(460px,100%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
 .logo{font-family:var(--f-display);font-weight:400;font-size:clamp(3.8rem,19vw,7rem);line-height:1;margin:0;color:var(--coin);letter-spacing:.04em;-webkit-text-stroke:3px var(--edge);paint-order:stroke fill;text-shadow:0 6px 0 var(--edge),0 0 40px rgba(255,210,63,.35);display:flex}
@@ -171,6 +205,43 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .end-stats small{display:block;color:var(--soft);font-size:.76rem}
 .end-stats b{font-family:var(--f-num);font-weight:800;font-size:1.35rem}
 .row-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.mcoin{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:2.5px solid var(--edge);border-radius:999px;padding:3px 12px;box-shadow:0 3px 0 var(--edge);font-size:.9rem}
+.mcoin b{font-family:var(--f-num);font-weight:800;font-size:1.05rem;color:#FFE58A}
+.meta-btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
+.mbtn{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:16px;border:3px solid var(--edge);background:var(--panel-2);box-shadow:0 4px 0 var(--edge);cursor:pointer;font-weight:700;font-size:.9rem}
+.mbtn span{font-size:1.4rem;line-height:1.1}
+.mbtn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+.mbtn .dot{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:var(--danger);border:2.5px solid var(--edge)}
+.meta-card{width:min(480px,100%);max-height:100%;display:flex;flex-direction:column;gap:10px;background:var(--panel);border:3px solid var(--edge);border-radius:22px;box-shadow:0 6px 0 var(--edge);padding:12px;text-align:left}
+.meta-body{overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;min-height:0}
+.meta-sec h4{margin:4px 2px 6px;font-size:.95rem;color:var(--soft);font-weight:700}
+.skins{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.skin{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px 6px;border-radius:14px;border:2.5px solid var(--edge);background:var(--panel-2);cursor:pointer;font-size:.82rem}
+.skin img{width:64px;height:40px;display:block;border-radius:8px}
+.skin img.av{width:44px;height:44px;border-radius:50%;margin:-2px 0}
+.skin small{font-family:var(--f-num);font-weight:800;color:#FFE58A;font-size:.8rem}
+.skin small.own{color:var(--soft);font-family:var(--f-body);font-weight:600}
+.skin.on{border-color:var(--coin);background:#4A3A10}
+.skin.on small{color:var(--coin)}
+.task,.ach{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--panel-3)}
+.task b,.ach b{display:block;font-size:.95rem}
+.task small,.ach small{display:block;color:var(--soft);font-size:.76rem;margin-top:2px}
+.task .pbar{height:7px;border-radius:9px;background:#100D26;overflow:hidden;margin-top:6px}
+.task .pbar i{display:block;height:100%;background:var(--heal);border-radius:9px}
+.claim{border:2.5px solid var(--edge);background:var(--coin);color:#2A1A00;border-radius:12px;padding:6px 12px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 3px 0 var(--edge)}
+.claim[disabled]{background:var(--panel-2);color:var(--soft);box-shadow:none;cursor:default}
+.ach.lock{opacity:.55}
+.ach .rw{font-family:var(--f-num);font-weight:800;color:#FFE58A;white-space:nowrap}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 120px);transform:translate(-50%,-20px);z-index:12;pointer-events:none;background:#3A2A08;color:#FFE9A0;border:3px solid var(--edge);border-radius:16px;box-shadow:0 5px 0 var(--edge);padding:8px 16px;font-weight:800;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.earn{font-weight:800;color:#FFE58A;margin:0}
+.share-img{width:min(320px,80vw);border-radius:16px;border:3px solid var(--edge);box-shadow:0 6px 0 var(--edge);-webkit-user-select:auto;user-select:auto;-webkit-touch-callout:default}
+.fr-gold{box-shadow:0 0 0 3px #FFD23F!important}
+.fr-rainbow{box-shadow:0 0 0 2px #FF4D6D,0 0 0 4px #FFD23F,0 0 0 6px #4FE3FF!important}
+.fr-fire{box-shadow:0 0 0 3px #FF7A2A,0 0 12px 3px rgba(255,122,42,.85)!important}
+.fr-ice{box-shadow:0 0 0 3px #7FE7FF,0 0 12px 3px rgba(127,231,255,.8)!important}
+.fr-heart{box-shadow:0 0 0 3px #FF8FB8,0 0 10px 2px rgba(255,143,184,.8)!important}
+.fr-night{box-shadow:0 0 0 3px #B98CFF,0 0 12px 3px rgba(185,140,255,.8)!important}
 
 @media (max-width:400px){
   .pill small{display:none}
@@ -187,7 +258,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 
 <header class="top" id="top" hidden>
   <div class="row">
-    <img class="me-av" id="me-av" alt="我的头像">
+    <span class="me-wrap"><img class="me-av" id="me-av" alt="我的头像"><span class="me-tal" id="me-tal" hidden></span></span>
     <div class="pill"><i class="coin"></i><b id="coins">0</b><small id="income"></small></div>
     <div class="pill"><i class="volt"></i><b id="power">0</b><small id="pincome"></small></div>
     <div class="pill time"><small id="time-label">选房</small><b id="clock">0:20</b></div>
@@ -201,7 +272,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
   <div class="visit" id="visit" hidden>
     <img id="visit-av" alt="">
     <div><b id="visit-name"></b><small id="visit-info"></small></div>
-    <button type="button" id="visit-back">回我房间</button>
+    <span class="vbtns"><button type="button" class="give" id="visit-give" hidden>送金币</button><button type="button" id="visit-back">回我房间</button></span>
   </div>
 </header>
 
@@ -213,6 +284,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
     <button class="mapbtn" id="view" type="button" aria-label="切换全图"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg><b id="view-label">全图</b></button>
   </div>
 </div>
+<button class="sos-btn" id="sos" type="button" hidden>📣 求救</button>
 <div class="banner" id="banner"></div>
 
 <div class="sheet" id="sheet" hidden>
@@ -223,9 +295,9 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 <div class="sheet" id="settings" hidden>
   <div class="sheet-head"><h3>已暂停</h3><span class="small" id="pause-info" style="margin-left:auto"></span><button class="x" id="set-close" type="button" aria-label="继续游戏">✕</button></div>
   <div class="toggles">
-    <button class="toggle" type="button" id="t-music" aria-pressed="true">背景音乐<i></i></button>
-    <button class="toggle" type="button" id="t-sfx" aria-pressed="true">音效<i></i></button>
-    <button class="toggle" type="button" id="t-voice" aria-pressed="true">语音播报<i></i></button>
+    <label class="slider"><span>背景音乐</span><input type="range" id="v-music" min="0" max="100" step="5" aria-label="背景音乐音量"><b id="v-music-n"></b></label>
+    <label class="slider"><span>音效</span><input type="range" id="v-sfx" min="0" max="100" step="5" aria-label="音效音量"><b id="v-sfx-n"></b></label>
+    <label class="slider"><span>语音播报</span><input type="range" id="v-voice" min="0" max="100" step="5" aria-label="语音音量"><b id="v-voice-n"></b></label>
     <button class="toggle" type="button" id="t-vib" aria-pressed="true">被砸门时震动<i></i></button>
   </div>
   <div class="sheet-actions">
@@ -240,16 +312,49 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
     <h1 class="logo" aria-label="眠仓计划"><span>眠</span><span>仓</span><span>计</span><span>划</span></h1>
     <p class="tag">躺下赚钱，造塔守门，把鬼打死。</p>
     <button class="btn big" id="start" type="button">开始匹配</button>
+    <button class="btn alt" id="resume-game" type="button" hidden>继续上一局</button>
+    <span class="mcoin">🌙 <b id="meta-coins">0</b> 眠币</span>
+    <div class="meta-btns">
+      <button class="mbtn" type="button" data-meta="wardrobe"><span>👕</span>衣柜</button>
+      <button class="mbtn" type="button" data-meta="tasks"><span>📋</span>每日任务<i class="dot" id="task-dot" hidden></i></button>
+      <button class="mbtn" type="button" data-meta="ach"><span>🏆</span>成就<i class="dot" id="ach-dot" hidden></i></button>
+    </div>
     <p class="small" id="best">还没有战绩</p>
+    <button class="btn alt" id="install" type="button" hidden>📲 添加到手机桌面</button>
+    <p class="small" id="ios-tip" hidden>想像 App 一样打开？在 Safari 点「分享」→「添加到主屏幕」</p>
     <p class="how">抢房躺下 · 造建筑守门 · 鬼越砸越强</p>
   </div>
 </div>
+
+<div class="overlay" id="meta" hidden>
+  <div class="meta-card">
+    <div class="sheet-head" style="margin:0"><h3 id="meta-title">衣柜</h3><span class="mcoin" style="margin-left:auto">🌙 <b id="meta-coins2">0</b></span><button class="x" id="meta-close" type="button" aria-label="关闭">✕</button></div>
+    <div class="tabs" style="grid-template-columns:repeat(3,1fr);margin:0" id="meta-tabs">
+      <button type="button" data-mt="wardrobe">衣柜</button><button type="button" data-mt="tasks">每日任务</button><button type="button" data-mt="ach">成就</button>
+    </div>
+    <div class="meta-body" id="meta-body"></div>
+  </div>
+</div>
+
+<div class="overlay" id="shareview" hidden>
+  <div class="card">
+    <img class="share-img" id="share-img" alt="战绩图">
+    <p class="small">手机上长按图片就能保存或发给朋友</p>
+    <div class="row-btns">
+      <a class="btn" id="share-dl" download="眠仓计划战绩.png">保存图片</a>
+      <button class="btn" id="share-native" type="button" hidden>分享</button>
+      <button class="btn alt" id="share-close" type="button">关闭</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
 
 <div class="overlay" id="match" hidden>
   <div class="card">
     <h2 class="match-title" id="match-title">正在匹配宿舍…</h2>
     <p class="small" id="match-count">1 / 6</p>
     <div class="match-grid" id="match-grid"></div>
+    <div class="talents" id="talents" hidden></div>
   </div>
 </div>
 
@@ -264,8 +369,10 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
       <div><small>你造成的伤害</small><b id="st-dmg">--</b></div>
     </div>
     <p class="small" id="st-best"></p>
+    <p class="earn" id="st-earn"></p>
     <div class="row-btns">
       <button class="btn big" id="again" type="button">再来一局</button>
+      <button class="btn alt" id="share" type="button">战绩图</button>
       <button class="btn alt" id="home" type="button">回到首页</button>
     </div>
   </div>
@@ -364,6 +471,24 @@ const payTag = k => {
   if (D.en[0]) return '<i class="m">金币+电力</i>';
   return D.en.some(e => e > 0) ? '<i class="c">金币 · 高级要电</i>' : '<i class="c">只要金币</i>';
 };
+// pick one perk per match; roommates get a random one too
+const TALENTS = [
+  { id: "bed", em: "🛌", name: "睡神", desc: "床的金币收入 +30%", v: .3 },
+  { id: "dmg", em: "🔥", name: "火力全开", desc: "输出建筑伤害 +20%", v: .2 },
+  { id: "range", em: "🔭", name: "千里眼", desc: "输出建筑射程 +30", v: 30 },
+  { id: "door", em: "🚪", name: "铜墙铁壁", desc: "门的耐久上限 +30%", v: .3 },
+  { id: "power", em: "🔋", name: "电力满格", desc: "游戏机和发电机的电力 +50%", v: .5 },
+  { id: "refund", em: "🧮", name: "精打细算", desc: "建造、升级、修门都省 15% 金币", v: .15 },
+  { id: "start", em: "💰", name: "富二代", desc: "躺下时多拿 200 金币和 30 电力", v: 1 },
+  { id: "gift", em: "🍀", name: "幸运星", desc: "礼盒来得更勤，开出的金币电力 +50%", v: .5 },
+  { id: "repair", em: "🔧", name: "巧手", desc: "手动修门冷却减半，维修台 +30%", v: .3 },
+  { id: "hitcoin", em: "💢", name: "越挫越勇", desc: "鬼每砸你一下，你拿 3 秒的床收入", v: 3 },
+  { id: "rate", em: "🎸", name: "摇滚宿舍", desc: "所有炮塔攻速 +15%", v: .15 },
+  { id: "regen", em: "🌿", name: "自愈门", desc: "门 5 秒没挨打就每秒回 2% 耐久", v: .02 },
+  { id: "chill", em: "❄️", name: "寒气逼人", desc: "鬼砸你的门慢 15%", v: .15 },
+  { id: "calm", em: "🕯️", name: "安神香", desc: "鬼砸你的门时 25% 不涨经验", v: 25 },
+];
+const tl = (r, k) => (r && r.tal && r.tal.id === k ? r.tal.v : 0);
 const SELECT_LEN = 20, START_COINS = 40, REPAIR_CD = 12, STUN_IMMUNE = 1.5, BERSERK_AT = 720;
 // each match draws a ghost breed: some nights are a quick win, some are a long fight
 // hidden per-match temperament (never shown to players, every ghost looks the same and is called 猛鬼).
@@ -379,7 +504,7 @@ const ghostMax = (lv, ty = G.type) => Math.round(720 * Math.pow(1.415, lv - 1) *
 const ghostDmg = lv => Math.round(14 * Math.pow(1.335, lv - 1) * G.type.dmg * (G.berserk ? 1.3 + .35 * (nightT - BERSERK_AT) / 60 : 1));
 const ghostNeed = lv => Math.round(Math.min(48, 15 + lv * 5) * G.type.xp);
 const ghostR = lv => Math.min(64, 24 + lv * 2.4);
-const doorMax = r => DOOR.hp(r.doorLv);
+const doorMax = r => DOOR.hp(r.doorLv) * (1 + tl(r, "door"));
 const NAMES = ["星河入梦", "奶茶不加糖", "晚风知我意", "一只小咸鱼", "柠檬味的猫", "月亮邮递员", "熬夜冠军", "芝士就是力量", "云朵味的你", "橘子汽水", "小熊软糖", "风吹麦浪", "南城以北", "温柔且勇敢", "睡神本神", "喵了个咪", "今天也要早睡", "摸鱼达人", "可乐加冰", "西瓜味夏天", "不想上早八", "躺赢小王子", "人间清醒", "白桃乌龙", "追光的鲸", "半糖少女", "快乐小狗", "草莓味的风", "薄荷微凉", "野生程序猿", "奶盖控", "鱼丸粗面", "晴天娃娃", "九月的风", "慢热选手", "一颗小星星", "海盐芝士", "月下独酌", "夏日限定", "番茄炒蛋", "抹茶拿铁", "旺仔小馒头", "水蜜桃不甜", "汤圆不圆", "布丁小姐", "加菲猫本猫", "晚安小熊", "甜甜圈", "吃饱了再说", "偷偷发光", "星星点灯", "可可爱爱", "浅笑安然", "鲸落", "小王同学", "蹦迪小能手", "咸鱼翻身", "宇宙第一甜", "雨后彩虹", "山川与海", "清风徐来", "不吃香菜", "早睡早起", "一碗螺蛳粉", "柚子茶", "冰镇柠檬", "软萌兔", "小怪兽", "稳住别浪", "等风来", "烟火人间", "放学别跑", "隔壁老王", "学渣本渣", "钢铁直男", "社恐患者", "干饭人", "熊猫眼", "夜猫子", "栗子酥", "雪糕刺客", "奶茶续命", "灵魂歌手", "拖延症晚期", "锦鲤附体", "欧皇降临", "非酋本酋", "菜鸟驾到", "大力水手", "闪电侠", "喵星来客", "小橘子", "蓝胖子", "魔法少女", "一键三连", "摆烂中", "别催在躺", "卷王", "外卖到了", "打工人"];
 // roommate strength is rolled every match
 const ARCHETYPES = [
@@ -507,15 +632,18 @@ function avatarCanvas(av) {
 }
 
 /* ================= sound (all synthesized) ================= */
-const settings = Object.assign({ music: true, sfx: true, voice: true, vib: true }, store.get("tpfy-settings", {}));
+const settings = Object.assign({ vib: true, musicVol: 60, sfxVol: 80, voiceVol: 100 }, store.get("tpfy-settings", {}));
+// older saves had on/off switches
+for (const k of ["music", "sfx", "voice"]) if (settings[k] === false) { settings[k + "Vol"] = 0; delete settings[k]; }
+const vol = k => clamp(+settings[k + "Vol"] || 0, 0, 100) / 100;
 // spoken announcements through the browser's built-in Chinese voice (silently skipped where unavailable)
 let lastSpeak = -1e9, zhVoice = null;
 function pickVoice() { try { zhVoice = speechSynthesis.getVoices().find(v => /zh[-_]CN/i.test(v.lang)) || speechSynthesis.getVoices().find(v => /^zh/i.test(v.lang)) || null; } catch (e) { zhVoice = null; } }
 try { if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } } catch (e) { /* unsupported */ }
 function speak(text, urgent) {
-  if (!settings.voice || !window.speechSynthesis || SPEED > 1) return;
+  if (!vol("voice") || !window.speechSynthesis || SPEED > 1) return;
   const now = performance.now(); if (!urgent && now - lastSpeak < 2600) return; lastSpeak = now;
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "zh-CN"; u.rate = 1.12; u.pitch = 1.05; u.volume = .95; if (zhVoice) u.voice = zhVoice; speechSynthesis.speak(u); } catch (e) { /* unsupported */ }
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "zh-CN"; u.rate = 1.12; u.pitch = 1.05; u.volume = vol("voice"); if (zhVoice) u.voice = zhVoice; speechSynthesis.speak(u); } catch (e) { /* unsupported */ }
 }
 const AU = { ctx: null, next: 0, step: 0, last: {} };
 function auInit() {
@@ -527,14 +655,14 @@ function auInit() {
     const comp = c.createDynamicsCompressor();
     comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 6; comp.attack.value = .002; comp.release.value = .18; comp.connect(c.destination);
     AU.master = c.createGain(); AU.master.gain.value = 1.25; AU.master.connect(comp);
-    AU.sfxG = c.createGain(); AU.sfxG.gain.value = settings.sfx ? 1 : 0; AU.sfxG.connect(AU.master);
-    AU.musG = c.createGain(); AU.musG.gain.value = settings.music ? MUSIC_VOL : 0; AU.musG.connect(AU.master);
+    AU.sfxG = c.createGain(); AU.sfxG.gain.value = vol("sfx") * 1.25; AU.sfxG.connect(AU.master);
+    AU.musG = c.createGain(); AU.musG.gain.value = vol("music"); AU.musG.connect(AU.master);
     const len = c.sampleRate; AU.noise = c.createBuffer(1, len, c.sampleRate);
     const d = AU.noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
     AU.next = c.currentTime + .1;
   } catch (e) { AU.ctx = null; }
 }
-const MUSIC_VOL = .6, SFX_BOOST = 2.6, MUS_BOOST = 1.6;
+const SFX_BOOST = 2.6, MUS_BOOST = 1.6;
 function tone(f, dur, o = {}) {
   const c = AU.ctx; if (!c) return;
   const music = o.bus && o.bus !== AU.sfxG, vol = Math.min(.95, (o.vol || .15) * (music ? MUS_BOOST : SFX_BOOST));
@@ -554,9 +682,9 @@ function noise(dur, o = {}) {
   g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + (o.attack || .008)); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   src.connect(f); f.connect(g); g.connect(o.bus || AU.sfxG); src.start(t, Math.random() * .5); src.stop(t + dur + .05);
 }
-const THROTTLE = { sniper: 200, flame: 220, poison: 420, gift: 400, step: 380, warn: 900, shot: 60, cannon: 150, laser: 260, tesla: 120, zap: 160, hit: 80, hitfar: 160, block: 200, absorb: 180, coin: 150, join: 60, swish: 80 };
+const THROTTLE = { pop: 60, firework: 90, sniper: 200, flame: 220, poison: 420, gift: 400, step: 380, warn: 900, shot: 60, cannon: 150, laser: 260, tesla: 120, zap: 160, hit: 80, hitfar: 160, block: 200, absorb: 180, coin: 150, join: 60, swish: 80 };
 function sfx(name) {
-  if (!AU.ctx || !settings.sfx) return;
+  if (!AU.ctx || !vol("sfx")) return;
   const now = performance.now(); if (THROTTLE[name] && now - (AU.last[name] || 0) < THROTTLE[name]) return; AU.last[name] = now;
   const T = (f, d, o) => tone(f, d, o), N = (d, o) => noise(d, o);
   switch (name) {
@@ -591,6 +719,13 @@ function sfx(name) {
     case "disrupt": T(300, .5, { type: "sawtooth", vol: .06, f2: 900 }); T(900, .5, { type: "sawtooth", vol: .04, f2: 200, delay: .1 }); break;
     case "levelup": T(110, .6, { type: "sawtooth", vol: .09, f2: 220, attack: .05 }); T(165, .6, { type: "sawtooth", vol: .05, f2: 330, delay: .05 }); break;
     case "kill": N(.5, { freq: 900, f2: 200, vol: .3 }); T(300, .6, { type: "triangle", vol: .1, f2: 80 }); for (let i = 0; i < 4; i++) T(820 - i * 70, .1, { type: "triangle", vol: .07, delay: .5 + i * .11, vib: 28, vibDepth: 40 }); break;
+    case "vanish": N(.5, { type: "bandpass", freq: 2400, f2: 300, vol: .14, q: 2 }); T(900, .45, { type: "triangle", vol: .06, f2: 220, vib: 14, vibDepth: 60 }); break;
+    case "summon": [330, 415, 494].forEach((f, i) => T(f, .3, { type: "sawtooth", vol: .045, delay: i * .08, f2: f * 1.5 })); N(.4, { type: "bandpass", freq: 900, f2: 2400, vol: .1, delay: .1 }); break;
+    case "wreck": N(.25, { freq: 1600, f2: 200, vol: .35 }); T(160, .3, { type: "square", vol: .06, f2: 60 }); N(.15, { type: "highpass", freq: 3000, vol: .12, delay: .12 }); break;
+    case "pop": T(600, .12, { type: "triangle", vol: .12, f2: 1400 }); N(.06, { type: "highpass", freq: 2500, vol: .15 }); break;
+    case "sos": [0, 1, 2].forEach(i => { T(988, .1, { type: "square", vol: .06, delay: i * .2 }); T(740, .1, { type: "square", vol: .05, delay: i * .2 + .1 }); }); break;
+    case "thanks": [659, 880, 1175].forEach((f, i) => T(f, .18, { type: "triangle", vol: .09, delay: i * .08 })); break;
+    case "firework": T(rand(300, 500), .35, { type: "triangle", vol: .05, f2: rand(1200, 1800) }); N(.5, { freq: 1800, f2: 300, vol: .28, delay: .32 }); N(.6, { type: "highpass", freq: 5000, vol: .07, delay: .4 }); break;
     case "repel": [784, 988, 1175].forEach((f, i) => T(f, .16, { type: "triangle", vol: .1, delay: i * .07 })); break;
     case "sniper": N(.07, { type: "highpass", freq: 2200, vol: .35 }); T(1900, .14, { type: "square", vol: .05, f2: 180 }); T(70, .25, { vol: .2, f2: 40, delay: .02 }); break;
     case "flame": N(.25, { type: "bandpass", freq: 700, f2: 1400, vol: .12, q: .7 }); break;
@@ -607,7 +742,7 @@ function sfx(name) {
 const CHORDS = [[220, 261.6, 329.6], [174.6, 220, 261.6], [261.6, 329.6, 392], [196, 246.9, 293.7]];
 const ARP = [0, 1, 2, 1, 3, 1, 2, 1];
 function musicTick() {
-  const c = AU.ctx; if (!c || !settings.music || paused) return;
+  const c = AU.ctx; if (!c || !vol("music") || paused) return;
   const danger = phase === "night" && me && me.room && G.target === me.room && (G.state === "attack" || G.state === "walk");
   const beat = danger ? .2 : .3;
   if (AU.next < c.currentTime) AU.next = c.currentTime + .05;
@@ -647,43 +782,47 @@ function personalPlan() {
 function resetRooms() {
   for (const r of rooms) {
     Object.assign(r, { occupant: null, reserved: null, alive: true, bedLv: 1, doorLv: 1, doorHp: DOOR.hp(1), coins: START_COINS, energy: 0, repairCd: 0,
-      tick: 0, catTick: 0, pTick: 0, mult: 1, doorShake: 0, broken: false, shieldUntil: 0, barrier: 0, barrierMax: 0, lastHit: -9, built: 0, boostUntil: 0, rageUntil: 0, giftT: rand(30, 50) });
+      tal: null, skin: null, tick: 0, catTick: 0, pTick: 0, mult: 1, doorShake: 0, broken: false, shieldUntil: 0, barrier: 0, barrierMax: 0, lastHit: -9, built: 0, sosAsked: false, sosUntil: 0, boostUntil: 0, rageUntil: 0, giftT: rand(30, 50) });
     r.slots.forEach(s => s.b = null);
   }
 }
 function makePlayers() {
   const names = shuffle(NAMES).slice(0, 5);
-  me = { name: "我", isPlayer: true, av: randomAvatar(), x: CX, y: rand(300, 800), path: [], state: "idle", room: null, speed: 210, face: 1 };
+  me = { name: "我", isPlayer: true, skin: { bed: meta.equip.bed, door: meta.equip.door }, frame: meta.equip.frame, av: randomAvatar(), x: CX, y: rand(300, 800), path: [], state: "idle", room: null, speed: 210, face: 1 };
   const bots = names.map(name => {
     const a = weighted(ARCHETYPES);
     return { name, kind: a.kind, av: randomAvatar(), x: CX + rand(-50, 50), y: rand(60, MAP_H - 60), path: [], state: "idle", room: null, speed: rand(120, 170),
-      delay: rand(...a.delay), think: rand(1, 3), pi: 0, stuck: 0, lazy: rand(...a.lazy), mult: rand(...a.mult), plan: personalPlan(), face: 1 };
+      delay: rand(...a.delay), think: rand(1, 3), pi: 0, stuck: 0, lazy: rand(...a.lazy), mult: rand(...a.mult), plan: personalPlan(), face: 1, tal: pick(TALENTS), skin: { bed: botSkin("bed"), door: botSkin("door") }, frame: botSkin("frame") };
   });
   players = [me, ...bots];
   for (const p of players) { p.img = avatarCanvas(p.av); p.url = avatarURL(p.av); }
-  $("me-av").src = me.url;
+  $("me-av").src = me.url; $("me-av").className = "me-av" + frameCls(me.frame);
 }
 function newGame() {
   resetRooms();
   const type = (SPEED > 1 && window.__forceGhost != null && GHOSTS[+window.__forceGhost]) || weighted(GHOSTS);
   G = { type, x: ALTAR.x, y: ALTAR.y, lv: 1, xp: 0, hp: ghostMax(1, type), max: ghostMax(1, type), state: "hidden", target: null, path: [], atk: 1, rise: 0, lunge: 0, hurt: 0,
-    slow: 0, vuln: 0, attackT: 0, wait: 0, face: 1, frozenUntil: 0, stunUntil: 0, stunImmune: 0, smashT: 14, tele: 0, disruptT: 18, enrageUntil: 0, enraged: false, berserk: false, poisonDps: 0, poisonUntil: 0, poisonMine: false, poisonAcc: 0 };
+    slow: 0, vuln: 0, attackT: 0, wait: 0, face: 1, frozenUntil: 0, stunUntil: 0, stunImmune: 0, smashT: 14, tele: 0, disruptT: 18, enrageUntil: 0, enraged: false, berserk: false, variant: (SPEED > 1 && window.__forceVariant != null && VARIANTS[+window.__forceVariant]) || pick(VARIANTS), invisUntil: 0, skillT: 16, poisonDps: 0, poisonUntil: 0, poisonMine: false, poisonAcc: 0 };
   gift = null; giftT = rand(28, 40);
   const special = rollPool();
-  stats = { dmg: 0 }; gt = 0; selT = SELECT_LEN; nightT = 0; deaths = 0; bullets = []; parts = []; floats = []; rings = []; fx = [];
-  camMode = "overview"; visit = null; shake = 0; flash = 0; ended = false; paused = false;
+  minions = []; sosCd = 0; giveCd = 0; helpQ = [];
+  stats = { dmg: 0, gifts: 0, helps: 0, pops: 0, builds: 0, limited: 0, maxCoins: 0 }; gt = 0; selT = SELECT_LEN; nightT = 0; deaths = 0; bullets = []; parts = []; floats = []; rings = []; fx = [];
+  camMode = "overview"; visit = null; shake = 0; flash = 0; ended = false; paused = false; celebrate = 0; slowmo = 0;
   closeSheet(); $("settings").hidden = true; $("feed").innerHTML = ""; $("top").hidden = false;
   phase = "select"; buildStrip();
+  const mt = $("me-tal"); mt.hidden = !me.tal; if (me.tal) { mt.textContent = me.tal.em; mt.title = me.tal.name; }
   banner("20 秒内抢一间宿舍！", "info");
   feed("本局限定建筑：" + special.map(k => BUILD[k].name).join("、"), "good");
+  if (me.tal) feed(`本局天赋「${me.tal.name}」：${me.tal.desc}`, "good");
 }
 
 /* ================= matchmaking (players are simulated) ================= */
 function startMatch() {
-  auInit(); sfx("click");
+  auInit(); sfx("click"); clearSave();
   $("title").hidden = true; $("end").hidden = true; $("match").hidden = false; $("top").hidden = true; $("strip").hidden = true;
   makePlayers(); resetRooms(); phase = "match";
   const grid = $("match-grid");
+  grid.hidden = false; $("talents").hidden = true; clearInterval(talentTimer);
   grid.innerHTML = players.map((p, i) => `<div class="mslot${i === 0 ? " me" : ""}" data-i="${i}">${i === 0 ? `<img src="${p.url}" alt=""><b>我</b>` : `<span class="wait"></span><b>等待中</b>`}</div>`).join("");
   $("match-title").textContent = "正在匹配宿舍…"; $("match-count").textContent = "1 / 6";
   let n = 1, t = 400;
@@ -694,11 +833,30 @@ function startMatch() {
       const p = players[i], slot = grid.querySelector(`[data-i="${i}"]`);
       slot.innerHTML = `<img src="${p.url}" alt=""><b>${p.name}</b>`; n++; $("match-count").textContent = `${n} / 6`; sfx("join");
       if (n === players.length) {
-        $("match-title").textContent = "匹配成功！"; sfx("matched"); speak("匹配成功，快去抢房间", true);
-        setTimeout(() => { if (phase !== "match") return; $("match").hidden = true; newGame(); }, 900);
+        $("match-title").textContent = "匹配成功！"; sfx("matched"); speak("匹配成功，选一个天赋", true);
+        setTimeout(() => { if (phase === "match") showTalents(); }, 900);
       }
     }, t);
   }
+}
+
+let talentTimer = null;
+function showTalents() {
+  const opts = shuffle(TALENTS).slice(0, 3);
+  $("match-title").textContent = "选一个本局天赋";
+  $("match-grid").hidden = true;
+  const box = $("talents"); box.hidden = false;
+  box.innerHTML = opts.map((o, i) => `<button class="tal" type="button" data-i="${i}"><span class="em">${o.em}</span><span><b>${o.name}</b><small>${o.desc}</small></span></button>`).join("");
+  let left = 10; $("match-count").textContent = `${left} 秒后随机选一个`;
+  const choose = i => {
+    if (phase !== "match" || me.tal) return;
+    clearInterval(talentTimer); me.tal = opts[i]; sfx("upgrade");
+    box.querySelectorAll(".tal").forEach((b, k) => b.classList.toggle("picked", k === i));
+    setTimeout(() => { if (phase !== "match") return; $("match").hidden = true; newGame(); }, 500);
+  };
+  box.onclick = e => { const b = e.target.closest(".tal"); if (b) choose(+b.dataset.i); };
+  clearInterval(talentTimer);
+  talentTimer = setInterval(() => { left--; $("match-count").textContent = `${left} 秒后随机选一个`; if (left <= 0) choose(Math.floor(Math.random() * 3)); }, 1000);
 }
 
 /* ================= feedback helpers ================= */
@@ -721,9 +879,24 @@ function burst(x, y, color, n, sp = 140) {
 const isMine = r => !!me && !!r && r === me.room;
 const who = r => r && r.occupant ? (r.occupant.isPlayer ? "你" : r.occupant.name) : "";
 const gName = () => "猛鬼";
+// every ghost is called 猛鬼, but each night it has one of these looks and tricks (never tied to how strong it is)
+const VARIANTS = [
+  { id: "classic", body: "#F1EEFF", eye: "#FF3355", intro: "今晚的猛鬼没什么花招，就是一个劲地砸门" },
+  { id: "shade", body: "#D6ECFF", eye: "#4FE3FF", intro: "今晚的猛鬼会隐身，隐身的时候炮塔打不到它" },
+  { id: "summoner", body: "#E9DAFF", eye: "#C27BFF", intro: "今晚的猛鬼会放小鬼去砸别人的门，点一下小鬼就能拍散它" },
+  { id: "wrecker", body: "#DDF5D2", eye: "#4FD43A", intro: "今晚的猛鬼会拆家，砸门时会把建筑打掉一级" },
+];
+let minions = [], sosCd = 0, giveCd = 0, helpQ = [];
+const bubbleT = {};
+function bubble(p, text, sec = 2.6) {
+  const i = players.indexOf(p), el = document.querySelector(`#players .pb[data-i="${i}"] .bub`); if (!el) return;
+  el.textContent = text; el.classList.add("show"); el.classList.remove("sos");
+  clearTimeout(bubbleT[i]); bubbleT[i] = setTimeout(() => el.classList.remove("show"), sec * 1000);
+}
+
 
 /* ================= economy actions (shared by player & bots) ================= */
-function pay(r, c, e) { if (r.coins < c || r.energy < e) return false; r.coins -= c; r.energy -= e; return true; }
+function pay(r, c, e) { if (r.coins < c || r.energy < e) return false; r.coins -= c * (1 - tl(r, "refund")); r.energy -= e; return true; }
 const canPay = (r, c, e) => r.coins >= c && r.energy >= e;
 function bedUp(r) { const L = r.bedLv; if (L >= BED.max || !pay(r, BED.cost[L - 1], BED.en[L - 1])) return false; r.bedLv++; return true; }
 function doorUp(r) {
@@ -736,7 +909,7 @@ const canUpB = (r, b) => { const D = BUILD[b.type]; return b.lv < D.max && canPa
 const repairCost = r => nice(doorMax(r) * .08);
 function repairDoor(r) {
   if (gt < r.repairCd || r.doorHp <= 0 || r.doorHp >= doorMax(r) || !pay(r, repairCost(r), 0)) return false;
-  r.doorHp = Math.min(doorMax(r), r.doorHp + doorMax(r) * .4); r.repairCd = gt + REPAIR_CD; return true;
+  r.doorHp = Math.min(doorMax(r), r.doorHp + doorMax(r) * .4); r.repairCd = gt + REPAIR_CD * (tl(r, "repair") ? .5 : 1); return true;
 }
 function newB(type) { const D = BUILD[type]; return { type, lv: 1, spent: D.cost[0], spentE: D.en[0], cd: rand(0, .4), cd2: 0, aim: 0, flash: 0, fx: 0, offUntil: 0, born: gt, ramp: 0, acc: 0, firing: false }; }
 function recalcBarrier(r) { r.barrierMax = r.slots.reduce((a, s) => a + (s.b && s.b.type === "barrier" ? BUILD.barrier.val(s.b.lv) : 0), 0); r.barrier = Math.min(r.barrier, r.barrierMax); }
@@ -760,10 +933,12 @@ function roomMods(r) {
   let rate = 1, tree = 0;
   for (const s of r.slots) if (s.b && s.b.offUntil <= gt) { if (s.b.type === "speaker") rate += BUILD.speaker.val(s.b.lv) / 100; else if (s.b.type === "tree") tree += BUILD.tree.val(s.b.lv) / 100; }
   if (gt < r.rageUntil) rate *= 1.5;
-  return { rate, tree, boost: gt < r.boostUntil ? 2 : 1 };
+  rate *= 1 + tl(r, "rate");
+  return { rate, tree: tree + tl(r, "bed"), boost: gt < r.boostUntil ? 2 : 1 };
 }
 const incomeOf = r => { const m = roomMods(r); return (BED.inc(r.bedLv) * (1 + m.tree) + r.slots.reduce((a, s) => a + (s.b && s.b.offUntil <= gt ? (s.b.type === "cat" ? BUILD.cat.val(s.b.lv) : s.b.type === "arcade" ? BUILD.arcade.coin(s.b.lv) : 0) : 0), 0)) * r.mult * m.boost; };
-const powerOf = r => r.slots.reduce((a, s) => a + (s.b && (s.b.type === "arcade" || s.b.type === "dynamo") && s.b.offUntil <= gt ? BUILD[s.b.type].val(s.b.lv) : 0), 0);
+const powerOf = r => r.slots.reduce((a, s) => a + (s.b && (s.b.type === "arcade" || s.b.type === "dynamo") && s.b.offUntil <= gt ? BUILD[s.b.type].val(s.b.lv) : 0), 0) * (1 + tl(r, "power"));
+const rangeOf = (r, b) => BUILD[b.type].range(b.lv) + tl(r, "range");
 const powerScore = r => r.bedLv + r.doorLv * 2 + r.slots.reduce((a, s) => a + (s.b ? s.b.lv * 2 : 0), 0);
 
 /* ================= room selection ================= */
@@ -774,7 +949,9 @@ function claim(ch, r) {
 const freeRooms = () => rooms.filter(r => !r.reserved);
 function lieDown(ch) {
   const r = ch.room; ch.state = "bed"; ch.path = []; ch.x = r.bedPt.x; ch.y = r.bedPt.y;
-  r.occupant = ch; r.mult = ch.isPlayer ? 1 : ch.mult;
+  r.occupant = ch; r.mult = ch.isPlayer ? 1 : ch.mult; r.tal = ch.tal || null; r.skin = ch.skin || null;
+  r.doorHp = doorMax(r);
+  if (tl(r, "start")) { r.coins += 200; r.energy += 30; }
   burst(r.headPt.x, r.headPt.y, "#FFFFFF", 10, 90);
   if (ch.isPlayer) {
     camMode = "focus"; visit = null; sfx("lie");
@@ -797,6 +974,7 @@ function startNight() {
   phase = "night"; G.state = "rise"; G.rise = 0;
   banner("猛鬼出动了！", "danger"); sfx("spawn"); speak("猛鬼出动了，大家小心", true);
   feed("猛鬼从鬼井里爬出来了：它每砸一次门都会变强", "bad");
+  feed(G.variant.intro, "bad");
 }
 
 /* ================= ghost ================= */
@@ -819,7 +997,7 @@ function pickTarget(exclude) {
   const top = Math.max(...c.map(r => r.doorHp + r.barrier));
   const score = r => (r.doorHp + r.barrier) / top * .8 + Math.random() * .6 + Math.abs(r.doorY - G.y) / MAP_H * .25;
   c.sort((a, b) => score(a) - score(b));
-  const r = c[0]; G.target = r; G.state = "walk"; G.attackT = 0; G.tele = 0; r.warned = false; route(G, { kind: "door", room: r });
+  const r = c[0]; G.target = r; G.state = "walk"; r.sosAsked = false; G.attackT = 0; G.tele = 0; r.warned = false; route(G, { kind: "door", room: r });
   if (isMine(r)) { banner(`${gName()}朝你的门来了！`, "danger"); feed(`${gName()}盯上了你`, "bad"); sfx("alarm"); speak(`${gName()}朝你来了`, true); goHome(); }
   else feed(`${gName()}盯上了 ${r.occupant.name}`);
 }
@@ -828,19 +1006,21 @@ function hitGhost(dmg, mine, quiet) {
   dmg *= 1 + G.vuln;
   G.hp -= dmg; G.hurt = .12; if (mine) stats.dmg += dmg;
   if (!quiet) floatText(G.x + rand(-14, 14), G.y - ghostR(G.lv) - 10, "-" + fmt(dmg), mine ? "#FFE26A" : "#FFFFFF", mine ? 16 : 12);
-  if (G.hp <= 0) { G.hp = 0; G.state = "dead"; burst(G.x, G.y, "#F1EEFF", 50, 280); endGame(true); }
+  if (G.hp <= 0) { G.hp = 0; G.state = "dead"; burst(G.x, G.y, "#F1EEFF", 50, 280); burst(G.x, G.y, "#FFD23F", 30, 220); slowmo = 1.2; flash = .5; endGame(true); }
 }
 function stun(d) { if (gt < G.stunImmune || G.state === "heal") return; G.stunUntil = Math.max(G.stunUntil, gt + d); G.stunImmune = gt + d + STUN_IMMUNE; }
 function damageDoor(r, dmg) {
   if (gt < r.shieldUntil) { floatText(r.wallX, r.doorY - 30, "格挡", "#FFE26A", 14); if (isMine(r)) sfx("block"); return; }
   let seal = 0, vine = 0;
   for (const s of r.slots) if (s.b && s.b.offUntil <= gt) { if (s.b.type === "seal") { seal += BUILD.seal.val(s.b.lv); s.b.flash = .2; } else if (s.b.type === "vine") vine += BUILD.vine.val(s.b.lv); }
+  seal += tl(r, "calm");
   if (seal && Math.random() * 100 < Math.min(74, seal)) floatText(G.x, G.y - ghostR(G.lv) - 22, "镇住", "#C9A0FF", 12);
   else gainXp(1);
   r.lastHit = gt;
   const raw = dmg;
   if (r.barrier > 0) { const a = Math.min(r.barrier, dmg); r.barrier -= a; dmg -= a; if (isMine(r)) sfx("absorb"); floatText(r.wallX + (r.left ? 26 : -26), r.doorY - 24, "护盾 -" + fmt(a), "#8FD3FF", 12); }
   if (dmg > 0) { r.doorHp -= dmg; r.doorShake = .25; burst(r.wallX, r.doorY + rand(-20, 20), DOOR_COLORS[r.doorLv - 1], 6, 120); floatText(r.wallX + (r.left ? 30 : -30), r.doorY + rand(-10, 20), "-" + fmt(dmg), "#FF6B85", 13); }
+  if (tl(r, "hitcoin") && dmg > 0) { const c = BED.inc(r.bedLv) * r.mult * tl(r, "hitcoin"); r.coins += c; if (isMine(r)) floatText(r.headPt.x, r.headPt.y - 30, "+" + fmt(c), "#FFD23F", 13, "coin"); }
   if (vine && dmg > 0 && r.doorHp > 0) {
     const h = dmg * Math.min(70, vine) / 100; r.doorHp = Math.min(doorMax(r), r.doorHp + h);
     floatText(r.wallX + (r.left ? -26 : 26), r.doorY - 30, "+" + fmt(h), "#5CE08A", 12);
@@ -864,6 +1044,7 @@ function damageDoor(r, dmg) {
     r.doorHp = 0; r.broken = true; G.state = "enter"; G.path = [{ ...r.doorInner }, { ...r.bedWay }, { ...r.bedPt }];
     burst(r.wallX, r.doorY, DOOR_COLORS[r.doorLv - 1], 24, 220);
     feed(`${who(r)}的门被砸破了！`, "bad"); sfx("break");
+    if (isMine(r)) { slowmo = .9; shake = 16; }
   }
 }
 function killRoom(r) {
@@ -891,6 +1072,7 @@ function updateGhost(dt) {
     feed(`${gName()}残血了，正逃回鬼井！快追着打`, "good");
     return;
   }
+  if (G.lv >= 2 && (G.state === "walk" || G.state === "attack") && G.tele <= 0) { G.skillT -= dt; if (G.skillT <= 0) variantSkill(); }
   switch (G.state) {
     case "rise": G.rise += dt; if (G.rise > 1.6) pickTarget(); break;
     case "idle": G.wait -= dt; if (G.wait <= 0) pickTarget(); break;
@@ -938,12 +1120,63 @@ function updateGhost(dt) {
       break;
   }
 }
-const ghostTargetable = () => phase === "night" && !["hidden", "rise", "dead", "heal"].includes(G.state);
+const ghostTargetable = () => phase === "night" && !["hidden", "rise", "dead", "heal"].includes(G.state) && !(gt < G.invisUntil);
+function variantSkill() {
+  const t = G.target, id = G.variant.id;
+  if (id === "shade") {
+    G.invisUntil = gt + 3 + Math.min(2, G.lv * .15); G.skillT = 15 + rand(0, 4);
+    burst(G.x, G.y, "#D6ECFF", 18, 150);
+    if (isMine(t) || visit === t || camMode === "overview") sfx("vanish");
+    if (isMine(t)) feed(`${gName()}隐身了，炮塔暂时打不到它`, "bad");
+  } else if (id === "summoner") {
+    let pool = rooms.filter(r => r.alive && r.occupant && r !== t); if (!pool.length && t) pool = [t];
+    const n = G.lv >= 7 ? 3 : 2;
+    for (let i = 0; i < n && pool.length; i++) { const r = pick(pool); minions.push({ x: G.x + rand(-20, 20), y: G.y - 20, room: r, t: rand(0, 3), hp: ghostDmg(G.lv) * 2.2, dmg: ghostDmg(G.lv) * 1.4 }); }
+    G.skillT = 20 + rand(0, 4); sfx("summon");
+    feed(`${gName()}放出了小鬼，点一下就能拍散`, "bad");
+  } else if (id === "wrecker") {
+    if (G.state !== "attack" || !t) { G.skillT = 1; return; }
+    G.skillT = 24 + rand(0, 4);
+    const ups = t.slots.filter(s => s.b && s.b.lv > 1), any = t.slots.filter(s => s.b);
+    if (ups.length) {
+      const sl = pick(ups); sl.b.lv--; if (sl.b.type === "barrier") recalcBarrier(t); burst(sl.x, sl.y, "#6BFF4A", 16, 170); sl.b.flash = .4;
+      if (isMine(t)) { feed(`${gName()}把你的${BUILD[sl.b.type].name}拆掉一级！`, "bad"); sfx("wreck"); shake = 8; }
+    } else if (any.length) { const sl = pick(any); sl.b.offUntil = gt + 8; if (isMine(t)) { feed(`${gName()}砸坏了你的${BUILD[sl.b.type].name}，停摆 8 秒`, "bad"); sfx("wreck"); } }
+  } else G.skillT = 999;
+}
+function minionHit(r, dmg) {
+  if (gt < r.shieldUntil) { floatText(r.wallX, r.doorY - 30, "格挡", "#FFE26A", 14); return; }
+  if (r.barrier > 0) { const a = Math.min(r.barrier, dmg); r.barrier -= a; dmg -= a; }
+  if (dmg > 0) { r.doorHp = Math.max(1, r.doorHp - dmg); r.doorShake = .25; floatText(r.wallX + (r.left ? 30 : -30), r.doorY, "-" + fmt(dmg), "#E0A0FF", 13); }
+  burst(r.doorOuter.x, r.doorOuter.y, "#C27BFF", 16, 160);
+  if (isMine(r)) { sfx("hit"); shake = Math.min(10, shake + 4); vibrate(30); }
+}
+function updateMinions(dt) {
+  for (let i = minions.length - 1; i >= 0; i--) {
+    const m = minions[i], r = m.room; m.t += dt;
+    if (!r.alive) { minions.splice(i, 1); continue; }
+    const dx = r.doorOuter.x - m.x, dy = r.doorOuter.y - m.y, L = Math.hypot(dx, dy);
+    if (L < 90) {
+      // the target room's own guns shoot it down
+      let dps = 0; for (const s of r.slots) if (s.b && s.b.offUntil <= gt && ATTACKERS.includes(s.b.type) && s.b.type !== "thunder") dps += BUILD[s.b.type].val(s.b.lv) * .6;
+      m.hp -= dps * dt;
+      if (m.hp <= 0) { burst(m.x, m.y, "#E9DAFF", 14, 150); if (isMine(r)) sfx("pop"); minions.splice(i, 1); continue; }
+    }
+    if (L < 8) { minionHit(r, m.dmg); minions.splice(i, 1); continue; }
+    const st = Math.min(L, 115 * dt); m.x += dx / L * st; m.y += dy / L * st;
+  }
+}
+function popMinion(i) {
+  const m = minions[i]; minions.splice(i, 1);
+  const c = nice(Math.max(10, BED.inc(me.room.bedLv) * 5)); me.room.coins += c; stats.pops++;
+  burst(m.x, m.y, "#E9DAFF", 18, 170); sfx("pop"); vibrate(15); track("pop");
+  floatText(m.x, m.y - 16, "+" + fmt(c), "#FFD23F", 14, "coin");
+}
 
 /* ================= gift boxes (random items) ================= */
 const GIFTS = [
-  { w: 26, name: "金币袋", use: r => { const n = nice(Math.max(60, incomeOf(r) * 25)); r.coins += n; return `+${fmt(n)} 金币`; } },
-  { w: 20, name: "充电宝", use: r => { const n = nice(Math.max(40, powerOf(r) * 25 + 30)); r.energy += n; return `+${fmt(n)} 电力`; } },
+  { w: 26, name: "金币袋", use: r => { const n = nice(Math.max(60, incomeOf(r) * 25) * (1 + tl(r, "gift"))); r.coins += n; return `+${fmt(n)} 金币`; } },
+  { w: 20, name: "充电宝", use: r => { const n = nice((Math.max(40, powerOf(r) * 25 + 30)) * (1 + tl(r, "gift"))); r.energy += n; return `+${fmt(n)} 电力`; } },
   { w: 16, name: "修理箱", use: r => { if (r.doorHp > 0) r.doorHp = Math.min(doorMax(r), r.doorHp + doorMax(r) * .35); return "门回了 35% 耐久"; } },
   { w: 12, name: "加班费", use: r => { r.boostUntil = gt + 30; return "30 秒内金币收入翻倍"; } },
   { w: 12, name: "鸡血", use: r => { r.rageUntil = gt + 20; return "20 秒内炮塔攻速 +50%"; } },
@@ -966,19 +1199,52 @@ function updateGifts(dt) {
       gift = { x: p.x, y: p.y, t: 0, life: 14 };
       sfx("gift"); feed("房间里掉了个礼盒，快点开它！", "good");
     }
-    if (gift && (gift.t += dt) >= gift.life) { gift = null; giftT = nightT + rand(35, 55); }
+    if (gift && (gift.t += dt) >= gift.life) { gift = null; giftT = nightT + rand(35, 55) * (tl(mr, "gift") ? .65 : 1); }
   }
   // roommates open their own boxes off-screen
   for (const r of rooms) if (r.alive && r.occupant && !r.occupant.isPlayer && nightT >= r.giftT) { r.giftT = nightT + rand(40, 60); r.coins += incomeOf(r) * 15; }
 }
 function openGift() {
   const r = me.room, g = weighted(GIFTS), at = { x: gift.x, y: gift.y };
-  gift = null; giftT = nightT + rand(35, 55);
-  const msg = g.use(r);
+  gift = null; giftT = nightT + rand(35, 55) * (tl(r, "gift") ? .65 : 1);
+  const msg = g.use(r); stats.gifts++; track("gift");
   sfx("open"); vibrate(25); burst(at.x, at.y, "#FFD23F", 24, 210); burst(at.x, at.y, "#FF7A95", 12, 160);
   floatText(at.x, at.y - 24, g.name, "#FFFFFF", 18); floatText(at.x, at.y - 48, msg, "#FFD23F", 13);
   feed(`礼盒开出「${g.name}」：${msg}`, "good"); speak(`开出${g.name}`);
 }
+
+/* ================= roommates helping each other ================= */
+function askHelp() {
+  const r = me.room; if (!r || !r.alive || phase !== "night" || gt < sosCd) return;
+  sosCd = gt + 45; sfx("sos"); feed("你向室友求救了！", "good"); bubble(me, "救命！", 2.5);
+  const bots = shuffle(players.filter(p => !p.isPlayer && p.room && p.room.alive && p.state === "bed"));
+  const yes = bots.filter(p => Math.random() < (p.kind === "大佬" ? .9 : p.kind === "摸鱼" ? .35 : .65)).slice(0, 2);
+  if (!yes.length) { helpQ.push({ at: gt + 2.2, p: null }); return; }
+  yes.forEach((p, i) => helpQ.push({ at: gt + rand(1, 2.4) + i * .8, p }));
+}
+function updateHelp() {
+  for (let i = helpQ.length - 1; i >= 0; i--) {
+    const h = helpQ[i]; if (gt < h.at) continue; helpQ.splice(i, 1);
+    const mr = me.room; if (!mr || !mr.alive) continue;
+    if (!h.p) { feed("室友们都忙着守门，没人回应……", "bad"); continue; }
+    const pr = h.p.room; if (!pr || !pr.alive) continue;
+    const amt = nice(clamp(pr.coins * .2, 40, 20000)); pr.coins = Math.max(0, pr.coins - amt); mr.coins += amt;
+    bubble(h.p, `送你 ${fmt(amt)}`); feed(`${h.p.name} 送了你 ${fmt(amt)} 金币`, "good"); sfx("thanks");
+    floatText(mr.headPt.x, mr.headPt.y - 34, "+" + fmt(amt), "#FFD23F", 18, "coin");
+  }
+}
+function giveCoins() {
+  const r = visit, mr = me.room;
+  if (!r || !r.alive || !r.occupant || r.occupant.isPlayer || !mr || !mr.alive || gt < giveCd) return;
+  const amt = nice(Math.max(30, mr.coins * .15)); if (mr.coins < amt) { sfx("error"); feed("金币不够送了", "bad"); return; }
+  mr.coins -= amt; r.coins += amt; giveCd = gt + 6; stats.helps++; track("help");
+  if (!repairDoor(r)) doorUp(r);
+  r.sosUntil = 0; bubble(r.occupant, "谢谢！", 2.6); sfx("thanks");
+  floatText(r.headPt.x, r.headPt.y - 30, "+" + fmt(amt), "#FFD23F", 18, "coin");
+  feed(`你送给 ${r.occupant.name} ${fmt(amt)} 金币`, "good");
+}
+$("sos").addEventListener("click", () => { auInit(); askHelp(); });
+$("visit-give").addEventListener("click", () => { auInit(); giveCoins(); });
 
 /* ================= bots ================= */
 function npcStep(r, step) {
@@ -1031,12 +1297,19 @@ function update(dt) {
       r.coins += inc * dt; r.tick += dt;
       if (r.tick >= 1) { r.tick -= 1; if (mine) floatText(r.headPt.x + rand(-6, 6), r.headPt.y - 24, "+" + Math.round(inc), "#FFD23F", 14, "coin"); }
       r.doorShake = Math.max(0, r.doorShake - dt);
+      if (!mine && atDoorOf === r && !r.sosAsked && r.doorHp < doorMax(r) * .45) {
+        r.sosAsked = true;
+        if (Math.random() < .65) { r.sosUntil = gt + 15; bubble(r.occupant, "救命！", 4); feed(`${r.occupant.name} 在求救！点他头像可以送金币`, "bad"); if (camMode !== "focus" || visit === r) sfx("sos"); }
+      }
+      if (tl(r, "regen") && gt - r.lastHit > 5 && r.doorHp > 0 && r.doorHp < doorMax(r)) r.doorHp = Math.min(doorMax(r), r.doorHp + doorMax(r) * tl(r, "regen") * dt);
+      if (tl(r, "chill") && atDoorOf === r) G.slow = Math.max(G.slow, tl(r, "chill"));
       if (r.barrierMax > 0 && gt - r.lastHit > 3) r.barrier = Math.min(r.barrierMax, r.barrier + r.barrierMax * .08 * dt);
       const dGhost = Math.hypot(G.x - r.doorC.x, G.y - r.doorC.y), inside = roomAt(G.x, G.y) === r, atMine = atDoorOf === r;
       let extra = 0, pw = 0;
       for (const s of r.slots) {
         const b = s.b; if (!b) continue;
-        const D = BUILD[b.type], val = D.val(b.lv), off = b.offUntil > gt;
+        const D = BUILD[b.type], off = b.offUntil > gt;
+        const val = D.val(b.lv) * (ATTACKERS.includes(b.type) ? 1 + tl(r, "dmg") : b.type === "repair" ? 1 + tl(r, "repair") : b.type === "arcade" || b.type === "dynamo" ? 1 + tl(r, "power") : 1);
         b.flash = Math.max(0, b.flash - dt); b.firing = false; b.cd2 = Math.max(0, b.cd2 - dt);
         if (off) { b.ramp = 0; continue; }
         switch (b.type) {
@@ -1081,7 +1354,7 @@ function update(dt) {
           default:
             if (!ATTACKERS.includes(b.type)) break;
             {
-              const inRange = live && (inside || dGhost <= D.range(b.lv));
+              const inRange = live && (inside || dGhost <= rangeOf(r, b));
               if (b.cd > 0) b.cd -= dt * rate;
               if (!inRange) { b.ramp = 0; break; }
               const want = Math.atan2(gy - s.y, gx - s.x); let da = want - b.aim; da = Math.atan2(Math.sin(da), Math.cos(da)); b.aim += da * Math.min(1, dt * 12);
@@ -1118,7 +1391,7 @@ function update(dt) {
       const d = G.poisonDps * dt; hitGhost(d, G.poisonMine, true); G.poisonAcc += d;
       if (G.poisonAcc > G.poisonDps) { floatText(G.x + rand(-12, 12), G.y - ghostR(G.lv) - 8, "-" + fmt(G.poisonAcc), "#8CFF7A", 12); G.poisonAcc = 0; if (G.poisonMine) sfx("poison"); }
     }
-    if (phase === "night") { updateGhost(dt); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); }
+    if (phase === "night") { updateGhost(dt); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); updateMinions(dt); updateHelp(); }
   }
   if (phase === "title" || phase === "match") { G.x = CX + Math.sin(gt * .5) * 40; G.y = MAP_H * .5 + Math.sin(gt * .3) * MAP_H * .4; G.face = Math.cos(gt * .5) > 0 ? 1 : -1; }
   for (let i = bullets.length - 1; i >= 0; i--) {
@@ -1137,20 +1410,32 @@ function update(dt) {
   for (let i = rings.length - 1; i >= 0; i--) { const g = rings[i]; g.life += dt; g.r = 8 + (g.max - 8) * Math.min(1, g.life / .6); if (g.life > .7) rings.splice(i, 1); }
   for (let i = fx.length - 1; i >= 0; i--) { fx[i].t += dt; if (fx[i].t >= fx[i].life) fx.splice(i, 1); }
   shake = Math.max(0, shake - dt * 25); flash = Math.max(0, flash - dt * 2);
+  if (celebrate > 0) {
+    celebrate -= dt;
+    if (Math.random() < dt * 6) {
+      const x = cam.x + rand(-.42, .42) * vw / cam.s, y = cam.y + rand(-.4, .05) * vh / cam.s, col = pick(["#FFD23F", "#FF8FB8", "#7FE7FF", "#8CFF7A", "#C9A0FF"]);
+      burst(x, y, col, 40, 320); burst(x, y, "#FFFFFF", 12, 150); sfx("firework");
+    }
+  }
 }
 
 /* ================= end ================= */
 const mmss = T => `${Math.floor(T / 60)}:${String(Math.floor(T % 60)).padStart(2, "0")}`;
 function endGame(win) {
-  if (ended) return; ended = true;
+  if (ended) return; ended = true; clearSave();
   const survived = nightT, rank = win ? 1 : players.length - deaths + 1;
-  phase = "end"; closeSheet();
+  phase = "end"; closeSheet(); if (win) celebrate = 5;
   const rec = store.get("tpfy-rec", { best: 0, wins: 0, fastest: 0 });
   const isBest = survived > rec.best; if (isBest) rec.best = survived;
   let fastestNew = false;
   if (win) { rec.wins++; if (!rec.fastest || survived < rec.fastest) { rec.fastest = survived; fastestNew = true; } }
   store.set("tpfy-rec", rec);
+  const earn = Math.round(15 + (win ? 40 : 0) + Math.max(0, 6 - rank) * 6 + Math.min(40, survived / 30) + Math.min(30, Math.sqrt(stats.dmg) / 25));
+  meta.coins += earn; saveMeta();
+  track("end", { win, survived, rank, alive: rooms.filter(o => o.alive && o.occupant).length });
+  lastResult = { win, survived, rank, lv: G.lv, dmg: stats.dmg, earn };
   setTimeout(() => {
+    $("st-earn").textContent = `+${earn} 眠币（现在共 ${meta.coins}）`;
     sfx(win ? "win" : "lose"); speak(win ? `打死${gName()}了，胜利！` : "你被抓走了", true);
     $("end-title").textContent = win ? `打死${gName()}了！` : "被抓走了";
     $("end-title").className = "end-title " + (win ? "win" : "lose");
@@ -1161,10 +1446,290 @@ function endGame(win) {
     $("st-lv").textContent = `Lv.${G.lv}`;
     $("st-dmg").textContent = fmt(stats.dmg);
     $("st-best").textContent = win ? `最快击杀 ${mmss(rec.fastest)}${fastestNew ? "（新纪录）" : ""} · 共击杀 ${rec.wins} 次` : `最久坚持 ${mmss(rec.best)}${isBest ? "（新纪录）" : ""} · 共击杀 ${rec.wins} 次`;
-    $("end").hidden = false; $("strip").hidden = true; $("visit").hidden = true;
+    $("end").hidden = false; $("strip").hidden = true; $("visit").hidden = true; $("sos").hidden = true;
     $("again").focus();
-  }, win ? 1300 : 1600);
+  }, win ? 2400 : 1600);
 }
+
+/* ================= meta progression: 眠币, wardrobe, daily tasks, achievements ================= */
+const META_KEY = "mc-meta";
+const meta = Object.assign({ coins: 0, owned: { bed: ["def"], door: ["def"], frame: ["def"] }, equip: { bed: "def", door: "def", frame: "def" }, ach: {}, seen: 0, daily: null,
+  life: { games: 0, wins: 0, gifts: 0, helps: 0, pops: 0, built: [] } }, store.get(META_KEY, {}));
+const saveMeta = () => store.set(META_KEY, meta);
+let lastResult = null;
+const COSMETICS = {
+  bed: [
+    { id: "def", name: "默认", price: 0 },
+    { id: "berry", name: "草莓", price: 120, base: "#FF7A9A", dot: "#FFE1EA" },
+    { id: "melon", name: "西瓜", price: 150, base: "#5FBF5A", stripe: "#2E7A32" },
+    { id: "panda", name: "熊猫", price: 200, base: "#F4F4F4", dot: "#2A2A2A" },
+    { id: "galaxy", name: "星空", price: 300, base: "#2B2470", star: "#FFE58A" },
+    { id: "rainbow", name: "彩虹", price: 450, rainbow: true },
+    { id: "gold", name: "黄金", price: 800, base: "#E2B843", stripe: "#FFE58A" },
+  ],
+  door: [
+    { id: "def", name: "默认", price: 0 },
+    { id: "sakura", name: "樱花", price: 120, base: "#FFA8C8", dot: "#FFFFFF" },
+    { id: "candy", name: "糖果", price: 150, base: "#FFFFFF", band: "#FF4D6D" },
+    { id: "bamboo", name: "竹子", price: 200, base: "#6FBF5A", band: "#3E7A32" },
+    { id: "cosmos", name: "宇宙", price: 300, base: "#3A2470", star: "#FFE58A" },
+    { id: "gold", name: "黄金", price: 800, base: "#E2B843", band: "#FFE58A" },
+  ],
+  frame: [
+    { id: "def", name: "无", price: 0 },
+    { id: "gold", name: "金边", price: 100 },
+    { id: "heart", name: "爱心", price: 150 },
+    { id: "ice", name: "冰晶", price: 200 },
+    { id: "fire", name: "火焰", price: 250 },
+    { id: "night", name: "夜光", price: 300 },
+    { id: "rainbow", name: "彩虹", price: 500 },
+  ],
+};
+const FRAME_COL = { gold: "#FFD23F", heart: "#FF8FB8", ice: "#7FE7FF", fire: "#FF7A2A", night: "#B98CFF", rainbow: "#FFD23F" };
+const frameCls = id => id && id !== "def" ? " fr-" + id : "";
+const skinOf = (kind, id) => COSMETICS[kind].find(k => k.id === id);
+const skinBase = (kind, id) => { const k = id && id !== "def" && skinOf(kind, id); return k ? k.base || "#FF8FB8" : null; };
+function botSkin(kind) { return Math.random() < .35 ? pick(COSMETICS[kind].slice(1)).id : "def"; }
+function paintSkin(c, kind, id, x, y, w, h, rad, fallback) {
+  const k = id && id !== "def" ? skinOf(kind, id) : null;
+  c.save(); rrPath(c, x, y, w, h, rad); c.fillStyle = k && k.base ? k.base : fallback; c.fill();
+  if (k) {
+    c.clip();
+    if (k.rainbow) ["#FF4D6D", "#FF9A3C", "#FFD23F", "#5CE08A", "#4FB6FF", "#9C7BE0"].forEach((col, i, a) => { c.fillStyle = col; c.fillRect(x + w * i / a.length, y, w / a.length + 1, h); });
+    if (k.dot) { c.fillStyle = k.dot; for (let yy = y + 6; yy < y + h; yy += 12) for (let xx = x + ((yy - y) / 12 % 2 ? 9 : 3); xx < x + w; xx += 12) { c.beginPath(); c.arc(xx, yy, 2.4, 0, TAU); c.fill(); } }
+    if (k.stripe) { c.strokeStyle = k.stripe; c.lineWidth = 5; for (let d = -h; d < w + h; d += 14) { c.beginPath(); c.moveTo(x + d, y); c.lineTo(x + d + h, y + h); c.stroke(); } }
+    if (k.band) { c.fillStyle = k.band; for (let yy = y + 4; yy < y + h; yy += 14) c.fillRect(x, yy, w, 5); }
+    if (k.star) { c.fillStyle = k.star; for (let i = 0; i < 9; i++) { const sx = x + ((i * 37) % 100) / 100 * w, sy = y + ((i * 61 + 13) % 100) / 100 * h; c.beginPath(); c.arc(sx, sy, i % 3 ? 1.4 : 2.4, 0, TAU); c.fill(); } }
+  }
+  c.restore(); rrPath(c, x, y, w, h, rad); c.lineWidth = 2.5; c.strokeStyle = EDGE; c.stroke();
+}
+const skinPreview = {};
+function previewOf(kind, id) {
+  const key = kind + id; if (skinPreview[key]) return skinPreview[key];
+  const cv = document.createElement("canvas"); cv.width = 128; cv.height = 80; const c = cv.getContext("2d"); c.scale(2, 2);
+  c.fillStyle = "#1B1640"; c.fillRect(0, 0, 64, 40);
+  if (kind === "bed") { c.fillStyle = "#EDE8FF"; rrPath(c, 4, 6, 56, 28, 6); c.fill(); paintSkin(c, "bed", id, 20, 4, 40, 32, 6, "#7D86B5"); rrPath(c, 7, 12, 10, 16, 4); c.fillStyle = "#FFFFFF"; c.fill(); c.lineWidth = 2; c.strokeStyle = EDGE; c.stroke(); }
+  else paintSkin(c, "door", id, 24, 3, 16, 34, 3, "#B98450");
+  return (skinPreview[key] = cv.toDataURL());
+}
+const ACHS = [
+  { id: "first", name: "初次驱鬼", desc: "第一次打死猛鬼", reward: 50 },
+  { id: "fast", name: "速战速决", desc: "5 分钟内打死猛鬼", reward: 100 },
+  { id: "wins10", name: "驱鬼专家", desc: "累计打死猛鬼 10 次", reward: 200 },
+  { id: "survive15", name: "钉子户", desc: "一局坚持 15 分钟", reward: 100 },
+  { id: "allsafe", name: "全员平安", desc: "一个人都没被抓走就打死猛鬼", reward: 120 },
+  { id: "last", name: "孤胆英雄", desc: "只剩你一个人时打死猛鬼", reward: 150 },
+  { id: "door12", name: "神之门", desc: "把门升到满级", reward: 120 },
+  { id: "bed12", name: "龙床", desc: "把床升到满级", reward: 120 },
+  { id: "full", name: "满屋子", desc: "13 个空位全部造满", reward: 80 },
+  { id: "gift20", name: "拆盒狂魔", desc: "累计开 20 个礼盒", reward: 80 },
+  { id: "help10", name: "热心室友", desc: "累计送室友金币 10 次", reward: 80 },
+  { id: "pop10", name: "拍鬼达人", desc: "累计拍散 10 只小鬼", reward: 80 },
+  { id: "rich", name: "万元户", desc: "一局里攒到 10 万金币", reward: 80 },
+  { id: "games20", name: "宿舍常客", desc: "累计玩 20 局", reward: 100 },
+  { id: "collector", name: "收藏家", desc: `造过全部 ${Object.keys(BUILD).length} 种建筑`, reward: 200 },
+];
+const DAILY = [
+  { id: "play", text: "玩 2 局", goal: 2, reward: 30 },
+  { id: "win", text: "打死 1 次猛鬼", goal: 1, reward: 60 },
+  { id: "gift", text: "开 3 个礼盒", goal: 3, reward: 40 },
+  { id: "build", text: "造 10 个建筑", goal: 10, reward: 30 },
+  { id: "limited", text: "造 3 个「本局限定」建筑", goal: 3, reward: 40 },
+  { id: "help", text: "送室友金币 2 次", goal: 2, reward: 40 },
+  { id: "dmg", text: "累计对猛鬼造成 5 万伤害", goal: 50000, reward: 50 },
+  { id: "survive", text: "一局坚持 8 分钟", goal: 1, reward: 50 },
+  { id: "door", text: "把门升到 Lv.6", goal: 1, reward: 40 },
+];
+const today = () => { const d = new Date(), p = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+function ensureDaily() {
+  if (meta.daily && meta.daily.date === today()) return meta.daily;
+  meta.daily = { date: today(), list: shuffle(DAILY).slice(0, 3).map(d => ({ id: d.id, prog: 0, claimed: false })) }; saveMeta();
+  return meta.daily;
+}
+function dailyAdd(id, n = 1, set) { for (const t of ensureDaily().list) if (t.id === id) t.prog = set ? Math.max(t.prog, n) : t.prog + n; }
+let toastQ = [], toastBusy = false;
+function toast(msg) {
+  toastQ.push(msg); if (toastBusy) return;
+  const next = () => { const m = toastQ.shift(); if (!m) { toastBusy = false; return; } toastBusy = true; const el = $("toast"); el.textContent = m; el.classList.add("show"); setTimeout(() => { el.classList.remove("show"); setTimeout(next, 300); }, 2200); };
+  next();
+}
+function unlock(id) {
+  if (meta.ach[id]) return; const a = ACHS.find(x => x.id === id); if (!a) return;
+  meta.ach[id] = Date.now(); meta.coins += a.reward; saveMeta();
+  toast(`🏆 成就「${a.name}」 +${a.reward} 眠币`); sfx("thanks");
+}
+function track(k, v) {
+  const L = meta.life; ensureDaily();
+  if (k === "build") {
+    dailyAdd("build"); if (!CORE.includes(v)) dailyAdd("limited");
+    if (!L.built.includes(v)) L.built.push(v);
+    if (Object.keys(BUILD).every(t => L.built.includes(t))) unlock("collector");
+    if (me.room && me.room.slots.every(sl => sl.b)) unlock("full");
+  } else if (k === "gift") { L.gifts++; dailyAdd("gift"); if (L.gifts >= 20) unlock("gift20"); }
+  else if (k === "help") { L.helps++; dailyAdd("help"); if (L.helps >= 10) unlock("help10"); }
+  else if (k === "pop") { L.pops++; if (L.pops >= 10) unlock("pop10"); }
+  else if (k === "door") { if (v >= 6) dailyAdd("door", 1, true); if (v >= DOOR.max) unlock("door12"); }
+  else if (k === "bed") { if (v >= BED.max) unlock("bed12"); }
+  else if (k === "end") {
+    L.games++; dailyAdd("play"); dailyAdd("dmg", Math.round(stats.dmg));
+    if (v.survived >= 480) dailyAdd("survive", 1, true);
+    if (v.survived >= 900) unlock("survive15");
+    if (L.games >= 20) unlock("games20");
+    if (v.win) {
+      L.wins++; dailyAdd("win"); unlock("first");
+      if (v.survived < 300) unlock("fast");
+      if (L.wins >= 10) unlock("wins10");
+      if (deaths === 0) unlock("allsafe");
+      if (v.alive === 1) unlock("last");
+    }
+  }
+  saveMeta();
+}
+let metaTab = "wardrobe";
+function openMeta(tab) { metaTab = tab || metaTab; renderMeta(); $("meta").hidden = false; sfx("click"); }
+function renderMeta() {
+  $("meta-coins2").textContent = meta.coins;
+  $("meta-tabs").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mt === metaTab)));
+  let h = "";
+  if (metaTab === "wardrobe") {
+    $("meta-title").textContent = "衣柜";
+    for (const [kind, label] of [["bed", "床单"], ["door", "门"], ["frame", "头像框"]]) {
+      h += `<div class="meta-sec"><h4>${label}</h4><div class="skins">` + COSMETICS[kind].map(k => {
+        const own = meta.owned[kind].includes(k.id), on = meta.equip[kind] === k.id;
+        const img = kind === "frame" ? `<img class="av${frameCls(k.id)}" src="${me.url}" alt="">` : `<img src="${previewOf(kind, k.id)}" alt="">`;
+        return `<button class="skin${on ? " on" : ""}" type="button" data-skin="${kind}:${k.id}">${img}<span>${k.name}</span>${on ? `<small class="own">使用中</small>` : own ? `<small class="own">已拥有</small>` : `<small>🌙 ${k.price}</small>`}</button>`;
+      }).join("") + `</div></div>`;
+    }
+    h += `<p class="note">皮肤只改变外观。打完一局按名次、坚持时间和伤害发眠币。</p>`;
+  } else if (metaTab === "tasks") {
+    $("meta-title").textContent = "每日任务";
+    h = ensureDaily().list.map((t, i) => {
+      const d = DAILY.find(x => x.id === t.id), done = t.prog >= d.goal, p = Math.min(1, t.prog / d.goal);
+      return `<div class="task"><div><b>${d.text}</b><small>${fmt(Math.min(t.prog, d.goal))} / ${fmt(d.goal)} · 奖励 🌙 ${d.reward}</small><div class="pbar"><i style="width:${p * 100}%"></i></div></div>
+        <button class="claim" type="button" data-claim="${i}" ${done && !t.claimed ? "" : "disabled"}>${t.claimed ? "已领取" : done ? "领取" : "进行中"}</button></div>`;
+    }).join("") + `<p class="note">每天 0 点换一批新任务。</p>`;
+  } else {
+    $("meta-title").textContent = "成就";
+    const got = ACHS.filter(a => meta.ach[a.id]).length;
+    h = `<p class="note" style="margin:0 2px">已解锁 ${got} / ${ACHS.length}</p>` + ACHS.map(a => `<div class="ach${meta.ach[a.id] ? "" : " lock"}"><div><b>${meta.ach[a.id] ? "🏆" : "🔒"} ${a.name}</b><small>${a.desc}</small></div><span class="rw">${meta.ach[a.id] ? "已获得" : "🌙 " + a.reward}</span></div>`).join("");
+    meta.seen = Object.keys(meta.ach).length; saveMeta();
+  }
+  $("meta-body").innerHTML = h;
+  refreshMetaBadges();
+}
+function refreshMetaBadges() {
+  $("meta-coins").textContent = meta.coins;
+  const d = ensureDaily(); $("task-dot").hidden = !d.list.some(t => !t.claimed && t.prog >= DAILY.find(x => x.id === t.id).goal);
+  $("ach-dot").hidden = Object.keys(meta.ach).length <= (meta.seen || 0);
+}
+$("meta-body").addEventListener("click", e => {
+  const sk = e.target.closest("[data-skin]"), cl = e.target.closest("[data-claim]");
+  if (sk) {
+    const [kind, id] = sk.dataset.skin.split(":"), k = skinOf(kind, id);
+    if (!meta.owned[kind].includes(id)) {
+      if (meta.coins < k.price) { sfx("error"); toast(`眠币不够，还差 ${k.price - meta.coins}`); return; }
+      meta.coins -= k.price; meta.owned[kind].push(id); sfx("open"); toast(`买到了「${k.name}」`);
+    } else sfx("click");
+    meta.equip[kind] = id; saveMeta();
+    if (me) { if (kind === "frame") { me.frame = id; $("me-av").className = "me-av" + frameCls(id); } else me.skin[kind] = id; }
+    renderMeta();
+  } else if (cl && !cl.disabled) {
+    const t = ensureDaily().list[+cl.dataset.claim], d = DAILY.find(x => x.id === t.id);
+    t.claimed = true; meta.coins += d.reward; saveMeta(); sfx("coin"); toast(`领取 🌙 ${d.reward} 眠币`); renderMeta();
+  }
+});
+document.querySelectorAll("[data-meta]").forEach(b => b.addEventListener("click", () => { auInit(); openMeta(b.dataset.meta); }));
+$("meta-tabs").addEventListener("click", e => { const b = e.target.closest("[data-mt]"); if (b) { metaTab = b.dataset.mt; sfx("click"); renderMeta(); } });
+$("meta-close").addEventListener("click", () => { $("meta").hidden = true; sfx("click"); refreshMetaBadges(); });
+
+/* ================= save & resume an unfinished night ================= */
+const SAVE_KEY = "mc-save";
+const ROOM_KEYS = ["alive", "bedLv", "doorLv", "doorHp", "coins", "energy", "repairCd", "tick", "catTick", "pTick", "mult", "broken", "shieldUntil", "barrier", "barrierMax",
+  "lastHit", "built", "sosAsked", "sosUntil", "boostUntil", "rageUntil", "giftT", "skin", "warned"];
+function snapshot() {
+  const ri = r => (r ? r.i : -1), pi = p => players.indexOf(p);
+  return {
+    v: 1, at: Date.now(), gt, nightT, deaths, giftT, sosCd, giveCd, avail: [...avail], stats,
+    G: Object.assign({}, G, { type: GHOSTS.indexOf(G.type), variant: G.variant.id, target: ri(G.target), path: [] }),
+    players: players.map(p => { const o = Object.assign({}, p, { room: ri(p.room), tal: p.tal ? p.tal.id : null }); delete o.img; delete o.url; delete o.path; return o; }),
+    rooms: rooms.map(r => { const o = {}; for (const k of ROOM_KEYS) o[k] = r[k]; o.occupant = pi(r.occupant); o.reserved = pi(r.reserved); o.tal = r.tal ? r.tal.id : null; o.slots = r.slots.map(sl => (sl.b ? Object.assign({}, sl.b) : null)); return o; }),
+  };
+}
+function saveGame() { if (phase === "night" && !ended && me && me.room && me.room.alive) store.set(SAVE_KEY, snapshot()); }
+const clearSave = () => store.set(SAVE_KEY, null);
+function loadSave() { const sv = store.get(SAVE_KEY, null); return sv && sv.v === 1 && Date.now() - sv.at < 6 * 3600e3 ? sv : null; }
+function restoreGame(sv) {
+  resetRooms();
+  const talOf = id => TALENTS.find(t => t.id === id) || null;
+  players = sv.players.map(o => Object.assign({}, o, { room: rooms[o.room] || null, tal: talOf(o.tal), path: [] }));
+  me = players.find(p => p.isPlayer);
+  for (const p of players) { p.img = avatarCanvas(p.av); p.url = avatarURL(p.av); }
+  $("me-av").src = me.url; $("me-av").className = "me-av" + frameCls(me.frame);
+  rooms.forEach((r, i) => {
+    const { slots, occupant, reserved, tal, ...rest } = sv.rooms[i];
+    Object.assign(r, rest, { occupant: players[occupant] || null, reserved: players[reserved] || null, tal: talOf(tal) });
+    r.slots.forEach((sl, k) => { sl.b = slots[k] ? Object.assign({}, slots[k]) : null; });
+  });
+  G = Object.assign({}, sv.G, { type: GHOSTS[sv.G.type] || GHOSTS[1], variant: VARIANTS.find(v => v.id === sv.G.variant) || VARIANTS[0], target: rooms[sv.G.target] || null, path: [] });
+  if ((G.state === "walk" || G.state === "attack") && G.target) { G.state = "walk"; G.tele = 0; route(G, { kind: "door", room: G.target }); }
+  else if (G.state === "enter" && G.target) G.path = [{ ...G.target.doorInner }, { ...G.target.bedWay }, { ...G.target.bedPt }];
+  else if (G.state === "retreat") route(G, { kind: "altar" });
+  else if (G.state !== "heal") { G.state = "idle"; G.wait = 1; }
+  gt = sv.gt; nightT = sv.nightT; deaths = sv.deaths; giftT = sv.giftT; sosCd = sv.sosCd; giveCd = sv.giveCd; avail = new Set(sv.avail); stats = sv.stats;
+  gift = null; minions = []; helpQ = []; bullets = []; parts = []; floats = []; rings = []; fx = [];
+  phase = "night"; ended = false; paused = false; camMode = "focus"; visit = null; shake = 0; flash = 0; celebrate = 0; slowmo = 0;
+  closeSheet(); $("title").hidden = true; $("end").hidden = true; $("feed").innerHTML = ""; $("top").hidden = false;
+  buildStrip(); const mt = $("me-tal"); mt.hidden = !me.tal; if (me.tal) mt.textContent = me.tal.em;
+  feed(`接着上一局继续，已坚持 ${mmss(nightT)}`, "good");
+  togglePause(true);
+}
+setInterval(saveGame, 5000);
+addEventListener("pagehide", saveGame);
+$("resume-game").addEventListener("click", () => { auInit(); const sv = loadSave(); if (sv) { sfx("click"); restoreGame(sv); } else $("resume-game").hidden = true; });
+
+/* ================= install as an app ================= */
+let installEvt = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (phase === "title") $("install").hidden = false; });
+$("install").addEventListener("click", async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) { /* ignore */ } installEvt = null; $("install").hidden = true; });
+const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+
+/* ================= result image ================= */
+function makeShareImage() {
+  const r = lastResult; if (!r) return null;
+  const Wd = 720, Hd = 1000, cv = document.createElement("canvas"); cv.width = Wd; cv.height = Hd; const c = cv.getContext("2d");
+  const g = c.createLinearGradient(0, 0, 0, Hd); g.addColorStop(0, "#2B1E5A"); g.addColorStop(1, "#0D0A20"); c.fillStyle = g; c.fillRect(0, 0, Wd, Hd);
+  for (let i = 0; i < 40; i++) { c.fillStyle = `rgba(255,255,255,${.1 + (i % 5) * .08})`; c.beginPath(); c.arc((i * 173) % Wd, (i * 97) % 420, 1.5 + (i % 3), 0, TAU); c.fill(); }
+  const txt = (t, x, y, size, col, font = '"ZCOOL QingKe HuangYou","PingFang SC","Microsoft YaHei",sans-serif') => { c.font = `${size}px ${font}`; c.textAlign = "center"; c.textBaseline = "middle"; c.lineJoin = "round"; c.lineWidth = size * .16; c.strokeStyle = EDGE; c.strokeText(t, x, y); c.fillStyle = col; c.fillText(t, x, y); };
+  txt("眠仓计划", Wd / 2, 90, 76, "#FFD23F");
+  txt(r.win ? "打死猛鬼了！" : "被抓走了……", Wd / 2, 190, 64, r.win ? "#FFE58A" : "#FF8FA3");
+  c.save(); c.beginPath(); c.arc(Wd / 2, 330, 86, 0, TAU); c.fillStyle = me.av.bg; c.fill(); c.lineWidth = 8; c.strokeStyle = FRAME_COL[me.frame] || EDGE; c.stroke(); c.clip();
+  drawAvatar(c, Wd / 2, 348, 54, me.av, r.win ? "normal" : "scared"); c.restore();
+  const cells = [["坚持了", mmss(r.survived)], ["名次", `第 ${r.rank} 名`], ["猛鬼等级", `Lv.${r.lv}`], ["造成伤害", fmt(r.dmg)]];
+  cells.forEach(([k, v], i) => {
+    const x = 60 + (i % 2) * 310, y = 460 + Math.floor(i / 2) * 130;
+    rrPath(c, x, y, 290, 110, 22); c.fillStyle = "rgba(26,21,56,.95)"; c.fill(); c.lineWidth = 5; c.strokeStyle = EDGE; c.stroke();
+    c.font = `600 28px "PingFang SC","Microsoft YaHei",sans-serif`; c.textAlign = "left"; c.fillStyle = "#B8B1DE"; c.fillText(k, x + 24, y + 34);
+    c.font = `800 46px "Baloo 2","PingFang SC",sans-serif`; c.fillStyle = "#F5F2FF"; c.fillText(v, x + 24, y + 80);
+  });
+  if (me.tal) { c.font = `700 30px "PingFang SC","Microsoft YaHei",sans-serif`; c.textAlign = "center"; c.fillStyle = "#A8F0C0"; c.fillText(`本局天赋：${me.tal.em} ${me.tal.name}`, Wd / 2, 755); }
+  players.forEach((p, i) => {
+    const x = 105 + i * 102, y = 840;
+    c.save(); c.drawImage(p.img, x - 40, y - 40, 80, 80);
+    if (p.state === "dead") { c.fillStyle = "rgba(20,10,30,.6)"; c.beginPath(); c.arc(x, y, 38, 0, TAU); c.fill(); c.font = "800 44px sans-serif"; c.textAlign = "center"; c.fillStyle = "#FF4D6D"; c.fillText("✕", x, y + 2); }
+    c.restore();
+  });
+  c.font = `600 24px "PingFang SC","Microsoft YaHei",sans-serif`; c.textAlign = "center"; c.fillStyle = "#8A84B0";
+  c.fillText(`${today()} · zhaoyiming001.github.io/youxi`, Wd / 2, 950);
+  return cv;
+}
+$("share").addEventListener("click", () => {
+  const cv = makeShareImage(); if (!cv) return; sfx("click");
+  const url = cv.toDataURL("image/png"); $("share-img").src = url; $("share-dl").href = url; $("shareview").hidden = false;
+  const nb = $("share-native"); nb.hidden = true;
+  try { cv.toBlob(b => { if (!b) return; const f = new File([b], "眠仓计划战绩.png", { type: "image/png" }); if (navigator.canShare && navigator.canShare({ files: [f] })) { nb.hidden = false; nb.onclick = () => navigator.share({ files: [f], title: "眠仓计划战绩" }).catch(() => {}); } }); } catch (e) { /* no share support */ }
+});
+$("share-close").addEventListener("click", () => { $("shareview").hidden = true; });
 
 /* ================= camera & input ================= */
 const canvas = $("game"), ctx = canvas.getContext("2d");
@@ -1201,6 +1766,7 @@ function goHome() { visit = null; camMode = "focus"; }
 function tap(sx, sy) {
   if ((phase !== "select" && phase !== "night") || paused) return;
   const p = toWorld(sx, sy), r = roomAt(p.x, p.y);
+  if (phase === "night" && me.room && me.room.alive) { const mi = minions.findIndex(m => Math.hypot(p.x - m.x, p.y - m.y) < 26); if (mi >= 0) return popMinion(mi); }
   if (me.state !== "bed") { if (r && phase === "select") choose(r); return; }
   const mine = me.room;
   if (camMode === "overview") { if (r) focusRoom(r); return; }
@@ -1249,7 +1815,7 @@ addEventListener("keydown", e => {
 
 /* ================= player switcher ================= */
 function buildStrip() {
-  $("players").innerHTML = players.map((p, i) => `<button class="pb" type="button" data-i="${i}" aria-label="去看 ${p.isPlayer ? "我" : p.name} 的房间"><img src="${p.url}" alt=""><i class="hpb"><i></i></i><span class="atk">被打</span>${p.isPlayer ? `<span class="tag">我</span>` : ""}</button>`).join("");
+  $("players").innerHTML = players.map((p, i) => `<button class="pb" type="button" data-i="${i}" aria-label="去看 ${p.isPlayer ? "我" : p.name} 的房间"><img src="${p.url}" alt="" class="${frameCls(p.frame).trim()}"><i class="hpb"><i></i></i><span class="atk">被打</span><span class="bub"></span>${p.isPlayer ? `<span class="tag">我</span>` : ""}</button>`).join("");
 }
 $("players").addEventListener("click", e => {
   const b = e.target.closest(".pb"); if (!b || !inGame()) return;
@@ -1268,6 +1834,11 @@ function refreshStrip() {
     const bar = btn.querySelector(".hpb i"); bar.style.width = ratio * 100 + "%"; bar.style.background = ratio > .5 ? "#5CE08A" : ratio > .25 ? "#FFD23F" : "#FF4D6D";
   });
   $("view-label").textContent = camMode === "overview" ? "回房" : "全图";
+  $("players").querySelectorAll(".pb").forEach(btn => {
+    const p = players[+btn.dataset.i], r = p && p.room, bub = btn.querySelector(".bub");
+    const sos = phase === "night" && r && r.alive && !p.isPlayer && gt < r.sosUntil;
+    if (sos) { bub.textContent = "救命！"; bub.classList.add("show", "sos"); } else if (bub.classList.contains("sos")) bub.classList.remove("show", "sos");
+  });
 }
 
 /* ================= icons ================= */
@@ -1297,7 +1868,7 @@ function renderSheet() {
     title = `${D.name} · Lv.${b.lv}`;
     const cdLeft = b.cd2 > 0 ? `正在冷却，还剩 ${Math.ceil(b.cd2)} 秒。` : "";
     h = `<div class="stats"><div class="stat"><small>${D.unit}${D.suffix ? ` · ${D.suffix}` : ""}</small><b>${valText(b.type, b.lv)}${max ? "" : ` <em>→ ${valText(b.type, b.lv + 1)}</em>`}</b></div>
-      ${D.range ? `<div class="stat"><small>射程</small><b>${D.range(b.lv)}${max ? "" : ` <em>→ ${D.range(b.lv + 1)}</em>`}</b></div>` : `<div class="stat"><small>等级</small><b>${b.lv} / ${D.max}</b></div>`}</div>
+      ${D.range ? `<div class="stat"><small>射程</small><b>${rangeOf(r, b)}${max ? "" : ` <em>→ ${D.range(b.lv + 1) + tl(r, "range")}</em>`}</b></div>` : `<div class="stat"><small>等级</small><b>${b.lv} / ${D.max}</b></div>`}</div>
       <div class="sheet-actions">
         <button class="act" type="button" data-act="up">${max ? "已满级" : upLabel(D.cost[b.lv], D.en[b.lv])}</button>
         <button class="act alt" type="button" data-act="sell">拆掉 ${b.spent ? `+<i class="coin"></i><span class="num">${fmt(b.spent * .5)}</span>` : ""}${b.spentE ? ` +<i class="volt"></i><span class="num">${fmt(b.spentE * .5)}</span>` : ""}</button>
@@ -1317,7 +1888,7 @@ function renderSheet() {
       <div class="sheet-actions">
         <button class="act" type="button" data-act="door">${max ? "已满级" : upLabel(DOOR.cost[L - 1], DOOR.en[L - 1])}</button>
         <button class="act heal" type="button" data-act="repair" data-live="repair"></button>
-      </div><p class="note">升级会把多出来的耐久直接补上。手动修门每 ${REPAIR_CD} 秒能用一次。</p>`;
+      </div><p class="note">升级会把多出来的耐久直接补上。手动修门每 ${REPAIR_CD * (tl(r, "repair") ? .5 : 1)} 秒能用一次。</p>`;
   }
   $("sheet-title").textContent = title; $("sheet-body").innerHTML = h;
   refreshSheet();
@@ -1348,11 +1919,11 @@ $("sheet-body").addEventListener("click", e => {
   const btn = e.target.closest("[data-act]"); if (!btn) return;
   if (btn.disabled) { sfx("error"); return; }
   const act = btn.dataset.act, r = me.room, s = sheetSel; let ok = false, at = null;
-  if (act.startsWith("build:")) { ok = build(r, s.slot, act.slice(6)); at = s.slot; }
+  if (act.startsWith("build:")) { ok = build(r, s.slot, act.slice(6)); at = s.slot; if (ok) { stats.builds++; if (!CORE.includes(act.slice(6))) stats.limited++; track("build", act.slice(6)); } }
   else if (act === "up") { ok = upBuild(r, s.slot); at = s.slot; }
   else if (act === "sell") { sell(r, s.slot); ok = true; at = s.slot; }
-  else if (act === "bed") { ok = bedUp(r); at = r.headPt; }
-  else if (act === "door") { ok = doorUp(r); at = r.doorC; }
+  else if (act === "bed") { ok = bedUp(r); at = r.headPt; if (ok) track("bed", r.bedLv); }
+  else if (act === "door") { ok = doorUp(r); at = r.doorC; if (ok) track("door", r.doorLv); }
   else if (act === "repair") { ok = repairDoor(r); at = r.doorC; }
   if (ok && at) {
     sfx(act === "sell" ? "sell" : act === "repair" ? "fix" : act.startsWith("build") ? "build" : "upgrade");
@@ -1364,16 +1935,26 @@ $("sheet-body").addEventListener("click", e => {
 
 /* ================= pause & settings ================= */
 function syncToggles() {
-  for (const k of ["music", "sfx", "voice", "vib"]) $("t-" + k).setAttribute("aria-pressed", String(settings[k]));
-  if (AU.ctx) { AU.musG.gain.value = settings.music ? MUSIC_VOL : 0; AU.sfxG.gain.value = settings.sfx ? 1 : 0; }
+  $("t-vib").setAttribute("aria-pressed", String(settings.vib));
+  for (const k of ["music", "sfx", "voice"]) { const v = Math.round(vol(k) * 100), el = $("v-" + k); el.value = v; el.style.setProperty("--p", v + "%"); $("v-" + k + "-n").textContent = v; }
+  if (AU.ctx) { AU.musG.gain.value = vol("music"); AU.sfxG.gain.value = vol("sfx") * 1.25; }
 }
-for (const k of ["music", "sfx", "voice", "vib"]) $("t-" + k).addEventListener("click", () => { auInit(); settings[k] = !settings[k]; if (k === "voice" && !settings.voice) { try { speechSynthesis.cancel(); } catch (e) { /* ignore */ } } store.set("tpfy-settings", settings); syncToggles(); sfx("click"); });
+$("t-vib").addEventListener("click", () => { auInit(); settings.vib = !settings.vib; store.set("tpfy-settings", settings); syncToggles(); sfx("click"); });
+for (const k of ["music", "sfx", "voice"]) {
+  const el = $("v-" + k);
+  el.addEventListener("input", () => { auInit(); settings[k + "Vol"] = +el.value; syncToggles(); });
+  el.addEventListener("change", () => {
+    store.set("tpfy-settings", settings);
+    if (k === "sfx") sfx("coin");
+    if (k === "voice") { if (!vol("voice")) { try { speechSynthesis.cancel(); } catch (e) { /* ignore */ } } else speak("语音音量", true); }
+  });
+}
 function inGame() { return phase === "select" || phase === "night"; }
 function togglePause(force) {
   if (!inGame()) return;
   paused = force != null ? force : !paused;
   $("settings").hidden = !paused; if (paused) closeSheet();
-  $("pause-info").textContent = phase === "night" ? `${gName()} · 已坚持 ${mmss(nightT)} · 存活 ${rooms.filter(r => r.alive && r.occupant).length}/6` : "";
+  $("pause-info").textContent = [phase === "night" ? `已坚持 ${mmss(nightT)} · 存活 ${rooms.filter(r => r.alive && r.occupant).length}/6` : "", me && me.tal ? `天赋 ${me.tal.em}${me.tal.name}` : ""].filter(Boolean).join(" · ");
   sfx("click");
 }
 $("gear").addEventListener("click", () => { auInit(); if (inGame()) togglePause(); else $("settings").hidden = !$("settings").hidden; });
@@ -1413,6 +1994,13 @@ function upArrow(x, y, t) {
 }
 function drawBuilding(c, type, lv, x, y, s, st, t, icon) {
   const h = s / 2; c.save(); c.translate(x, y); c.lineJoin = "round"; c.lineCap = "round"; c.lineWidth = 2.5; c.strokeStyle = EDGE;
+  // looks get fancier every 3 levels: steel plinth from Lv.4, glowing gold plinth from Lv.7
+  const tier = lv >= 7 ? 3 : lv >= 4 ? 2 : 1;
+  if (!icon && tier > 1) {
+    if (tier === 3) { const gl = c.createRadialGradient(0, 0, h * .3, 0, 0, h * 1.55); gl.addColorStop(0, `rgba(255,210,63,${.3 + .15 * Math.sin(t * 3)})`); gl.addColorStop(1, "rgba(255,210,63,0)"); c.fillStyle = gl; c.beginPath(); c.arc(0, 0, h * 1.55, 0, TAU); c.fill(); }
+    rrPath(c, -h - 3, h * .45, s + 6, h * .62, 7); c.fillStyle = tier === 3 ? "#D9A333" : "#6E7BA6"; c.fill(); c.stroke();
+    c.fillStyle = tier === 3 ? "#FFE58A" : "#A9B6E0"; rrPath(c, -h + 2, h * .52, s - 4, 3, 2); c.fill();
+  }
   const barrel = (len, w, col) => { c.save(); c.rotate(st.aim || 0); rrPath(c, 0, -w / 2, len, w, 3); c.fillStyle = col; c.fill(); c.stroke(); if (st.flash > 0) { c.beginPath(); c.arc(len + 5, 0, w * .7, 0, TAU); c.fillStyle = "#FFE26A"; c.fill(); } c.restore(); };
   switch (type) {
     case "turret":
@@ -1566,7 +2154,12 @@ function drawBuilding(c, type, lv, x, y, s, st, t, icon) {
       c.strokeStyle = "#C9A0FF"; c.lineWidth = 2.5; c.beginPath();
       for (let k = 0; k < 24; k++) { const a = k / 24 * TAU * 2 + t * 5, rad = 3 + k * .7; c.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); } c.stroke();
     }
-    c.beginPath(); c.arc(h - 2, -h + 2, 8, 0, TAU); c.fillStyle = "#FFD23F"; c.fill(); c.lineWidth = 2; c.strokeStyle = EDGE; c.stroke();
+    if (tier === 3 && !reduce) for (let k = 0; k < 2; k++) {
+      const ph = (t * .7 + k * .5) % 1, sx = Math.cos(k * 2.4 + Math.floor(t * .7 + k * .5) * 1.7) * h * .8, sy = -h * .2 - ph * h * .9, sz = 4 * Math.sin(ph * Math.PI);
+      c.fillStyle = "#FFF6C8"; c.beginPath(); c.moveTo(sx, sy - sz); c.lineTo(sx + sz * .35, sy); c.lineTo(sx, sy + sz); c.lineTo(sx - sz * .35, sy); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(sx - sz, sy); c.lineTo(sx, sy + sz * .35); c.lineTo(sx + sz, sy); c.lineTo(sx, sy - sz * .35); c.closePath(); c.fill();
+    }
+    c.beginPath(); c.arc(h - 2, -h + 2, 8, 0, TAU); c.fillStyle = tier === 3 ? "#FF9AD5" : tier === 2 ? "#7FE7FF" : "#FFD23F"; c.fill(); c.lineWidth = 2; c.strokeStyle = EDGE; c.stroke();
     c.font = `800 11px ${FONT_NUM}`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = "#2A1A00"; c.fillText(lv, h - 2, -h + 2.5);
   }
   c.restore();
@@ -1636,7 +2229,7 @@ function drawBed(r, t) {
   const px = L ? b.x + 6 : b.x + b.w - 32;
   rrPath(ctx, px, b.y + 10, 26, b.h - 20, 9); ctx.fillStyle = "#FFFFFF"; ctx.fill(); ctx.lineWidth = 2; ctx.stroke();
   const bx = L ? b.x + 38 : b.x - 2, bw = b.w - 36;
-  rrPath(ctx, bx, b.y - 2, bw, b.h + 4, 8); ctx.fillStyle = BLANKETS[r.bedLv - 1]; ctx.fill(); ctx.lineWidth = 2.5; ctx.stroke();
+  paintSkin(ctx, "bed", r.skin && r.skin.bed, bx, b.y - 2, bw, b.h + 4, 8, BLANKETS[r.bedLv - 1]);
   ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 2;
   for (let k = 1; k < 4; k++) { const xx = bx + bw * k / 4; ctx.beginPath(); ctx.moveTo(xx, b.y + 4); ctx.lineTo(xx, b.y + b.h - 4); ctx.stroke(); }
   if (occ && (occ.state === "bed" || occ.state === "dead")) {
@@ -1653,13 +2246,13 @@ function drawBed(r, t) {
 function drawDoor(r, t) {
   const x = r.wallX, y0 = r.doorY - DOOR_H / 2, th = 16;
   if (r.broken) {
-    ctx.fillStyle = DOOR_COLORS[r.doorLv - 1]; ctx.strokeStyle = EDGE; ctx.lineWidth = 2.5;
+    ctx.fillStyle = skinBase("door", r.skin && r.skin.door) || DOOR_COLORS[r.doorLv - 1]; ctx.strokeStyle = EDGE; ctx.lineWidth = 2.5;
     for (const [dy, a] of [[-24, .5], [22, -.4]]) { ctx.save(); ctx.translate(x + (r.left ? -18 : 18), r.doorY + dy); ctx.rotate(a); rrPath(ctx, -6, -14, 12, 28, 3); ctx.fill(); ctx.stroke(); ctx.restore(); }
     return;
   }
   const sh = r.doorShake > 0 ? Math.sin(t * 80) * 3 * (r.doorShake / .25) : 0;
   ctx.save(); ctx.translate(0, sh);
-  rrPath(ctx, x - th / 2, y0, th, DOOR_H, 4); ctx.fillStyle = DOOR_COLORS[r.doorLv - 1]; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = EDGE; ctx.stroke();
+  paintSkin(ctx, "door", r.skin && r.skin.door, x - th / 2, y0, th, DOOR_H, 4, DOOR_COLORS[r.doorLv - 1]); ctx.lineWidth = 3; ctx.strokeStyle = EDGE; ctx.stroke();
   ctx.strokeStyle = "rgba(11,9,29,.35)"; ctx.lineWidth = 1.5;
   for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(x - th / 2 + 2, y0 + DOOR_H * k / 4); ctx.lineTo(x + th / 2 - 2, y0 + DOOR_H * k / 4); ctx.stroke(); }
   if (r.doorLv >= 4) { ctx.fillStyle = "rgba(255,255,255,.6)"; for (const dy of [6, DOOR_H - 6]) { ctx.beginPath(); ctx.arc(x, y0 + dy, 2.2, 0, TAU); ctx.fill(); } }
@@ -1679,6 +2272,7 @@ function drawPlaque(r, t) {
   const ax = L ? r.wallX + 20 : r.wallX - 20, ay = r.doorY - 64;
   if (occ && occ.img) {
     ctx.drawImage(occ.img, ax - 13, ay - 13, 26, 26);
+    const fc = FRAME_COL[occ.frame]; if (fc) { ctx.beginPath(); ctx.arc(ax, ay, 14, 0, TAU); ctx.lineWidth = 3; ctx.strokeStyle = fc; ctx.stroke(); }
     if (r.occupant && !r.alive) { ctx.fillStyle = "rgba(20,10,30,.6)"; ctx.beginPath(); ctx.arc(ax, ay, 13, 0, TAU); ctx.fill(); }
     let name = occ.isPlayer ? "我" : occ.name; if (name.length > 5) name = name.slice(0, 5) + "…";
     label(ctx, name, L ? ax + 17 : ax - 17, ay, 10.5, occ.isPlayer ? "#FFD23F" : r.alive ? "#E8E4FF" : "#8A84B0", FONT_CN, 700, L ? "left" : "right");
@@ -1713,6 +2307,8 @@ function drawGhost(t) {
   if (G.tele > 0) { x += Math.sin(t * 60) * 2; sc2 = 1 + (1.3 - G.tele) * .12; }
   if (G.state === "rise") { const k = clamp(G.rise / 1.6, 0, 1); sc2 = k < 1 ? 1 + 2.2 * Math.pow(k - 1, 3) + 1.2 * Math.pow(k - 1, 2) : 1; alpha = Math.min(1, k * 2); }
   if (G.state === "heal") alpha = .75;
+  if (gt < G.invisUntil) alpha = .16 + .06 * Math.sin(t * 12);
+  const V = G.variant || VARIANTS[0];
   if (G.berserk) sc2 *= 1.08;
   ctx.save(); ctx.globalAlpha = alpha;
   ctx.beginPath(); ctx.ellipse(G.x, G.y + R * .85, R * .9, R * .25, 0, 0, TAU); ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fill();
@@ -1723,7 +2319,7 @@ function drawGhost(t) {
   if (G.tele > 0) { ctx.beginPath(); ctx.arc(x, y, R * (1.2 + G.tele), 0, TAU); ctx.lineWidth = 4; ctx.strokeStyle = `rgba(255,60,90,${1 - G.tele / 1.3 * .6})`; ctx.stroke(); }
   if (G.vuln > 0) { ctx.beginPath(); ctx.arc(x, y, R * 1.25, 0, TAU); ctx.setLineDash([5, 6]); ctx.lineWidth = 2.5; ctx.strokeStyle = "#FFE26A"; ctx.stroke(); ctx.setLineDash([]); }
   ctx.translate(x, y); ctx.scale(sc2 * (G.face || 1), sc2);
-  const body = frozen ? "#BDEBFF" : "#F1EEFF";
+  const body = frozen ? "#BDEBFF" : V.body;
   ctx.beginPath(); ctx.arc(0, -R * .15, R, Math.PI, 0); ctx.lineTo(R, R * .75);
   const n = 4, seg = 2 * R / n;
   for (let k = 0; k < n; k++) { const xa = R - k * seg, xb = xa - seg, wob = reduce || frozen ? 0 : Math.sin(t * 7 + k) * R * .07; ctx.quadraticCurveTo((xa + xb) / 2, R * .45 + wob, xb, R * .75 + (k % 2 ? 0 : R * .08)); }
@@ -1735,8 +2331,8 @@ function drawGhost(t) {
   for (const sd of [-1, 1]) { ctx.beginPath(); ctx.ellipse(sd * R * 1.02, R * .15 + (G.state === "attack" ? -G.lunge * 8 : Math.sin(t * 4 + sd) * 3), R * .22, R * .14, sd * .6, 0, TAU); ctx.fill(); ctx.stroke(); }
   for (const sd of [-1, 1]) {
     ctx.beginPath(); ctx.ellipse(sd * R * .36, -R * .28, R * .2, R * .27, sd * -.2, 0, TAU); ctx.fillStyle = EDGE; ctx.fill();
-    ctx.save(); ctx.shadowColor = frozen ? "#4FE3FF" : "#FF3355"; ctx.shadowBlur = 10;
-    ctx.beginPath(); ctx.arc(sd * R * .34 + R * .05, -R * .26, R * .08, 0, TAU); ctx.fillStyle = frozen ? "#4FE3FF" : "#FF3355"; ctx.fill(); ctx.restore();
+    ctx.save(); ctx.shadowColor = frozen ? "#4FE3FF" : V.eye; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(sd * R * .34 + R * .05, -R * .26, R * .08, 0, TAU); ctx.fillStyle = frozen ? "#4FE3FF" : V.eye; ctx.fill(); ctx.restore();
   }
   ctx.lineWidth = 3; ctx.strokeStyle = EDGE;
   for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * R * .58, -R * .62); ctx.lineTo(sd * R * .16, -R * .5); ctx.stroke(); }
@@ -1747,6 +2343,9 @@ function drawGhost(t) {
   } else { ctx.moveTo(-R * .25, R * .15); for (let k = 1; k <= 4; k++) ctx.lineTo(-R * .25 + k * R * .125, R * .15 + (k % 2 ? R * .08 : 0)); ctx.stroke(); }
   if (G.lv >= 12) { ctx.beginPath(); ctx.moveTo(-R * .5, -R * 1.05); ctx.lineTo(-R * .5, -R * 1.5); ctx.lineTo(-R * .25, -R * 1.25); ctx.lineTo(0, -R * 1.6); ctx.lineTo(R * .25, -R * 1.25); ctx.lineTo(R * .5, -R * 1.5); ctx.lineTo(R * .5, -R * 1.05); ctx.closePath(); ctx.fillStyle = "#FFD23F"; ctx.fill(); ctx.lineWidth = 2.5; ctx.stroke(); }
   else if (G.lv >= 6) { ctx.fillStyle = "#3A1426"; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * R * .35, -R * 1.02); ctx.lineTo(sd * R * .62, -R * 1.45); ctx.lineTo(sd * R * .62, -R * .85); ctx.closePath(); ctx.fill(); ctx.lineWidth = 2.5; ctx.stroke(); } }
+  if (V.id === "wrecker" && G.lv < 6) { ctx.fillStyle = "#3E6B2E"; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * R * .3, -R * 1.05); ctx.lineTo(sd * R * .5, -R * 1.38); ctx.lineTo(sd * R * .58, -R * .92); ctx.closePath(); ctx.fill(); ctx.lineWidth = 2.5; ctx.stroke(); } }
+  if (V.id === "summoner" && !reduce) for (let k = 0; k < 2; k++) { const a = t * 2.5 + k * Math.PI; ctx.beginPath(); ctx.arc(Math.cos(a) * R * 1.25, -R * .2 + Math.sin(a) * R * .35, R * .13, 0, TAU); ctx.fillStyle = "#C27BFF"; ctx.fill(); ctx.lineWidth = 2; ctx.stroke(); }
+  if (V.id === "shade" && !frozen) { ctx.globalAlpha *= .5; ctx.beginPath(); ctx.arc(0, -R * .15, R * 1.12, Math.PI * 1.1, Math.PI * 1.9); ctx.strokeStyle = "#BFE4FF"; ctx.lineWidth = 3; ctx.stroke(); ctx.globalAlpha = alpha; ctx.strokeStyle = EDGE; }
   if (frozen) { ctx.fillStyle = "rgba(220,248,255,.85)"; for (const [ix, iy] of [[-.7, .5], [.6, .6], [0, -.9]]) { ctx.beginPath(); ctx.moveTo(R * ix, R * iy - 9); ctx.lineTo(R * ix + 6, R * iy); ctx.lineTo(R * ix, R * iy + 9); ctx.lineTo(R * ix - 6, R * iy); ctx.closePath(); ctx.fill(); ctx.lineWidth = 2; ctx.stroke(); } }
   ctx.restore();
   if (stunned && !frozen) for (let k = 0; k < 3; k++) { const a = t * 6 + k * TAU / 3; label(ctx, "★", x + Math.cos(a) * R * .8, y - R * 1.1 + Math.sin(a) * 5, 12, "#FFE26A"); }
@@ -1759,6 +2358,14 @@ function drawGhost(t) {
     const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk && !stunned ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : G.slow > 0 ? ["减速", "#9FE8FF"] : enr ? ["狂暴", "#FF8FA3"] : null;
     if (tag) label(ctx, tag[0], x, y + R + 14, 12, tag[1]);
   }
+}
+function drawMinion(m, t) {
+  const R = 12, y = m.y + Math.sin(t * 8 + m.t) * 3;
+  ctx.save(); ctx.translate(m.x, y); ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.arc(0, -2, R, Math.PI, 0); ctx.lineTo(R, R * .7); for (let k = 0; k < 3; k++) ctx.lineTo(R - (k + .5) * 2 * R / 3, R * (k % 2 ? .7 : .35)); ctx.lineTo(-R, R * .7); ctx.closePath();
+  ctx.fillStyle = "#E9DAFF"; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = EDGE; ctx.stroke();
+  ctx.fillStyle = "#7A2BC2"; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.arc(sd * 4, -3, 2.4, 0, TAU); ctx.fill(); }
+  ctx.restore();
 }
 function drawGift(g, t) {
   const pop = Math.min(1, g.t / .3), bob = reduce ? 0 : Math.sin(t * 4) * 3, left = g.life - g.t;
@@ -1780,7 +2387,7 @@ function jagged(x1, y1, x2, y2, segs, amp) {
   ctx.lineTo(x2, y2);
 }
 
-let lastDt = .016;
+let lastDt = .016, slowmo = 0, celebrate = 0;
 function render(t) {
   const tgt = camTarget(), k = Math.min(1, lastDt * 7);
   if (!(drag && drag.moved)) { cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
@@ -1842,7 +2449,7 @@ function render(t) {
     if (sheetSel && r === mine && sheetSel.kind === "door") { ctx.lineWidth = 3; ctx.strokeStyle = "#FFD23F"; rrPath(ctx, r.wallX - 14, r.doorY - DOOR_H / 2 - 6, 28, DOOR_H + 12, 8); ctx.stroke(); }
   }
   if (showRange) {
-    const R2 = BUILD[sheetSel.slot.b.type].range(sheetSel.slot.b.lv);
+    const R2 = rangeOf(mine, sheetSel.slot.b);
     ctx.save(); ctx.beginPath(); ctx.arc(mine.doorC.x, mine.doorC.y, R2, 0, TAU); ctx.fillStyle = "rgba(255,210,63,.08)"; ctx.fill(); ctx.setLineDash([8, 6]); ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(255,210,63,.75)"; ctx.stroke(); ctx.restore();
   }
   for (const g of rings) { ctx.globalAlpha = 1 - g.life / .7; ctx.lineWidth = 3; ctx.strokeStyle = "#9FE8FF"; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, TAU); ctx.stroke(); }
@@ -1855,6 +2462,7 @@ function render(t) {
     tags.forEach(([txt, col], k) => label(ctx, txt, mine.x0 + RW / 2 + (tags.length > 1 ? (k ? 62 : -62) : 0), mine.y0 + 158, 13, col));
   }
   drawGhost(t);
+  for (const m of minions) drawMinion(m, t);
   for (const r of rooms) drawPlaque(r, t);
   for (const [ax, ay] of arrows) upArrow(ax, ay, t);
   if (gift && phase === "night") drawGift(gift, t);
@@ -1895,6 +2503,7 @@ function updateHud(dt) {
   if (!inGame() && phase !== "end") { $("hint").hidden = true; refreshStrip(); return; }
   const r = me && me.room, inBed = r && me.state === "bed";
   $("coins").textContent = fmt(r ? r.coins : START_COINS);
+  if (r && phase === "night") { stats.maxCoins = Math.max(stats.maxCoins, r.coins); if (r.coins >= 1e5) unlock("rich"); }
   $("power").textContent = fmt(r ? r.energy : 0);
   $("income").textContent = inBed ? `+${fmtRate(incomeOf(r))}/秒` : "";
   const pr = inBed ? powerOf(r) : 0;
@@ -1912,6 +2521,11 @@ function updateHud(dt) {
   if (phase === "select") st = "马上出动";
   $("gstate").textContent = st;
   $("ghostbar").classList.toggle("alarm", phase === "night" && !!r && G.target === r && (G.state === "attack" || G.state === "walk"));
+  const mrA = r && r.alive && inBed && phase === "night";
+  const sb = $("sos"), showSos = mrA && G.target === r && (G.state === "attack" || G.state === "walk" || G.tele > 0);
+  sb.hidden = !showSos; if (showSos) { const cd = Math.ceil(sosCd - gt); sb.disabled = cd > 0; const txt = cd > 0 ? `求救 ${cd}秒` : "📣 求救"; if (sb.textContent !== txt) sb.textContent = txt; }
+  const vg = $("visit-give"), showGive = mrA && visit && visit.alive && visit.occupant && !visit.occupant.isPlayer;
+  vg.hidden = !showGive; if (showGive) { vg.disabled = gt < giveCd || r.coins < 30; const txt = `送 ${fmt(nice(Math.max(30, r.coins * .15)))}`; if (vg.textContent !== txt) vg.textContent = txt; }
   const vc = $("visit");
   if (visit && visit.occupant && inGame()) {
     vc.hidden = false;
@@ -1947,26 +2561,30 @@ function demoScene() {
   });
 }
 function showTitle() {
-  phase = "title"; ended = false; paused = false; closeSheet();
-  $("end").hidden = true; $("match").hidden = true; $("strip").hidden = true; $("visit").hidden = true; $("top").hidden = true; $("hint").hidden = true; $("feed").innerHTML = "";
-  demoScene(); renderBest(); $("title").hidden = false;
+  phase = "title"; ended = false; paused = false; celebrate = 0; slowmo = 0; closeSheet();
+  $("end").hidden = true; $("match").hidden = true; $("strip").hidden = true; $("visit").hidden = true; $("sos").hidden = true; $("top").hidden = true; $("hint").hidden = true; $("feed").innerHTML = "";
+  demoScene(); renderBest(); refreshMetaBadges(); $("title").hidden = false;
+  const sv = loadSave(); $("resume-game").hidden = !sv; if (sv) $("resume-game").textContent = `继续上一局（已坚持 ${mmss(sv.nightT)}）`;
+  $("install").hidden = !installEvt;
+  $("ios-tip").hidden = !(/iphone|ipad|ipod/i.test(navigator.userAgent) && !standalone());
 }
 
 let last = performance.now();
 function frame(ms) {
   const dt = Math.min(.05, (ms - last) / 1000); last = ms; lastDt = dt;
-  if (!paused) for (let i = 0; i < SPEED; i++) update(dt);
+  const ts = slowmo > 0 ? .3 : 1; slowmo = Math.max(0, slowmo - dt);
+  if (!paused) for (let i = 0; i < SPEED; i++) update(dt * ts);
   render(ms / 1000);
   updateHud(dt);
   musicTick();
   requestAnimationFrame(frame);
 }
 if (SPEED > 1) window.__dbg = { get me() { return me; }, get G() { return G; }, get phase() { return phase; }, get nightT() { return nightT; }, get players() { return players; }, get cam() { return { camMode, visit: visit && visit.i }; },
-  rooms, npcStep, PLAN, repairDoor, get avail() { return avail; }, get gift() { return gift; }, openGift: () => gift && openGift(), toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
+  rooms, npcStep, PLAN, repairDoor, get minions() { return minions; }, get stats() { return stats; }, get gt() { return gt; }, get avail() { return avail; }, get gift() { return gift; }, openGift: () => gift && openGift(), toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
 $("start").addEventListener("click", startMatch);
 $("again").addEventListener("click", startMatch);
 $("home").addEventListener("click", () => { sfx("click"); showTitle(); });
-document.addEventListener("visibilitychange", () => { if (document.hidden && inGame() && !paused) togglePause(true); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { saveGame(); if (inGame() && !paused) togglePause(true); } });
 buildBg(); makeIcons(); showTitle();
 requestAnimationFrame(frame);
 })();
