@@ -1763,7 +1763,7 @@ const MOB_SKILLS = [
   { id: "frost", n: "冰冻", col: "#9FE8FF", hp: 1 }, { id: "healer", n: "治疗", col: "#F4F0FF", hp: 1.1 },
   { id: "rage", n: "狂暴", col: "#FF5A6E", hp: 1 }, { id: "shield", n: "护盾", col: "#7FB8FF", hp: 1 },
 ];
-const WAVE_FIRST = 55, WAVE_GAP = 40;
+const WAVE_FIRST = 55, WAVE_GAP = 40, MOB_CAP = 240;
 let mobs = [], wave = 0, waveT = WAVE_FIRST, waveQ = [], mobShots = [], mobSfxT = 0;
 const mobsAt = r => mobs.some(m => m.room === r && m.arrived);
 const mobTargetable = m => !(m.sk === "shade" && !m.arrived);
@@ -1771,11 +1771,11 @@ const liveRooms = () => rooms.filter(r => r.alive && r.occupant);
 function resetWaves() { mobs = []; wave = 0; waveT = WAVE_FIRST; waveQ = []; mobShots = []; }
 function startWave() {
   wave++;
-  const n = Math.min(32, 3 + wave * 2), skills = shuffle(MOB_SKILLS).slice(0, wave < 3 ? 2 : wave < 6 ? 3 : 4);
-  const diff = (G0 && G0.diff) || 1, hp = 70 * Math.pow(1.3, wave - 1) * diff, dmg = 5 * Math.pow(1.22, wave - 1) * diff;
-  for (let k = 0; k < n; k++) waveQ.push({ at: gt + k * .2, sk: Math.random() < .25 ? null : pick(skills), hp, dmg });
-  banner(`第 ${wave} 波小鬼来了！一共 ${n} 只`, "danger"); sfx("summon"); speak(`第${wave}波小鬼来了`, true);
-  feed(`第 ${wave} 波小鬼从鬼井涌出来（${n} 只），这波会：${skills.map(q => q.n).join("、")}`, "bad");
+  const n = Math.min(160, 15 + wave * 10), skills = shuffle(MOB_SKILLS).slice(0, wave < 3 ? 2 : wave < 6 ? 3 : 4);
+  const diff = (G0 && G0.diff) || 1, hp = 26 * Math.pow(1.3, wave - 1) * diff, dmg = 1.6 * Math.pow(1.22, wave - 1) * diff;   // big swarms of weak little ghosts
+  for (let k = 0; k < n; k++) waveQ.push({ at: gt + k * .05, sk: Math.random() < .25 ? null : pick(skills), hp, dmg });
+  banner(`第 ${wave} 波小鬼来了！`, "danger"); sfx("summon"); speak(`第${wave}波小鬼来了`, true);
+  feed(`第 ${wave} 波小鬼从鬼井涌出来了，这波会：${skills.map(q => q.n).join("、")}`, "bad");
 }
 function spawnMob(q, x, y, room) {
   const live = liveRooms(); if (!live.length) return;
@@ -1797,7 +1797,7 @@ function killMob(i) {
   const m = mobs[i]; mobs.splice(i, 1);
   burst(m.x, m.y - 6, m.col, 10, 130);
   const r = m.killer && m.killer.alive ? m.killer : m.room;
-  if (r && r.alive) { const c = nice(Math.max(4, BED.inc(r.bedLv) * (m.small ? .6 : 1.5))); r.coins += c; if (isMine(r)) { floatText(m.x, m.y - 18, "+" + fmt(c), "#FFD23F", 12, "coin"); if (gt > mobSfxT) { mobSfxT = gt + .12; sfx("pop"); } } }
+  if (r && r.alive) { const c = nice(Math.max(2, BED.inc(r.bedLv) * (m.small ? .15 : .35))); r.coins += c; if (isMine(r)) { r.mobCoin = (r.mobCoin || 0) + c; if (gt > (r.mobCoinT || 0)) { r.mobCoinT = gt + .5; floatText(m.x, m.y - 18, "+" + fmt(r.mobCoin), "#FFD23F", 12, "coin"); r.mobCoin = 0; } if (gt > mobSfxT) { mobSfxT = gt + .12; sfx("pop"); } } }
   if (m.sk === "split" && !m.small) for (let k = 0; k < 2; k++) spawnMob({ hp: m.max * .35, dmg: m.dmg * .5, sk: null, small: true }, m.x + rand(-10, 10), m.y + rand(-10, 10), m.room);
 }
 function tapMob(i) {
@@ -1810,7 +1810,7 @@ function updateMobs(dt) {
   waveT -= dt;
   if (waveT <= 6 && waveT + dt > 6) feed(`第 ${wave + 1} 波小鬼马上要从鬼井出来了`, "");
   if (waveT <= 0) { waveT = WAVE_GAP; startWave(); }
-  while (waveQ.length && waveQ[0].at <= gt) spawnMob(waveQ.shift());
+  while (waveQ.length && waveQ[0].at <= gt && mobs.length < MOB_CAP) spawnMob(waveQ.shift());
   if (!mobs.length) return;
   // every weapon that isn't busy with a ghost shoots the nearest little ghost in range
   for (const o of rooms) {
@@ -1850,24 +1850,33 @@ function updateMobs(dt) {
     }
   }
 }
+// mob bodies are pre-rendered once per look so big swarms stay cheap to draw
+const mobSprites = new Map(), MOB_SPR = 40;
+function mobSprite(sk, small, white, blink) {
+  const key = `${sk}|${small}|${white}|${blink}`; let cv = mobSprites.get(key); if (cv) return cv;
+  const S = 3; cv = document.createElement("canvas"); cv.width = cv.height = MOB_SPR * S;
+  const c = cv.getContext("2d"); c.scale(S, S); c.translate(MOB_SPR / 2, MOB_SPR / 2); c.lineJoin = "round"; c.lineWidth = 2; c.strokeStyle = EDGE;
+  const R = small ? 7 : sk === "tank" ? 12.5 : 10, S0 = MOB_SKILLS.find(q => q.id === sk);
+  if (sk === "fast") { c.strokeStyle = "rgba(255,255,255,.5)"; for (const k of [-3, 3]) { c.beginPath(); c.moveTo(-R * .6, k + R * .9); c.lineTo(-R * .6, k + R * 1.6); c.stroke(); } c.strokeStyle = EDGE; }
+  c.beginPath(); c.arc(0, -1, R, Math.PI, 0); c.lineTo(R, R * .7);
+  for (let k = 0; k < 3; k++) c.lineTo(R - (k + .5) * 2 * R / 3, R * (k % 2 ? .7 : .3)); c.lineTo(-R, R * .7); c.closePath();
+  c.fillStyle = white ? "#FFFFFF" : S0 ? S0.col : "#D9CCFF"; c.fill(); c.stroke();
+  c.fillStyle = EDGE; for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * R * .35, -R * .2, R * .16, 0, TAU); c.fill(); }
+  if (sk === "rage") { c.beginPath(); c.moveTo(-R * .6, -R * .62); c.lineTo(-R * .15, -R * .4); c.moveTo(R * .6, -R * .62); c.lineTo(R * .15, -R * .4); c.stroke(); }
+  if (sk === "tank") { c.beginPath(); c.arc(0, -R * .55, R * .75, Math.PI, 0); c.closePath(); c.fillStyle = "#6E7BA6"; c.fill(); c.stroke(); }
+  if (sk === "bomb") { c.beginPath(); c.arc(0, -R - 3, 3, 0, TAU); c.fillStyle = blink ? "#FF3355" : "#2A1A1A"; c.fill(); c.stroke(); }
+  if (sk === "healer") { c.fillStyle = "#5CE08A"; c.fillRect(-1.6, R * .05, 3.2, R * .55); c.fillRect(-R * .27, R * .25, R * .55, 3.2); }
+  if (sk === "thief") { c.beginPath(); c.arc(R * .85, R * .2, 3.5, 0, TAU); c.fillStyle = "#FFD23F"; c.fill(); c.stroke(); }
+  if (sk === "frost") { c.strokeStyle = "#FFFFFF"; c.lineWidth = 1.6; for (let k = 0; k < 3; k++) { const a = k * Math.PI / 3; c.beginPath(); c.moveTo(Math.cos(a) * 3.5, R * .35 + Math.sin(a) * 3.5); c.lineTo(-Math.cos(a) * 3.5, R * .35 - Math.sin(a) * 3.5); c.stroke(); } }
+  mobSprites.set(key, cv); return cv;
+}
 function drawMob(m, t) {
-  const R = m.small ? 7 : m.sk === "tank" ? 12.5 : 10, x = m.x + (m.room.left ? -1 : 1) * m.lunge * 5, y = m.y - 6 + Math.sin(t * 9 + m.t) * 2.5;
-  ctx.save(); ctx.translate(x, y); ctx.lineJoin = "round"; ctx.lineWidth = 2; ctx.strokeStyle = EDGE;
+  const R = m.small ? 7 : m.sk === "tank" ? 12.5 : 10, x = m.x + (m.room.left ? -1 : 1) * m.lunge * 5, y = m.y - 6 + (reduce ? 0 : Math.sin(t * 9 + m.t) * 2.5);
   if (m.sk === "shade" && !m.arrived) ctx.globalAlpha = .35;
-  if (m.sk === "fast" && !m.arrived) { ctx.strokeStyle = "rgba(255,255,255,.5)"; for (const k of [-3, 3]) { ctx.beginPath(); ctx.moveTo(-R * .6, k + R * .9); ctx.lineTo(-R * .6, k + R * 1.8); ctx.stroke(); } ctx.strokeStyle = EDGE; }
-  ctx.beginPath(); ctx.arc(0, -1, R, Math.PI, 0); ctx.lineTo(R, R * .7);
-  for (let k = 0; k < 3; k++) ctx.lineTo(R - (k + .5) * 2 * R / 3, R * (k % 2 ? .7 : .3)); ctx.lineTo(-R, R * .7); ctx.closePath();
-  ctx.fillStyle = m.hurt > 0 ? "#FFFFFF" : m.col; ctx.fill(); ctx.stroke();
-  ctx.fillStyle = EDGE; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.arc(sd * R * .35, -R * .2, R * .16, 0, TAU); ctx.fill(); }
-  if (m.sk === "rage") { ctx.beginPath(); ctx.moveTo(-R * .6, -R * .62); ctx.lineTo(-R * .15, -R * .4); ctx.moveTo(R * .6, -R * .62); ctx.lineTo(R * .15, -R * .4); ctx.stroke(); }
-  if (m.sk === "tank") { ctx.beginPath(); ctx.arc(0, -R * .55, R * .75, Math.PI, 0); ctx.closePath(); ctx.fillStyle = "#6E7BA6"; ctx.fill(); ctx.stroke(); }
-  if (m.sk === "bomb") { ctx.beginPath(); ctx.arc(0, -R - 3, 3, 0, TAU); ctx.fillStyle = Math.sin(t * 14 + m.t) > 0 ? "#FF3355" : "#2A1A1A"; ctx.fill(); ctx.stroke(); }
-  if (m.sk === "healer") { ctx.fillStyle = "#5CE08A"; ctx.fillRect(-1.6, R * .05, 3.2, R * .55); ctx.fillRect(-R * .27, R * .25, R * .55, 3.2); }
-  if (m.sk === "thief") { ctx.beginPath(); ctx.arc(R * .85, R * .2, 3.5, 0, TAU); ctx.fillStyle = "#FFD23F"; ctx.fill(); ctx.stroke(); }
-  if (m.sk === "frost") { ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.6; for (let k = 0; k < 3; k++) { const a = k * Math.PI / 3; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 3.5, R * .35 + Math.sin(a) * 3.5); ctx.lineTo(-Math.cos(a) * 3.5, R * .35 - Math.sin(a) * 3.5); ctx.stroke(); } }
-  if (m.shield > 0) { ctx.globalAlpha = .55; ctx.beginPath(); ctx.arc(0, 0, R + 4, 0, TAU); ctx.strokeStyle = "#8FD3FF"; ctx.lineWidth = 2.5; ctx.stroke(); }
-  ctx.restore();
-  if (m.hp < m.max) { rrPath(ctx, x - 10, y - R - 8, 20, 4, 2); ctx.fillStyle = "#100D26"; ctx.fill(); rrPath(ctx, x - 10, y - R - 8, 20 * clamp(m.hp / m.max, 0, 1), 4, 2); ctx.fillStyle = "#FF8FB8"; ctx.fill(); }
+  ctx.drawImage(mobSprite(m.sk, m.small, m.hurt > 0, m.sk === "bomb" && Math.sin(t * 14 + m.t) > 0), x - MOB_SPR / 2, y - MOB_SPR / 2, MOB_SPR, MOB_SPR);
+  ctx.globalAlpha = 1;
+  if (m.shield > 0) { ctx.beginPath(); ctx.arc(x, y, R + 4, 0, TAU); ctx.strokeStyle = "rgba(143,211,255,.6)"; ctx.lineWidth = 2.5; ctx.stroke(); }
+  if (m.hp < m.max) { ctx.fillStyle = "#100D26"; ctx.fillRect(x - 10, y - R - 8, 20, 3.5); ctx.fillStyle = "#FF8FB8"; ctx.fillRect(x - 10, y - R - 8, 20 * clamp(m.hp / m.max, 0, 1), 3.5); }
 }
 
 /* ================= gift boxes (random items) ================= */
