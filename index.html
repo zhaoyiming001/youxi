@@ -224,6 +224,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
   <div class="toggles">
     <button class="toggle" type="button" id="t-music" aria-pressed="true">背景音乐<i></i></button>
     <button class="toggle" type="button" id="t-sfx" aria-pressed="true">音效<i></i></button>
+    <button class="toggle" type="button" id="t-voice" aria-pressed="true">语音播报<i></i></button>
     <button class="toggle" type="button" id="t-vib" aria-pressed="true">被砸门时震动<i></i></button>
   </div>
   <div class="sheet-actions">
@@ -462,7 +463,16 @@ function avatarCanvas(av) {
 }
 
 /* ================= sound (all synthesized) ================= */
-const settings = Object.assign({ music: true, sfx: true, vib: true }, store.get("tpfy-settings", {}));
+const settings = Object.assign({ music: true, sfx: true, voice: true, vib: true }, store.get("tpfy-settings", {}));
+// spoken announcements through the browser's built-in Chinese voice (silently skipped where unavailable)
+let lastSpeak = -1e9, zhVoice = null;
+function pickVoice() { try { zhVoice = speechSynthesis.getVoices().find(v => /zh[-_]CN/i.test(v.lang)) || speechSynthesis.getVoices().find(v => /^zh/i.test(v.lang)) || null; } catch (e) { zhVoice = null; } }
+try { if (window.speechSynthesis) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } } catch (e) { /* unsupported */ }
+function speak(text, urgent) {
+  if (!settings.voice || !window.speechSynthesis || SPEED > 1) return;
+  const now = performance.now(); if (!urgent && now - lastSpeak < 2600) return; lastSpeak = now;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "zh-CN"; u.rate = 1.12; u.pitch = 1.05; u.volume = .95; if (zhVoice) u.voice = zhVoice; speechSynthesis.speak(u); } catch (e) { /* unsupported */ }
+}
 const AU = { ctx: null, next: 0, step: 0, last: {} };
 function auInit() {
   if (AU.ctx) { if (AU.ctx.state === "suspended") AU.ctx.resume(); return; }
@@ -493,7 +503,7 @@ function noise(dur, o = {}) {
   g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(o.vol || .2, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   src.connect(f); f.connect(g); g.connect(o.bus || AU.sfxG); src.start(t, Math.random() * .5); src.stop(t + dur + .05);
 }
-const THROTTLE = { shot: 60, cannon: 150, laser: 260, tesla: 120, zap: 160, hit: 80, hitfar: 160, block: 200, absorb: 180, coin: 150, join: 60, swish: 80 };
+const THROTTLE = { step: 380, warn: 900, shot: 60, cannon: 150, laser: 260, tesla: 120, zap: 160, hit: 80, hitfar: 160, block: 200, absorb: 180, coin: 150, join: 60, swish: 80 };
 function sfx(name) {
   if (!AU.ctx || !settings.sfx) return;
   const now = performance.now(); if (THROTTLE[name] && now - (AU.last[name] || 0) < THROTTLE[name]) return; AU.last[name] = now;
@@ -531,6 +541,9 @@ function sfx(name) {
     case "levelup": T(110, .6, { type: "sawtooth", vol: .09, f2: 220, attack: .05 }); T(165, .6, { type: "sawtooth", vol: .05, f2: 330, delay: .05 }); break;
     case "kill": N(.5, { freq: 900, f2: 200, vol: .3 }); T(300, .6, { type: "triangle", vol: .1, f2: 80 }); break;
     case "repel": [784, 988, 1175].forEach((f, i) => T(f, .16, { type: "triangle", vol: .1, delay: i * .07 })); break;
+    case "warn": [0, 1].forEach(i => { T(1250, .09, { type: "square", vol: .07, delay: i * .16 }); T(940, .09, { type: "square", vol: .05, delay: i * .16 + .08 }); }); break;
+    case "step": T(70, .12, { vol: .22, f2: 45 }); N(.06, { freq: 300, vol: .08 }); break;
+    case "spawn": T(55, 1.2, { type: "sawtooth", vol: .12, f2: 110, attack: .2 }); N(1.1, { freq: 200, f2: 900, vol: .15 }); [392, 370, 349].forEach((f, i) => T(f, .5, { type: "triangle", vol: .05, delay: .6 + i * .25 })); break;
     case "win": [523, 659, 784, 1047, 1319].forEach((f, i) => T(f, .35, { type: "triangle", vol: .12, delay: i * .11 })); T(262, 1.2, { vol: .1, delay: .5 }); break;
     case "lose": [440, 415, 392, 330].forEach((f, i) => T(f, .45, { type: "triangle", vol: .11, delay: i * .22 })); T(110, 1.4, { vol: .12, delay: .7 }); break;
   }
@@ -618,7 +631,7 @@ function startMatch() {
       const p = players[i], slot = grid.querySelector(`[data-i="${i}"]`);
       slot.innerHTML = `<img src="${p.url}" alt=""><b>${p.name}</b>`; n++; $("match-count").textContent = `${n} / 6`; sfx("join");
       if (n === players.length) {
-        $("match-title").textContent = "匹配成功！"; sfx("matched");
+        $("match-title").textContent = "匹配成功！"; sfx("matched"); speak("匹配成功，快去抢房间", true);
         setTimeout(() => { if (phase !== "match") return; $("match").hidden = true; newGame(); }, 900);
       }
     }, t);
@@ -696,7 +709,7 @@ function lieDown(ch) {
   if (ch.isPlayer) {
     camMode = "focus"; visit = null; sfx("lie");
     floatText(r.headPt.x, r.headPt.y - 22, "躺平！", "#FFD23F", 22);
-    banner("躺平成功！开始产金币", "good");
+    banner("躺平成功！开始产金币", "good"); speak("躺平成功");
   }
 }
 function choose(r) {
@@ -712,7 +725,7 @@ function choose(r) {
 function startNight() {
   for (const ch of players) if (ch.state !== "bed") { if (!ch.room) { const r = freeRooms()[0]; r.reserved = ch; ch.room = r; } lieDown(ch); }
   phase = "night"; G.state = "rise"; G.rise = 0;
-  banner(`今晚来的是「${gName()}」！`, "danger"); sfx("roar");
+  banner(`今晚来的是「${gName()}」！`, "danger"); sfx("spawn"); speak(`今晚来的是${gName()}，大家小心`, true);
   feed(`${gName()}从鬼井里爬出来了：${G.type.note}`, "bad");
 }
 
@@ -724,9 +737,9 @@ function gainXp(n) {
     const ratio = G.hp / G.max; G.lv++; G.max = ghostMax(G.lv); G.hp = Math.max(1, G.max * ratio);
     sfx("levelup"); floatText(G.x, G.y - ghostR(G.lv) - 30, `升到 Lv.${G.lv}`, "#FF9A3C", 16);
     feed(`${gName()}砸门涨经验，升到 Lv.${G.lv}`, "bad");
-    if (G.lv === 3) feed(`${gName()}学会了「重击」：蓄力后打出 3 倍伤害`, "bad");
-    if (G.lv === 5) feed(`${gName()}学会了「干扰」：让建筑停摆几秒`, "bad");
-    if (G.lv === 8) feed(`${gName()}学会了「狂暴」：血少时砸门更快`, "bad");
+    if (G.lv === 3) { feed(`${gName()}学会了「重击」：蓄力后打出 3 倍伤害`, "bad"); speak(`${gName()}学会了重击`); }
+    if (G.lv === 5) { feed(`${gName()}学会了「干扰」：让建筑停摆几秒`, "bad"); speak(`${gName()}学会了干扰`); }
+    if (G.lv === 8) { feed(`${gName()}学会了「狂暴」：血少时砸门更快`, "bad"); speak(`${gName()}学会了狂暴`); }
   }
 }
 function pickTarget(exclude) {
@@ -736,8 +749,8 @@ function pickTarget(exclude) {
   const top = Math.max(...c.map(r => r.doorHp + r.barrier));
   const score = r => (r.doorHp + r.barrier) / top * .8 + Math.random() * .6 + Math.abs(r.doorY - G.y) / MAP_H * .25;
   c.sort((a, b) => score(a) - score(b));
-  const r = c[0]; G.target = r; G.state = "walk"; G.attackT = 0; G.tele = 0; route(G, { kind: "door", room: r });
-  if (isMine(r)) { banner(`${gName()}朝你的门来了！`, "danger"); feed(`${gName()}盯上了你`, "bad"); sfx("alarm"); goHome(); }
+  const r = c[0]; G.target = r; G.state = "walk"; G.attackT = 0; G.tele = 0; r.warned = false; route(G, { kind: "door", room: r });
+  if (isMine(r)) { banner(`${gName()}朝你的门来了！`, "danger"); feed(`${gName()}盯上了你`, "bad"); sfx("alarm"); speak(`${gName()}朝你来了`, true); goHome(); }
   else feed(`${gName()}盯上了 ${r.occupant.name}`);
 }
 function hitGhost(dmg, mine, quiet) {
@@ -765,6 +778,7 @@ function damageDoor(r, dmg) {
   if (phase !== "night") return;
   if (isMine(r)) {
     shake = Math.min(10, shake + 5); sfx("hit"); vibrate(35);
+    if (!r.warned && r.doorHp > 0 && r.doorHp < doorMax(r) * .3) { r.warned = true; sfx("warn"); speak("门快撑不住了！", true); banner("门快撑不住了！", "danger"); }
     if (gt - lastAlarm > 7) { lastAlarm = gt; banner(`${gName()}在砸你的门！`, "danger"); goHome(); }
   } else if (camMode === "overview" || visit === r) sfx("hitfar");
   if (r.doorHp <= 0) {
@@ -778,7 +792,7 @@ function killRoom(r) {
   burst(r.headPt.x, r.headPt.y, "#FF4D6D", 26, 200); sfx("kill");
   G.hp = Math.min(G.max, G.hp + G.max * .3); gainXp(Math.ceil(ghostNeed(G.lv) / 3));
   if (occ.isPlayer) { banner("你被抓走了……", "danger"); endGame(false); G.state = "idle"; G.wait = 99; return; }
-  feed(`${occ.name} 被抓走了，${gName()}回血又涨经验`, "bad");
+  feed(`${occ.name} 被抓走了，${gName()}回血又涨经验`, "bad"); speak(`${occ.name}被抓走了`);
   G.state = "idle"; G.wait = 1.4; G.target = null;
 }
 function updateGhost(dt) {
@@ -787,11 +801,11 @@ function updateGhost(dt) {
   if (G.state === "hidden" || G.state === "dead") return;
   if (gt < G.frozenUntil || gt < G.stunUntil) return;
   const sp = 110 + G.lv * 5;
-  if (!G.berserk && nightT > BERSERK_AT) { G.berserk = true; banner(`${gName()}暴走了！不再逃跑`, "danger"); sfx("roar"); feed("暴走：不会再逃回鬼井，伤害每分钟变高", "bad"); }
+  if (!G.berserk && nightT > BERSERK_AT) { G.berserk = true; banner(`${gName()}暴走了！不再逃跑`, "danger"); sfx("roar"); speak(`${gName()}暴走了，不会再逃跑`, true); feed("暴走：不会再逃回鬼井，伤害每分钟变高", "bad"); }
   if (!G.berserk && (G.state === "walk" || G.state === "attack") && G.hp < G.max * .25) {
     if (isMine(t)) {
       const bonus = nice(25 * Math.pow(1.5, G.lv - 1));
-      t.coins += bonus; banner(`击退${gName()}！+${fmt(bonus)} 金币`, "good"); sfx("repel");
+      t.coins += bonus; banner(`击退${gName()}！+${fmt(bonus)} 金币`, "good"); sfx("repel"); speak("击退成功，快追着打");
       floatText(t.headPt.x, t.headPt.y - 30, "+" + fmt(bonus), "#FFD23F", 20, "coin");
     }
     G.state = "retreat"; route(G, { kind: "altar" }); G.target = null; G.tele = 0; G.enraged = false;
@@ -803,6 +817,7 @@ function updateGhost(dt) {
     case "idle": G.wait -= dt; if (G.wait <= 0) pickTarget(); break;
     case "walk":
       if (!t.alive) { pickTarget(); break; }
+      if (isMine(t) && Math.hypot(G.x - t.doorOuter.x, G.y - t.doorOuter.y) < 330) sfx("step");
       if (moveAlong(G, dt, sp)) { G.state = "attack"; G.atk = .5; G.attackT = 0; G.face = t.left ? -1 : 1; }
       break;
     case "attack": {
@@ -826,7 +841,7 @@ function updateGhost(dt) {
       }
       if (G.lv >= 3 && G.smashT <= 0 && t.doorHp > 0) {
         G.smashT = 18; G.tele = 1.3;
-        if (isMine(t)) { banner(`${gName()}要重击了！`, "danger"); sfx("alarm"); }
+        if (isMine(t)) { banner(`${gName()}要重击了！`, "danger"); sfx("alarm"); speak("小心重击", true); }
         break;
       }
       const spd = (1 - G.slow) * (gt < G.enrageUntil ? 1.5 : 1) * (G.berserk ? 1.3 : 1);
@@ -993,7 +1008,7 @@ function endGame(win) {
   if (win) { rec.wins++; if (!rec.fastest || survived < rec.fastest) { rec.fastest = survived; fastestNew = true; } }
   store.set("tpfy-rec", rec);
   setTimeout(() => {
-    sfx(win ? "win" : "lose");
+    sfx(win ? "win" : "lose"); speak(win ? `打死${gName()}了，胜利！` : "你被抓走了", true);
     $("end-title").textContent = win ? `打死${gName()}了！` : "被抓走了";
     $("end-title").className = "end-title " + (win ? "win" : "lose");
     $("end-sub").textContent = win ? (survived < 300 ? "速战速决！今晚的鬼还没来得及变强就被你们收拾了。" : "苦战到底，终于把它轰成了一缕青烟，整栋楼都能睡个好觉。")
@@ -1202,10 +1217,10 @@ $("sheet-body").addEventListener("click", e => {
 
 /* ================= pause & settings ================= */
 function syncToggles() {
-  for (const k of ["music", "sfx", "vib"]) $("t-" + k).setAttribute("aria-pressed", String(settings[k]));
+  for (const k of ["music", "sfx", "voice", "vib"]) $("t-" + k).setAttribute("aria-pressed", String(settings[k]));
   if (AU.ctx) { AU.musG.gain.value = settings.music ? .3 : 0; AU.sfxG.gain.value = settings.sfx ? 1 : 0; }
 }
-for (const k of ["music", "sfx", "vib"]) $("t-" + k).addEventListener("click", () => { auInit(); settings[k] = !settings[k]; store.set("tpfy-settings", settings); syncToggles(); sfx("click"); });
+for (const k of ["music", "sfx", "voice", "vib"]) $("t-" + k).addEventListener("click", () => { auInit(); settings[k] = !settings[k]; if (k === "voice" && !settings.voice) { try { speechSynthesis.cancel(); } catch (e) { /* ignore */ } } store.set("tpfy-settings", settings); syncToggles(); sfx("click"); });
 function inGame() { return phase === "select" || phase === "night"; }
 function togglePause(force) {
   if (!inGame()) return;
@@ -1244,6 +1259,7 @@ function miniIcon(kind, x, y, r) {
 function upArrow(x, y, t) {
   const bob = reduce ? 0 : Math.sin(t * 5) * 2;
   ctx.save(); ctx.translate(x, y + bob);
+  ctx.beginPath(); ctx.arc(0, 0, 13, 0, TAU); ctx.fillStyle = `rgba(92,224,138,${.18 + .12 * Math.sin(t * 5)})`; ctx.fill();
   ctx.beginPath(); ctx.arc(0, 0, 9, 0, TAU); ctx.fillStyle = "#5CE08A"; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = EDGE; ctx.stroke();
   ctx.beginPath(); ctx.moveTo(0, -5.5); ctx.lineTo(5.5, .5); ctx.lineTo(2, .5); ctx.lineTo(2, 5); ctx.lineTo(-2, 5); ctx.lineTo(-2, .5); ctx.lineTo(-5.5, .5); ctx.closePath(); ctx.fillStyle = "#FFFFFF"; ctx.fill();
   ctx.restore();
@@ -1461,7 +1477,7 @@ function drawDoor(r, t) {
   if (r.barrier > 1) { ctx.save(); ctx.globalAlpha = .25 + .35 * (r.barrier / r.barrierMax); ctx.beginPath(); ctx.ellipse(x, r.doorY, 20, 46, 0, 0, TAU); ctx.strokeStyle = "#8FD3FF"; ctx.lineWidth = 4; ctx.stroke(); ctx.restore(); }
   if (gt < r.shieldUntil) { ctx.save(); ctx.globalAlpha = .35 + .15 * Math.sin(t * 10); ctx.beginPath(); ctx.ellipse(x, r.doorY, 30, 54, 0, 0, TAU); ctx.fillStyle = "#FFD23F"; ctx.fill(); ctx.globalAlpha = .9; ctx.lineWidth = 3; ctx.strokeStyle = "#FFE9A0"; ctx.stroke(); ctx.restore(); }
 }
-function drawPlaque(r) {
+function drawPlaque(r, t) {
   const occ = r.occupant || r.reserved, L = r.left;
   const ax = L ? r.wallX + 20 : r.wallX - 20, ay = r.doorY - 64;
   if (occ && occ.img) {
@@ -1475,7 +1491,11 @@ function drawPlaque(r) {
     rrPath(ctx, bx, by, 64, 8, 4); ctx.fillStyle = "#100D26"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = EDGE; ctx.stroke();
     rrPath(ctx, bx + 1.5, by + 1.5, 61 * ratio, 5, 3); ctx.fillStyle = ratio > .5 ? "#5CE08A" : ratio > .25 ? "#FFD23F" : "#FF4D6D"; ctx.fill();
     if (r.barrierMax > 0) { rrPath(ctx, bx + 1.5, by - 4, 61 * clamp(r.barrier / r.barrierMax, 0, 1), 3, 2); ctx.fillStyle = "#8FD3FF"; ctx.fill(); }
-    label(ctx, "门" + r.doorLv, L ? bx + 70 : bx - 6, by + 4, 9.5, "#D8D2FF", FONT_CN, 700, L ? "left" : "right");
+    const hit = phase === "night" && G.target === r && (G.state === "attack" || G.state === "enter");
+    if (hit) {
+      ctx.save(); ctx.globalAlpha = .55 + .45 * Math.sin(t * 10); rrPath(ctx, bx - 3, by - 3, 70, 14, 6); ctx.lineWidth = 3; ctx.strokeStyle = "#FF4D6D"; ctx.stroke(); ctx.restore();
+      label(ctx, "门 " + Math.ceil(ratio * 100) + "%", bx + 32, by - 11, 12, ratio > .5 ? "#A8F0C0" : ratio > .25 ? "#FFE26A" : "#FF8FA3", FONT_NUM, 800);
+    }
   }
 }
 function drawWalker(ch, t) {
@@ -1575,6 +1595,7 @@ function render(t) {
 
   const mine = me && me.room, homeView = camMode === "focus" && !visit;
   const myTurn = mine && mine.alive && me.state === "bed" && inGame();
+  const arrows = [];
   const showRange = sheetSel && sheetSel.kind === "slot" && sheetSel.slot.b && BUILD[sheetSel.slot.b.type].range;
   for (const r of rooms) {
     for (const s of r.slots) {
@@ -1583,7 +1604,7 @@ function render(t) {
         drawBuilding(ctx, s.b.type, s.b.lv, s.x, s.y + (born < .3 ? -Math.sin(born / .3 * Math.PI) * 8 : 0), 42,
           { aim: s.b.aim, flash: s.b.flash, active: s.b.active, offUntil: s.b.offUntil, firing: s.b.firing, charge: phase === "night" ? chargeOf(s.b) : null }, t, false);
         if (s.b.firing && ghostTargetable()) { ctx.save(); ctx.lineCap = "round"; for (const [w, col] of [[8, "rgba(255,90,200,.35)"], [3, "#FFE0F7"]]) { ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(G.x, G.y - 10); ctx.lineWidth = w * (.7 + s.b.ramp * .6); ctx.strokeStyle = col; ctx.stroke(); } ctx.restore(); }
-        if (r === mine && myTurn && canUpB(r, s.b)) upArrow(s.x - 19, s.y - 19, t);
+        if (r === mine && myTurn && homeView && canUpB(r, s.b)) arrows.push([s.x, s.y - 27]);
       } else if (r === mine && homeView && myTurn && phase !== "end") {
         const sel = sheetSel && sheetSel.slot === s;
         ctx.save(); ctx.globalAlpha = sel ? 1 : .4 + .2 * Math.sin(t * 3); ctx.setLineDash([6, 5]); ctx.lineWidth = 2.5; ctx.strokeStyle = sel ? "#FFD23F" : "#FFFFFF";
@@ -1593,7 +1614,7 @@ function render(t) {
       if (sheetSel && sheetSel.slot === s && s.b) { ctx.lineWidth = 3; ctx.strokeStyle = "#FFD23F"; rrPath(ctx, s.x - 25, s.y - 25, 50, 50, 12); ctx.stroke(); }
     }
     drawBed(r, t);
-    if (r === mine && myTurn && canUpBed(r)) upArrow(r.left ? r.bed.x + r.bed.w + 4 : r.bed.x - 4, r.bed.y + 2, t);
+    if (r === mine && myTurn && homeView && canUpBed(r)) arrows.push([r.bed.x + r.bed.w / 2 + (r.left ? 18 : -18), r.bed.y + r.bed.h / 2]);
     if (sheetSel && r === mine && sheetSel.kind === "bed") { ctx.lineWidth = 3; ctx.strokeStyle = "#FFD23F"; rrPath(ctx, r.bed.x - 9, r.bed.y - 9, r.bed.w + 18, r.bed.h + 18, 14); ctx.stroke(); }
     if (r.occupant && !r.alive) { ctx.fillStyle = "rgba(60,0,20,.45)"; ctx.fillRect(r.x0, r.y0, RW, RH); }
     if (phase === "select" && !r.reserved && me.state !== "bed") {
@@ -1605,8 +1626,8 @@ function render(t) {
     if (r === mine && camMode !== "focus" && phase !== "select") { ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,210,63,.55)"; ctx.setLineDash([10, 8]); ctx.strokeRect(r.x0 + 4, r.y0 + 4, RW - 8, RH - 8); ctx.setLineDash([]); }
   }
   for (const r of rooms) {
-    drawDoor(r, t); drawPlaque(r);
-    if (r === mine && myTurn && canUpDoor(r)) upArrow(r.wallX + (r.left ? -18 : 18), r.doorY - DOOR_H / 2 - 4, t);
+    drawDoor(r, t);
+    if (r === mine && myTurn && homeView && canUpDoor(r)) arrows.push([r.wallX, r.doorY]);
     if (sheetSel && r === mine && sheetSel.kind === "door") { ctx.lineWidth = 3; ctx.strokeStyle = "#FFD23F"; rrPath(ctx, r.wallX - 14, r.doorY - DOOR_H / 2 - 6, 28, DOOR_H + 12, 8); ctx.stroke(); }
   }
   if (showRange) {
@@ -1617,6 +1638,8 @@ function render(t) {
   ctx.globalAlpha = 1;
   if (phase === "select") for (const ch of players) if (ch.state === "walk" || ch.state === "idle") drawWalker(ch, t);
   drawGhost(t);
+  for (const r of rooms) drawPlaque(r, t);
+  for (const [ax, ay] of arrows) upArrow(ax, ay, t);
   for (const b of bullets) { ctx.beginPath(); ctx.arc(b.x, b.y, b.kind === "c" ? 8 : 5, 0, TAU); ctx.fillStyle = b.kind === "c" ? "#2E2A36" : "#FFE26A"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = b.kind === "c" ? "#FF8A3C" : EDGE; ctx.stroke(); }
   for (const f of fx) {
     const a = 1 - f.t / f.life; ctx.globalAlpha = a; ctx.lineCap = "round";
