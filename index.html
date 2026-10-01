@@ -184,6 +184,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 /* ---------- overlays ---------- */
 .overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:radial-gradient(ellipse at 50% 30%,rgba(43,30,90,.72),rgba(10,8,24,.94));overflow:auto}
 #shareview,#meta{z-index:11}
+#settings{z-index:13}
 #title{background:radial-gradient(ellipse at 50% 45%,rgba(13,10,32,.62),rgba(10,8,24,.88) 75%)}
 .card{width:min(460px,100%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
 .logo{font-family:var(--f-display);font-weight:400;font-size:clamp(3.8rem,19vw,7rem);line-height:1;margin:0;color:var(--coin);letter-spacing:.04em;-webkit-text-stroke:3px var(--edge);paint-order:stroke fill;text-shadow:0 6px 0 var(--edge),0 0 40px rgba(255,210,63,.35);display:flex}
@@ -249,6 +250,65 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .fr-ice{box-shadow:0 0 0 3px #7FE7FF,0 0 12px 3px rgba(127,231,255,.8)!important}
 .fr-heart{box-shadow:0 0 0 3px #FF8FB8,0 0 10px 2px rgba(255,143,184,.8)!important}
 .fr-night{box-shadow:0 0 0 3px #B98CFF,0 0 12px 3px rgba(185,140,255,.8)!important}
+
+/* ---------- lobby & pre-match stage (full-height game screens) ---------- */
+.overlay.lobby,.overlay.stage{display:block;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px calc(env(safe-area-inset-bottom,0px) + 14px)}
+#title.lobby{background:radial-gradient(ellipse at 50% 35%,rgba(43,30,90,.35),rgba(10,8,24,.86) 70%)}
+.lobby-wrap,.stage-wrap{width:min(480px,100%);min-height:100%;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:12px}
+.lobby-top{width:100%;display:flex;align-items:center;gap:8px}
+.who{display:flex;align-items:center;gap:8px;text-align:left;background:var(--panel);border:3px solid var(--edge);border-radius:var(--wob);padding:4px 12px 4px 4px;box-shadow:var(--hi),0 3px 0 var(--edge);min-width:0;cursor:pointer}
+.who img{width:42px;height:42px;border-radius:50%;flex:none}
+.who b{display:block;font-family:var(--f-display);font-weight:400;font-size:1.05rem;letter-spacing:.04em}
+.who small{display:block;font-size:.72rem;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who:active{transform:translateY(2px)}
+.lobby-top .mcoin{margin-left:auto}
+.lobby-top .icon-btn{width:44px;height:44px}
+.lobby-hero{flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:230px;padding-top:34px}
+.sign{position:relative;padding:20px 22px 16px;text-align:center;background:linear-gradient(#3B2E7A,#251C55);border:4px solid var(--edge);border-radius:28px 34px 26px 32px/32px 26px 34px 28px;box-shadow:var(--hi),var(--lo),0 8px 0 var(--edge),0 0 70px rgba(255,210,63,.2);animation:swing 4.5s ease-in-out infinite;transform-origin:50% -40px}
+.sign::before,.sign::after{content:"";position:absolute;top:-36px;width:5px;height:36px;border-radius:3px;background:#5A4636;border:2px solid var(--edge)}
+.sign::before{left:20%}.sign::after{right:20%}
+@keyframes swing{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
+.sign .logo{font-size:clamp(3.3rem,16.5vw,6rem);justify-content:center}
+.sign .tag{margin-top:8px;font-size:.92rem}
+.peek{position:absolute;right:-24px;top:-34px;width:68px;height:68px;animation:peek 3.2s ease-in-out infinite}
+@keyframes peek{0%,100%{transform:translateY(0) rotate(10deg)}50%{transform:translateY(-9px) rotate(-4deg)}}
+.lobby-stats{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.lstat{background:var(--panel);border:3px solid var(--edge);border-radius:var(--wob);box-shadow:var(--hi),0 4px 0 var(--edge);padding:8px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.lstat img{width:30px;height:30px}
+.lstat b{font-family:var(--f-num);font-weight:800;font-size:1.2rem;line-height:1.15}
+.lstat small{font-size:.7rem;color:var(--soft)}
+.tip{width:100%;margin:0;display:flex;align-items:center;gap:10px;background:rgba(11,9,29,.72);border:2.5px dashed #4A4380;border-radius:var(--wob);padding:8px 12px;font-size:.84rem;color:var(--soft);min-height:44px;text-align:left}
+.tip b{flex:none;font-family:var(--f-display);font-weight:400;color:#2A1A00;background:var(--coin);border:2px solid var(--edge);border-radius:8px;padding:0 6px;font-size:.82rem;letter-spacing:.04em}
+.tip span{animation:feedIn .35s ease}
+.lobby-cta{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
+.btn.start{width:100%;font-size:2rem;padding:.38em 0;animation:breathe 1.8s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.03)}}
+.lobby-cta .btn.alt{width:100%}
+.lobby-nav{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;background:var(--panel);border:3px solid var(--edge);border-radius:var(--wob);padding:8px;box-shadow:var(--hi),0 5px 0 var(--edge)}
+.stage-head{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:14px}
+.ribbon{position:relative;padding:0 26px}
+.ribbon::before,.ribbon::after{content:"";position:absolute;top:12px;bottom:-10px;width:44px;background:#C98A1A;border:3px solid var(--edge)}
+.ribbon::before{left:0;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,38% 50%)}
+.ribbon::after{right:0;clip-path:polygon(0 0,100% 0,62% 50%,100% 100%,0 100%)}
+.ribbon h2{position:relative;z-index:1;margin:0;font-family:var(--f-display);font-weight:400;font-size:clamp(1.5rem,7vw,2.1rem);letter-spacing:.06em;color:#2A1A00;background:var(--coin);border:3px solid var(--edge);padding:.16em 1em;border-radius:10px 14px 9px 13px;box-shadow:var(--hi),var(--lo),0 5px 0 var(--edge);white-space:nowrap}
+.count{margin:0;font-family:var(--f-num);font-weight:800;font-size:1rem;color:var(--soft);background:rgba(11,9,29,.7);border-radius:999px;padding:2px 14px}
+.stage-body{flex:1;width:100%;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:10px 0}
+.stage-foot{width:100%;display:flex;flex-direction:column;gap:10px}
+.timer{height:16px;border-radius:99px;background:#100D26;border:3px solid var(--edge);overflow:hidden;box-shadow:0 3px 0 var(--edge)}
+.timer i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#FF4D6D,#FFD23F);border-radius:99px}
+.intel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.intel > div{background:var(--panel);border:3px solid var(--edge);border-radius:var(--wob);padding:8px 10px;box-shadow:var(--hi),0 4px 0 var(--edge);min-width:0;text-align:left}
+.intel small{display:block;font-size:.72rem;color:var(--soft)}
+.intel b{display:block;font-family:var(--f-display);font-weight:400;font-size:1.02rem;letter-spacing:.03em}
+.gintel{display:flex;align-items:center;gap:8px}
+.gintel img{width:40px;height:40px;flex:none}
+.mates{display:flex;margin-top:4px}
+.mates img{width:26px;height:26px;border-radius:50%;border:2px solid var(--edge);margin-right:-6px;background:var(--panel-2)}
+#tal-reroll{width:100%}
+#tal-reroll[disabled]{opacity:.45}
+.talents .tal{min-height:max(260px,min(330px,40vh));padding-bottom:16px;justify-content:flex-start}
+.talents .tal-ic{width:74px;height:74px}
+.talents .tal-ic img{width:52px;height:52px}
 
 /* ---------- hand-drawn sticker skin for every button ---------- */
 :root{--wob:18px 23px 16px 24px / 23px 16px 24px 18px;--wob-pill:32px 40px 30px 38px / 38px 30px 40px 32px;--hi:inset 0 3px 0 rgba(255,255,255,.26);--lo:inset 0 -4px 0 rgba(0,0,0,.16)}
@@ -323,7 +383,7 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
 </div>
 
 <div class="sheet" id="settings" hidden>
-  <div class="sheet-head"><h3>已暂停</h3><span class="small" id="pause-info" style="margin-left:auto"></span><button class="x" id="set-close" type="button" aria-label="继续游戏"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
+  <div class="sheet-head"><h3 id="set-title">已暂停</h3><span class="small" id="pause-info" style="margin-left:auto"></span><button class="x" id="set-close" type="button" aria-label="继续游戏"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
   <div class="toggles">
     <label class="slider"><span>背景音乐</span><input type="range" id="v-music" min="0" max="100" step="5" aria-label="背景音乐音量"><b id="v-music-n"></b></label>
     <label class="slider"><span>音效</span><input type="range" id="v-sfx" min="0" max="100" step="5" aria-label="音效音量"><b id="v-sfx-n"></b></label>
@@ -337,22 +397,37 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
   </div>
 </div>
 
-<div class="overlay" id="title">
-  <div class="card">
-    <h1 class="logo" aria-label="眠仓计划"><span>眠</span><span>仓</span><span>计</span><span>划</span></h1>
-    <p class="tag">躺下赚钱，造塔守门，把鬼打死。</p>
-    <button class="btn big" id="start" type="button">开始匹配</button>
-    <button class="btn alt" id="resume-game" type="button" hidden>继续上一局</button>
-    <span class="mcoin"><img class="ui-i" data-ui="moon" alt=""><b id="meta-coins">0</b> 眠币</span>
-    <div class="meta-btns">
+<div class="overlay lobby" id="title">
+  <div class="lobby-wrap">
+    <div class="lobby-top">
+      <button class="who" id="who" type="button" aria-label="换个造型"><img id="lobby-av" alt=""><span><b>我的宿舍</b><small id="lobby-sub">点头像换造型</small></span></button>
+      <span class="mcoin"><img class="ui-i" data-ui="moon" alt=""><b id="meta-coins">0</b></span>
+      <button class="icon-btn" id="lobby-gear" type="button" aria-label="设置"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M10.3 3h3.4l.5 2.6 1.9.8 2.2-1.5 2.4 2.4-1.5 2.2.8 1.9 2.6.5v3.4l-2.6.5-.8 1.9 1.5 2.2-2.4 2.4-2.2-1.5-1.9.8-.5 2.6h-3.4l-.5-2.6-1.9-.8-2.2 1.5-2.4-2.4 1.5-2.2-.8-1.9L1.4 13.7v-3.4l2.6-.5.8-1.9-1.5-2.2 2.4-2.4 2.2 1.5 1.9-.8z"/><circle cx="12" cy="12" r="3.2"/></svg></button>
+    </div>
+    <div class="lobby-hero">
+      <div class="sign">
+        <img class="peek" data-ui="ghost" alt="">
+        <h1 class="logo" aria-label="眠仓计划"><span>眠</span><span>仓</span><span>计</span><span>划</span></h1>
+        <p class="tag">躺下赚钱 · 造塔守门 · 把鬼打死</p>
+      </div>
+    </div>
+    <div class="lobby-stats">
+      <div class="lstat"><img data-ui="clock" alt=""><b id="ls-best">--</b><small>最久坚持</small></div>
+      <div class="lstat"><img data-ui="trophy" alt=""><b id="ls-wins">0</b><small>击杀猛鬼</small></div>
+      <div class="lstat"><img data-ui="flame" alt=""><b id="ls-fast">--</b><small>最快击杀</small></div>
+    </div>
+    <p class="tip"><b>小贴士</b><span id="lobby-tip"></span></p>
+    <div class="lobby-cta">
+      <button class="btn big start" id="start" type="button">开始匹配</button>
+      <button class="btn alt" id="resume-game" type="button" hidden>继续上一局</button>
+      <button class="btn alt" id="install" type="button" hidden><img class="ui-i" data-ui="phone" alt=""> 添加到手机桌面</button>
+      <p class="small" id="ios-tip" hidden>想像 App 一样打开？在 Safari 点「分享」→「添加到主屏幕」</p>
+    </div>
+    <nav class="lobby-nav">
       <button class="mbtn" type="button" data-meta="wardrobe"><img data-ui="shirt" alt="">衣柜</button>
       <button class="mbtn" type="button" data-meta="tasks"><img data-ui="clipboard" alt="">每日任务<i class="dot" id="task-dot" hidden></i></button>
       <button class="mbtn" type="button" data-meta="ach"><img data-ui="trophy" alt="">成就<i class="dot" id="ach-dot" hidden></i></button>
-    </div>
-    <p class="small" id="best">还没有战绩</p>
-    <button class="btn alt" id="install" type="button" hidden><img class="ui-i" data-ui="phone" alt=""> 添加到手机桌面</button>
-    <p class="small" id="ios-tip" hidden>想像 App 一样打开？在 Safari 点「分享」→「添加到主屏幕」</p>
-    <p class="how">抢房躺下 · 造建筑守门 · 鬼越砸越强</p>
+    </nav>
   </div>
 </div>
 
@@ -379,12 +454,27 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
 </div>
 <div class="toast" id="toast"></div>
 
-<div class="overlay" id="match" hidden>
-  <div class="card">
-    <h2 class="match-title" id="match-title">正在匹配宿舍…</h2>
-    <p class="small" id="match-count">1 / 6</p>
-    <div class="match-grid" id="match-grid"></div>
-    <div class="talents" id="talents" hidden></div>
+<div class="overlay stage" id="match" hidden>
+  <div class="stage-wrap">
+    <div class="stage-head">
+      <div class="ribbon"><h2 id="match-title">正在匹配宿舍…</h2></div>
+      <p class="count" id="match-count">1 / 6</p>
+    </div>
+    <div class="stage-body">
+      <div class="match-grid" id="match-grid"></div>
+      <div class="talents" id="talents" hidden></div>
+    </div>
+    <div class="stage-foot" id="match-foot">
+      <p class="tip"><b>小贴士</b><span id="match-tip"></span></p>
+    </div>
+    <div class="stage-foot" id="tal-foot" hidden>
+      <div class="timer"><i id="tal-bar"></i></div>
+      <div class="intel">
+        <div><small>室友</small><b>也在选天赋</b><span class="mates" id="mates"></span></div>
+        <div class="gintel"><img data-ui="ghost" alt=""><span><small>今晚的猛鬼</small><b>天赋入夜揭晓</b></span></div>
+      </div>
+      <button class="btn alt" id="tal-reroll" type="button">换一批 · 剩 1 次</button>
+    </div>
   </div>
 </div>
 
@@ -831,7 +921,7 @@ function resetRooms() {
 }
 function makePlayers() {
   const names = shuffle(NAMES).slice(0, 5);
-  me = { name: "我", isPlayer: true, skin: { bed: meta.equip.bed, door: meta.equip.door }, frame: meta.equip.frame, av: randomAvatar(), x: CX, y: rand(300, 800), path: [], state: "idle", room: null, speed: 210, face: 1 };
+  me = { name: "我", isPlayer: true, skin: { bed: meta.equip.bed, door: meta.equip.door }, frame: meta.equip.frame, av: meta.av || (meta.av = randomAvatar()), x: CX, y: rand(300, 800), path: [], state: "idle", room: null, speed: 210, face: 1 };
   const bots = names.map(name => {
     const a = weighted(ARCHETYPES);
     return { name, kind: a.kind, av: randomAvatar(), x: CX + rand(-50, 50), y: rand(60, MAP_H - 60), path: [], state: "idle", room: null, speed: rand(120, 170),
@@ -867,6 +957,7 @@ function startMatch() {
   makePlayers(); resetRooms(); phase = "match";
   const grid = $("match-grid");
   grid.hidden = false; $("talents").hidden = true; clearInterval(talentTimer);
+  $("match-foot").hidden = false; $("tal-foot").hidden = true; $("match-tip").textContent = randTip();
   grid.innerHTML = players.map((p, i) => `<div class="mslot${i === 0 ? " me" : ""}" data-i="${i}">${i === 0 ? `<img src="${p.url}" alt=""><b>我</b>` : `<span class="wait"></span><b>等待中</b>`}</div>`).join("");
   $("match-title").textContent = "正在匹配宿舍…"; $("match-count").textContent = "1 / 6";
   let n = 1, t = 400;
@@ -884,25 +975,44 @@ function startMatch() {
   }
 }
 
-let talentTimer = null;
-function showTalents() {
-  const opts = shuffle(TALENTS).slice(0, 3);
-  $("match-title").textContent = "选一个本局天赋";
-  $("match-grid").hidden = true;
-  const box = $("talents"); box.hidden = false;
-  box.classList.remove("done");
-  box.innerHTML = opts.map((o, i) => `<button class="tal" type="button" data-i="${i}" style="--tc:${TAL_CAT[o.cat][1]}"><span class="tal-cat">${TAL_CAT[o.cat][0]}</span><span class="tal-ic">${uiImg(o.ic, "")}</span><b>${o.name}</b><small>${o.desc}</small></button>`).join("");
-  let left = 10; $("match-count").textContent = `${left} 秒后随机选一个`;
-  const choose = i => {
-    if (phase !== "match" || me.tal) return;
-    clearInterval(talentTimer); me.tal = opts[i]; sfx("upgrade");
-    box.classList.add("done"); box.querySelectorAll(".tal").forEach((b, k) => b.classList.toggle("picked", k === i));
-    setTimeout(() => { if (phase !== "match") return; $("match").hidden = true; newGame(); }, 500);
-  };
-  box.onclick = e => { const b = e.target.closest(".tal"); if (b) choose(+b.dataset.i); };
-  clearInterval(talentTimer);
-  talentTimer = setInterval(() => { left--; $("match-count").textContent = `${left} 秒后随机选一个`; if (left <= 0) choose(Math.floor(Math.random() * 3)); }, 1000);
+let talentTimer = null, talOpts = [], rerolls = 1;
+const TIPS = ["鬼残血逃跑时追着打，别让它回鬼井回满血", "夜里掉下来的礼盒 14 秒内要点开", "游戏机同时产金币和电，前期先造它", "门快破时手动修门，再升门能直接补血",
+  "「本局限定」建筑每局都不一样，开局先看看", "鬼砸门越多升级越快，弱的室友要帮一把", "会放小鬼的猛鬼放出小鬼时，点一下就能拍散", "被打时点「求救」，室友会送你金币",
+  "中后期猛鬼会叫帮手，炮塔射程够远才打得到", "狙击台射程最远，适合帮邻居打鬼", "存钱罐攒得越多，利息越多", "电力能买天雷台、冰冻塔这类只要电的建筑"];
+const randTip = () => pick(TIPS);
+function dealTalents(exclude) {
+  talOpts = shuffle(TALENTS.filter(t => !exclude.includes(t))).slice(0, 3);
+  const box = $("talents"); box.classList.remove("done");
+  box.innerHTML = talOpts.map((o, i) => `<button class="tal" type="button" data-i="${i}" style="--tc:${TAL_CAT[o.cat][1]}"><span class="tal-cat">${TAL_CAT[o.cat][0]}</span><span class="tal-ic">${uiImg(o.ic, "")}</span><b>${o.name}</b><small>${o.desc}</small></button>`).join("");
 }
+function startTalentTimer(sec) {
+  let left = sec; clearInterval(talentTimer);
+  const bar = $("tal-bar"); bar.style.transition = "none"; bar.style.width = "100%"; void bar.offsetWidth;
+  bar.style.transition = `width ${sec}s linear`; bar.style.width = "0%";
+  $("match-count").textContent = `${left} 秒后随机选一个`;
+  talentTimer = setInterval(() => { left--; $("match-count").textContent = `${Math.max(0, left)} 秒后随机选一个`; if (left <= 0) chooseTalent(Math.floor(Math.random() * 3)); }, 1000);
+}
+function chooseTalent(i) {
+  if (phase !== "match" || me.tal || !talOpts[i]) return;
+  clearInterval(talentTimer); me.tal = talOpts[i]; sfx("upgrade");
+  const box = $("talents"); box.classList.add("done"); box.querySelectorAll(".tal").forEach((b, k) => b.classList.toggle("picked", k === i));
+  $("tal-bar").style.transition = "none"; $("tal-reroll").disabled = true; $("match-count").textContent = `选好了：${me.tal.name}`;
+  setTimeout(() => { if (phase !== "match") return; $("match").hidden = true; newGame(); }, 650);
+}
+function showTalents() {
+  rerolls = 1;
+  $("match-title").textContent = "选一个本局天赋";
+  $("match-grid").hidden = true; $("talents").hidden = false; $("match-foot").hidden = true; $("tal-foot").hidden = false;
+  $("mates").innerHTML = players.slice(1).map(p => `<img src="${p.url}" alt="">`).join("");
+  const rr = $("tal-reroll"); rr.disabled = false; rr.textContent = "换一批 · 剩 1 次";
+  dealTalents([]); startTalentTimer(10);
+}
+$("talents").addEventListener("click", e => { const b = e.target.closest(".tal"); if (b) chooseTalent(+b.dataset.i); });
+$("tal-reroll").addEventListener("click", () => {
+  if (phase !== "match" || me.tal || rerolls <= 0) return;
+  rerolls--; sfx("swish"); dealTalents(talOpts); startTalentTimer(8);
+  const rr = $("tal-reroll"); rr.disabled = true; rr.textContent = "已经换过了";
+});
 
 /* ================= feedback helpers ================= */
 let bannerT;
@@ -1812,7 +1922,8 @@ function makeShareImage() {
     c.restore();
   });
   c.font = `600 24px "PingFang SC","Microsoft YaHei",sans-serif`; c.textAlign = "center"; c.fillStyle = "#8A84B0";
-  c.fillText(`${today()} · zhaoyiming001.github.io/youxi`, Wd / 2, 950);
+  const site = /^https?:$/.test(location.protocol) ? (location.host + location.pathname).replace(/index\.html$/, "").replace(/\/$/, "") : "github.com/zhaoyiming001";
+  c.fillText(`${today()} · ${site}`, Wd / 2, 950);
   return cv;
 }
 $("share").addEventListener("click", () => {
@@ -2056,6 +2167,17 @@ function drawUi(c, name) {
       rrPath(c, 13, 4, 22, 40, 5); F("#2E3354"); rrPath(c, 16, 8, 16, 28, 2); F("#7FE7FF");
       poly([[20, 15], [28, 15], [28, 22], [32, 22], [24, 31], [16, 22], [20, 22]]); c.lineWidth = 2; F("#FFD23F");
       circ(24, 40, 1.8); c.fillStyle = "#FFFFFF"; c.fill(); break;
+    case "ghost":
+      c.beginPath(); c.arc(24, 20, 15, Math.PI, 0); c.lineTo(39, 38);
+      for (let k = 0; k < 4; k++) { const xa = 39 - k * 7.5, xb = xa - 7.5; c.quadraticCurveTo((xa + xb) / 2, 32, xb, 38 + (k % 2 ? 0 : 2)); }
+      c.closePath(); F("#F1EEFF");
+      for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(24 + sd * 5.5, 18, 3, 4, 0, 0, TAU); c.fillStyle = EDGE; c.fill(); c.beginPath(); c.arc(24 + sd * 5.5 + .8, 18.5, 1.3, 0, TAU); c.fillStyle = "#FF3355"; c.fill(); }
+      c.beginPath(); c.moveTo(19, 27); c.lineTo(21.5, 29); c.lineTo(24, 27); c.lineTo(26.5, 29); c.lineTo(29, 27); c.lineWidth = 2.2; c.stroke();
+      c.beginPath(); c.ellipse(8.5, 26, 4, 2.6, -.6, 0, TAU); c.lineWidth = 2.4; F("#F1EEFF"); c.beginPath(); c.ellipse(39.5, 24, 4, 2.6, .6, 0, TAU); F("#F1EEFF"); break;
+    case "clock":
+      circ(24, 25, 17); F("#FFFFFF"); circ(24, 25, 12.5); c.lineWidth = 2; c.strokeStyle = "#B8B1DE"; c.stroke(); c.strokeStyle = EDGE; c.lineWidth = 2.6;
+      rrPath(c, 19, 3, 10, 5, 2); F("#FF6B6B");
+      c.beginPath(); c.moveTo(24, 25); c.lineTo(24, 16); c.moveTo(24, 25); c.lineTo(30, 28); c.lineWidth = 3; c.stroke(); circ(24, 25, 2.2); c.fillStyle = EDGE; c.fill(); break;
     case "picture":
       rrPath(c, 5, 9, 38, 30, 4); F("#FFFFFF"); rrPath(c, 9, 13, 30, 22, 2); F("#7FE7FF");
       poly([[9, 35], [19, 23], [25, 29], [31, 23], [39, 33], [39, 35]]); F("#5CE08A");
@@ -2178,6 +2300,7 @@ for (const k of ["music", "sfx", "voice"]) {
 function inGame() { return phase === "select" || phase === "night"; }
 function togglePause(force) {
   if (!inGame()) return;
+  $("set-title").textContent = "已暂停"; $("restart").hidden = false; $("to-title").hidden = false; $("resume").textContent = "继续游戏";
   paused = force != null ? force : !paused;
   $("settings").hidden = !paused; if (paused) closeSheet();
   $("pause-info").textContent = [phase === "night" ? `已坚持 ${mmss(nightT)} · 存活 ${rooms.filter(r => r.alive && r.occupant).length}/6` : "", me && me.tal ? `天赋 ${me.tal.name}` : ""].filter(Boolean).join(" · ");
@@ -2788,9 +2911,26 @@ function updateHud(dt) {
 
 /* ================= title & loop ================= */
 function renderBest() {
-  const rec = store.get("tpfy-rec", null);
-  $("best").textContent = rec ? `最久坚持 ${mmss(rec.best)} · 击杀 ${rec.wins} 次${rec.fastest ? ` · 最快 ${mmss(rec.fastest)}` : ""}` : "还没有战绩，去躺一局吧";
+  const rec = store.get("tpfy-rec", null) || {};
+  $("ls-best").textContent = rec.best ? mmss(rec.best) : "--";
+  $("ls-wins").textContent = rec.wins || 0;
+  $("ls-fast").textContent = rec.fastest ? mmss(rec.fastest) : "--";
+  const L = meta.life;
+  $("lobby-sub").textContent = L.games ? `睡过 ${L.games} 晚 · 点头像换造型` : "点头像换造型";
+  $("lobby-av").src = me.url; $("lobby-av").className = frameCls(me.frame).trim();
 }
+let tipTimer = null;
+function rotateTip() { const el = $("lobby-tip"); el.textContent = randTip(); el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
+$("who").addEventListener("click", () => {
+  auInit(); sfx("swish"); meta.av = randomAvatar(); saveMeta();
+  me.av = meta.av; me.img = avatarCanvas(me.av); me.url = avatarURL(me.av); $("me-av").src = me.url; renderBest();
+});
+$("lobby-gear").addEventListener("click", () => {
+  auInit(); sfx("click");
+  $("set-title").textContent = "设置"; $("pause-info").textContent = "";
+  $("restart").hidden = true; $("to-title").hidden = true; $("resume").textContent = "好的";
+  $("settings").hidden = false;
+});
 function demoScene() {
   resetRooms();
   makePlayers();
@@ -2807,6 +2947,7 @@ function showTitle() {
   phase = "title"; ended = false; paused = false; celebrate = 0; slowmo = 0; closeSheet();
   $("end").hidden = true; $("match").hidden = true; $("strip").hidden = true; $("visit").hidden = true; $("sos").hidden = true; $("top").hidden = true; $("hint").hidden = true; $("feed").innerHTML = "";
   demoScene(); renderBest(); refreshMetaBadges(); $("title").hidden = false;
+  rotateTip(); clearInterval(tipTimer); tipTimer = setInterval(() => { if (phase === "title") rotateTip(); }, 4500);
   const sv = loadSave(); $("resume-game").hidden = !sv; if (sv) $("resume-game").textContent = `继续上一局（已坚持 ${mmss(sv.nightT)}）`;
   $("install").hidden = !installEvt;
   $("ios-tip").hidden = !(/iphone|ipad|ipod/i.test(navigator.userAgent) && !standalone());
