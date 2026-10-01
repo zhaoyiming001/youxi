@@ -184,11 +184,11 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .toggle[aria-pressed="true"] i::after{transform:translateX(20px)}
 
 /* ---------- overlays ---------- */
-.overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:radial-gradient(ellipse at 50% 30%,rgba(43,30,90,.72),rgba(10,8,24,.94));overflow:auto}
+.overlay{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:radial-gradient(ellipse at 50% 30%,rgba(43,30,90,.72),rgba(10,8,24,.94));overflow:auto}
 #shareview,#meta{z-index:11}
 #settings{z-index:13}
 #title{background:radial-gradient(ellipse at 50% 45%,rgba(13,10,32,.62),rgba(10,8,24,.88) 75%)}
-.card{width:min(460px,100%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.card{margin:auto 0;width:min(460px,100%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
 .logo{font-family:var(--f-display);font-weight:400;font-size:clamp(3.8rem,19vw,7rem);line-height:1;margin:0;color:var(--coin);letter-spacing:.04em;-webkit-text-stroke:3px var(--edge);paint-order:stroke fill;text-shadow:0 6px 0 var(--edge),0 0 40px rgba(255,210,63,.35);display:flex}
 .logo span{display:inline-block;animation:logoBob 2.4s ease-in-out infinite}
 .logo span:nth-child(2){animation-delay:-.3s}.logo span:nth-child(3){animation-delay:-.6s;color:#FF8FA3}.logo span:nth-child(4){animation-delay:-.9s;color:#FF8FA3}
@@ -222,8 +222,8 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .mbtn img{width:34px;height:34px}
 .mbtn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
 .mbtn .dot{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:var(--danger);border:2.5px solid var(--edge)}
-.meta-card{width:min(480px,100%);max-height:100%;display:flex;flex-direction:column;gap:10px;background:var(--panel);border:3px solid var(--edge);border-radius:22px;box-shadow:0 6px 0 var(--edge);padding:12px;text-align:left}
-.meta-body{overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;min-height:0}
+.meta-card{margin:auto 0;width:min(480px,100%);max-height:calc(100vh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));flex:none;display:flex;flex-direction:column;gap:10px;background:var(--panel);border:3px solid var(--edge);border-radius:22px;box-shadow:0 6px 0 var(--edge);padding:12px;text-align:left}
+.meta-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;min-height:0}
 .meta-sec h4{margin:4px 2px 6px;font-size:.95rem;color:var(--soft);font-weight:700}
 .skins{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
 .skin{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px 6px;border-radius:14px;border:2.5px solid var(--edge);background:var(--panel-2);cursor:pointer;font-size:.82rem}
@@ -427,7 +427,6 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
     <p class="tip"><b>小贴士</b><span id="lobby-tip"></span></p>
     <div class="lobby-cta">
       <button class="btn big start" id="start" type="button">开始匹配</button>
-      <button class="btn alt" id="resume-game" type="button" hidden>继续上一局</button>
       <button class="btn alt" id="install" type="button" hidden><img class="ui-i" data-ui="phone" alt=""> 添加到手机桌面</button>
       <p class="small" id="ios-tip" hidden>想像 App 一样打开？在 Safari 点「分享」→「添加到主屏幕」</p>
     </div>
@@ -826,12 +825,26 @@ function moveAlong(e, dt, sp) {
 }
 
 /* ================= avatars ================= */
-const SKINS = ["#FFE0C2", "#F6C9A0", "#E8B48A", "#FFD8C8", "#D9A07A", "#FFE9D6"];
-const HAIRS = ["#2B2340", "#6B3E26", "#E8B04A", "#FF7A9C", "#7FB8FF", "#9C6BFF", "#FF7A59", "#F5F2FF", "#3DBE8B", "#C0392B", "#8A8FA8", "#FFB6D9"];
-const BG_COLS = ["#FF7A59", "#FF8FC8", "#7BD389", "#7FB8FF", "#C9A0FF", "#FFD23F", "#5EE6D2", "#FFB15A", "#8FD3FF", "#B8E986", "#FF9AA2", "#A0C4FF"];
-const ACCS = ["none", "none", "bow", "glasses", "cat", "phones", "flower", "hat", "band", "star"];
-const ACC_COLS = ["#FF4D6D", "#4FE3FF", "#FFD23F", "#7BD389", "#C9A0FF", "#FF8FC8"];
-function randomAvatar() { return { skin: pick(SKINS), hair: pick(HAIRS), style: Math.floor(Math.random() * 7), expr: Math.floor(Math.random() * 9), acc: pick(ACCS), accCol: pick(ACC_COLS), bg: pick(BG_COLS) }; }
+const SKINS = ["#FFE0C2", "#F6C9A0", "#E8B48A", "#FFD8C8", "#D9A07A", "#FFE9D6", "#C68A5E", "#A86B45", "#8A5536", "#FFF1E4", "#F2C2A0", "#E0A97C"];
+const HAIRS = ["#2B2340", "#6B3E26", "#E8B04A", "#FF7A9C", "#7FB8FF", "#9C6BFF", "#FF7A59", "#F5F2FF", "#3DBE8B", "#C0392B", "#8A8FA8", "#FFB6D9",
+  "#1A1A1A", "#4A2A1A", "#B5651D", "#D8D8D8", "#FFE58A", "#5A3E9A", "#2E6BC8", "#FF4D6D"];
+const BG_COLS = ["#FF7A59", "#FF8FC8", "#7BD389", "#7FB8FF", "#C9A0FF", "#FFD23F", "#5EE6D2", "#FFB15A", "#8FD3FF", "#B8E986", "#FF9AA2", "#A0C4FF",
+  "#FFC6A8", "#B5EAD7", "#E2C2FF", "#FFE7A0", "#9AD0EC", "#F7A1C4", "#C3F584", "#FFADAD", "#9BF6FF", "#D3C0FF"];
+const ACCS = ["none", "none", "none", "bow", "glasses", "cat", "phones", "flower", "hat", "band", "star", "beanie", "crown", "mask", "halo", "horns", "cap", "clip", "sunglasses"];
+const ACC_COLS = ["#FF4D6D", "#4FE3FF", "#FFD23F", "#7BD389", "#C9A0FF", "#FF8FC8", "#FF9A3C", "#FFFFFF", "#2E2A36", "#5AB0FF"];
+const HAIR_STYLES = 13, EXPRS = 15;
+function randomAvatar() {
+  return { skin: pick(SKINS), hair: pick(HAIRS), style: Math.floor(Math.random() * HAIR_STYLES), expr: Math.floor(Math.random() * EXPRS), acc: pick(ACCS), accCol: pick(ACC_COLS),
+    acc2: Math.random() < .28 ? pick(["freckles", "bandaid", "blush"]) : "none", bg: pick(BG_COLS), bg2: pick(BG_COLS), pat: Math.random() < .55 ? 0 : 1 + Math.floor(Math.random() * 3) };
+}
+// avatar backdrop: plain, two-tone, polka dots or ring
+function paintAvBg(c, cx, cy, rad, av) {
+  c.save(); c.beginPath(); c.arc(cx, cy, rad, 0, TAU); c.fillStyle = av.bg; c.fill(); c.clip();
+  if (av.pat === 1) { c.fillStyle = av.bg2; c.fillRect(cx - rad, cy + rad * .15, rad * 2, rad); }
+  else if (av.pat === 2) { c.fillStyle = av.bg2; for (let yy = -rad; yy < rad; yy += rad * .42) for (let xx = -rad + ((yy / (rad * .42)) % 2 ? rad * .21 : 0); xx < rad; xx += rad * .42) { c.beginPath(); c.arc(cx + xx, cy + yy, rad * .08, 0, TAU); c.fill(); } }
+  else if (av.pat === 3) { c.beginPath(); c.arc(cx, cy, rad * .82, 0, TAU); c.lineWidth = rad * .14; c.strokeStyle = av.bg2; c.stroke(); }
+  c.restore();
+}
 function drawAvatar(c, x, y, r, av, mood) {
   c.save(); c.translate(x, y); c.lineJoin = "round"; c.lineCap = "round"; c.strokeStyle = EDGE;
   const lw = Math.max(1.6, r * .14), acc = av.acc || "none";
@@ -842,11 +855,19 @@ function drawAvatar(c, x, y, r, av, mood) {
   if (av.style === 4) { rrPath(c, -r * 1.1, -r * .5, r * 2.2, r * 1.85, r * .7); c.fill(); c.stroke(); }
   if (av.style === 5) { c.beginPath(); c.ellipse(r * .95, r * .15, r * .32, r * .62, -.35, 0, TAU); c.fill(); c.stroke(); }
   if (av.style === 3) for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * r * .72, -r * .78, r * .36, 0, TAU); c.fill(); c.stroke(); }
+  if (av.style === 7) { c.beginPath(); c.arc(0, -r * 1.12, r * .34, 0, TAU); c.fill(); c.stroke(); }
+  if (av.style === 8) { for (let k = 0; k <= 10; k++) { const a = Math.PI * (.95 + k * .11); c.beginPath(); c.arc(Math.cos(a) * r * .98, -r * .05 + Math.sin(a) * r * .98, r * .34, 0, TAU); c.fill(); c.stroke(); } }
+  if (av.style === 9) { rrPath(c, -r * 1.14, -r * .45, r * 2.28, r * 1.7, r * .55); c.fill(); c.stroke(); }
+  if (av.style === 12) for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(sd * r * 1.05, r * .4, r * .26, r * .55, sd * .25, 0, TAU); c.fill(); c.stroke(); }
   c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fillStyle = mood === "dead" ? "#B9B4C9" : av.skin; c.fill(); c.stroke();
   // hair in front
   c.fillStyle = av.hair; c.beginPath();
   if (av.style === 2) { c.moveTo(-r, -r * .1); for (let k = 0; k <= 6; k++) c.lineTo(-r + k * r / 3, -r * (k % 2 ? 1.25 : .62)); c.lineTo(r, -r * .1); c.quadraticCurveTo(0, -r * .5, -r, -r * .1); }
   else if (av.style === 6) { c.arc(0, -r * .05, r * 1.02, Math.PI * 1.08, Math.PI * 1.92); c.quadraticCurveTo(0, -r * .62, -r * .98, -r * .4); }
+  else if (av.style === 8) { c.closePath(); for (let k = -2; k <= 2; k++) { c.moveTo(k * r * .34 + r * .28, -r * .66); c.arc(k * r * .34, -r * .66, r * .28, 0, TAU); } }
+  else if (av.style === 9) { c.arc(0, -r * .08, r * 1.04, Math.PI, Math.PI * 2); c.quadraticCurveTo(r * .55, -r * .55, r * .02, -r * .25); c.lineTo(-r * .02, -r * .25); c.quadraticCurveTo(-r * .55, -r * .55, -r * 1.04, -r * .08); }
+  else if (av.style === 10) { c.moveTo(-r * .2, -r * .5); for (let k = 0; k <= 4; k++) c.lineTo(-r * .2 + k * r * .1, -r * (k % 2 ? .95 : 1.4)); c.lineTo(r * .2, -r * .5); c.quadraticCurveTo(0, -r * .62, -r * .2, -r * .5); }
+  else if (av.style === 11) { c.arc(0, 0, r * 1.0, Math.PI * 1.06, Math.PI * 1.94); c.quadraticCurveTo(0, -r * .74, -r * .98, -r * .33); }
   else if (av.style === 4) { c.arc(0, -r * .08, r * 1.04, Math.PI * 1.0, Math.PI * 2.0); c.quadraticCurveTo(r * .5, -r * .5, 0, -r * .32); c.quadraticCurveTo(-r * .5, -r * .5, -r * 1.04, -r * .08); }
   else { c.arc(0, -r * .08, r * 1.02, Math.PI * 1.02, Math.PI * 1.98); c.quadraticCurveTo(r * .2, -r * .3, -r * .1, -r * .42); c.quadraticCurveTo(-r * .5, -r * .3, -r * 1.01, -r * .12); }
   c.closePath(); c.fill(); c.stroke();
@@ -858,6 +879,12 @@ function drawAvatar(c, x, y, r, av, mood) {
   if (acc === "phones") { c.beginPath(); c.arc(0, -r * .1, r * 1.12, Math.PI * 1.1, Math.PI * 1.9); c.strokeStyle = "#2E2A36"; c.lineWidth = lw * 1.6; c.stroke(); c.strokeStyle = EDGE; c.lineWidth = lw * .8; c.fillStyle = av.accCol; for (const sd of [-1, 1]) { rrPath(c, sd * r * 1.05 - r * .2, -r * .25, r * .4, r * .55, r * .15); c.fill(); c.stroke(); } }
   if (acc === "flower") { c.save(); c.translate(-r * .62, -r * .72); c.fillStyle = av.accCol; for (let k = 0; k < 5; k++) { c.beginPath(); c.arc(Math.cos(k * TAU / 5) * r * .2, Math.sin(k * TAU / 5) * r * .2, r * .16, 0, TAU); c.fill(); } c.beginPath(); c.arc(0, 0, r * .12, 0, TAU); c.fillStyle = "#FFE26A"; c.fill(); c.restore(); }
   if (acc === "star") { c.save(); c.translate(r * .6, -r * .78); c.beginPath(); for (let k = 0; k < 10; k++) { const rad = k % 2 ? r * .12 : r * .28, a = -Math.PI / 2 + k * Math.PI / 5; c.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); } c.closePath(); c.fillStyle = "#FFE26A"; c.fill(); c.stroke(); c.restore(); }
+  if (acc === "beanie") { c.fillStyle = av.accCol; c.beginPath(); c.arc(0, -r * .32, r * 1.0, Math.PI, 0); c.closePath(); c.fill(); c.stroke(); rrPath(c, -r * 1.04, -r * .5, r * 2.08, r * .3, r * .14); c.fill(); c.stroke(); c.beginPath(); c.arc(0, -r * 1.36, r * .2, 0, TAU); c.fillStyle = "#FFFFFF"; c.fill(); c.stroke(); }
+  if (acc === "crown") { c.beginPath(); c.moveTo(-r * .55, -r * .75); c.lineTo(-r * .62, -r * 1.3); c.lineTo(-r * .28, -r * 1.02); c.lineTo(0, -r * 1.42); c.lineTo(r * .28, -r * 1.02); c.lineTo(r * .62, -r * 1.3); c.lineTo(r * .55, -r * .75); c.closePath(); c.fillStyle = "#FFD23F"; c.fill(); c.stroke(); c.beginPath(); c.arc(0, -r * .95, r * .09, 0, TAU); c.fillStyle = "#FF4D6D"; c.fill(); }
+  if (acc === "halo") { c.beginPath(); c.ellipse(0, -r * 1.32, r * .55, r * .16, 0, 0, TAU); c.lineWidth = lw * 1.6; c.strokeStyle = "#FFE26A"; c.stroke(); c.strokeStyle = EDGE; c.lineWidth = lw * .8; }
+  if (acc === "horns") for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * r * .3, -r * .9); c.lineTo(sd * r * .55, -r * 1.38); c.lineTo(sd * r * .7, -r * .78); c.closePath(); c.fillStyle = "#FF4D6D"; c.fill(); c.stroke(); }
+  if (acc === "cap") { c.fillStyle = av.accCol; c.beginPath(); c.arc(0, -r * .3, r * .98, Math.PI, 0); c.closePath(); c.fill(); c.stroke(); c.beginPath(); c.ellipse(r * .7, -r * .32, r * .62, r * .16, -.1, 0, TAU); c.fill(); c.stroke(); c.beginPath(); c.arc(0, -r * 1.27, r * .1, 0, TAU); c.fillStyle = "#FFFFFF"; c.fill(); }
+  if (acc === "clip") { c.save(); c.translate(r * .55, -r * .62); c.rotate(-.5); rrPath(c, -r * .3, -r * .08, r * .6, r * .16, r * .08); c.fillStyle = av.accCol; c.fill(); c.stroke(); c.restore(); }
   // face
   const ey = r * .12, ex = r * .38, m = mood || "normal";
   c.fillStyle = EDGE; c.strokeStyle = EDGE; c.lineWidth = lw * .9;
@@ -879,20 +906,31 @@ function drawAvatar(c, x, y, r, av, mood) {
       case 5: dotEyes(); c.fillStyle = "rgba(255,110,140,.6)"; for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(sd * r * .58, r * .38, r * .18, r * .1, 0, 0, TAU); c.fill(); } smile(.18, .12); break;
       case 6: for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * ex, ey, r * .15, 0, TAU); c.fillStyle = "#fff"; c.fill(); c.stroke(); c.beginPath(); c.arc(sd * ex + r * .03, ey, r * .07, 0, TAU); c.fillStyle = EDGE; c.fill(); } c.beginPath(); c.arc(0, r * .55, r * .09, 0, TAU); c.stroke(); break;
       case 7: for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * ex - r * .14, ey); c.lineTo(sd * ex + r * .14, ey); c.stroke(); } c.beginPath(); c.moveTo(-r * .25, r * .5); c.quadraticCurveTo(r * .15, r * .6, r * .32, r * .38); c.stroke(); break;
+      case 9: c.beginPath(); c.arc(-ex, ey, r * .11, 0, TAU); c.fill(); c.beginPath(); c.moveTo(ex - r * .14, ey + r * .02); c.lineTo(ex + r * .1, ey - r * .06); c.moveTo(ex - r * .14, ey + r * .02); c.lineTo(ex + r * .1, ey + r * .1); c.stroke(); smile(.3, .2); c.beginPath(); c.ellipse(-r * .05, r * .66, r * .1, r * .14, 0, 0, Math.PI); c.fillStyle = "#FF6F8E"; c.fill(); break;
+      case 10: dotEyes(); for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * ex - r * .16, ey - r * (sd > 0 ? .3 : .22)); c.lineTo(sd * ex + r * .16, ey - r * .26); c.stroke(); } c.beginPath(); c.moveTo(-r * .18, r * .5); c.quadraticCurveTo(r * .12, r * .58, r * .3, r * .4); c.stroke(); break;
+      case 11: for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * ex, ey, r * .13, 0, TAU); c.fill(); } c.beginPath(); c.ellipse(0, r * .55, r * .11, r * .14, 0, 0, TAU); c.stroke(); break;
+      case 12: for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * ex, ey + r * .06, r * .13, Math.PI * 1.15, Math.PI * 1.85); c.stroke(); } c.beginPath(); c.moveTo(-r * .3, r * .38); c.quadraticCurveTo(0, r * .85, r * .3, r * .38); c.closePath(); c.fill(); break;
+      case 13: dotEyes(); c.beginPath(); c.moveTo(-r * .24, r * .45); c.quadraticCurveTo(-r * .12, r * .6, 0, r * .45); c.quadraticCurveTo(r * .12, r * .6, r * .24, r * .45); c.stroke(); break;
+      case 14: dotEyes(); rrPath(c, -r * .32, r * .38, r * .64, r * .22, r * .08); c.fillStyle = "#FFFFFF"; c.fill(); c.stroke(); c.beginPath(); c.moveTo(-r * .32, r * .49); c.lineTo(r * .32, r * .49); c.lineWidth = lw * .5; c.stroke(); break;
       default: for (const sd of [-1, 1]) { c.save(); c.translate(sd * ex, ey); c.beginPath(); c.moveTo(0, r * .12); c.bezierCurveTo(-r * .22, -r * .02, -r * .1, -r * .2, 0, -r * .06); c.bezierCurveTo(r * .1, -r * .2, r * .22, -r * .02, 0, r * .12); c.fillStyle = "#FF4D6D"; c.fill(); c.restore(); } smile(.26, .2);
     }
+    if (av.acc2 === "freckles") { c.fillStyle = "rgba(150,80,40,.55)"; for (const sd of [-1, 1]) for (const [dx, dy] of [[0, 0], [.12, .06], [-.1, .08]]) { c.beginPath(); c.arc(sd * (r * .55 + r * dx), r * (.34 + dy), r * .04, 0, TAU); c.fill(); } }
+    if (av.acc2 === "blush") { c.fillStyle = "rgba(255,110,140,.55)"; for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(sd * r * .58, r * .36, r * .16, r * .09, 0, 0, TAU); c.fill(); } }
+    if (av.acc2 === "bandaid") { c.save(); c.translate(-r * .58, r * .32); c.rotate(-.5); rrPath(c, -r * .22, -r * .08, r * .44, r * .16, r * .07); c.fillStyle = "#F2C9A0"; c.fill(); c.lineWidth = lw * .5; c.stroke(); c.restore(); }
+    if (acc === "mask") { c.beginPath(); c.moveTo(-r * .62, r * .2); c.quadraticCurveTo(0, r * .1, r * .62, r * .2); c.quadraticCurveTo(r * .55, r * .85, 0, r * .82); c.quadraticCurveTo(-r * .55, r * .85, -r * .62, r * .2); c.closePath(); c.fillStyle = av.accCol === "#2E2A36" ? "#2E2A36" : "#F5F7FF"; c.fill(); c.lineWidth = lw * .7; c.stroke(); c.beginPath(); c.moveTo(-r * .4, r * .45); c.lineTo(r * .4, r * .45); c.lineWidth = lw * .4; c.stroke(); }
+    if (acc === "sunglasses") { c.fillStyle = "#1A1534"; for (const sd of [-1, 1]) { rrPath(c, sd * ex - r * .26, ey - r * .15, r * .52, r * .32, r * .12); c.fill(); } c.lineWidth = lw * .7; c.beginPath(); c.moveTo(-ex + r * .26, ey - r * .02); c.lineTo(ex - r * .26, ey - r * .02); c.stroke(); c.fillStyle = "rgba(255,255,255,.5)"; for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * ex - r * .1, ey - r * .05, r * .05, 0, TAU); c.fill(); } }
     if (acc === "glasses" && av.expr !== 2) { c.lineWidth = lw * .7; c.strokeStyle = "#2E2A36"; for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * ex, ey, r * .24, 0, TAU); c.stroke(); } c.beginPath(); c.moveTo(-ex + r * .24, ey); c.lineTo(ex - r * .24, ey); c.stroke(); }
   }
   c.restore();
 }
 function avatarURL(av, size = 96) {
   const cv = document.createElement("canvas"); cv.width = cv.height = size; const c = cv.getContext("2d");
-  c.fillStyle = av.bg; c.beginPath(); c.arc(size / 2, size / 2, size / 2, 0, TAU); c.fill();
+  paintAvBg(c, size / 2, size / 2, size / 2, av);
   drawAvatar(c, size / 2, size * .56, size * .3, av, "normal"); return cv.toDataURL();
 }
 function avatarCanvas(av) {
   const cv = document.createElement("canvas"); cv.width = cv.height = 64; const c = cv.getContext("2d");
-  c.fillStyle = av.bg; c.beginPath(); c.arc(32, 32, 30, 0, TAU); c.fill(); c.lineWidth = 3; c.strokeStyle = EDGE; c.stroke();
+  paintAvBg(c, 32, 32, 30, av); c.beginPath(); c.arc(32, 32, 30, 0, TAU); c.lineWidth = 3; c.strokeStyle = EDGE; c.stroke();
   drawAvatar(c, 32, 35, 19, av, "normal"); return cv;
 }
 
@@ -1090,7 +1128,7 @@ function newGame() {
 
 /* ================= matchmaking (players are simulated) ================= */
 function startMatch() {
-  auInit(); sfx("click"); clearSave();
+  auInit(); sfx("click");
   $("title").hidden = true; $("end").hidden = true; $("match").hidden = false; $("top").hidden = true; $("strip").hidden = true;
   makePlayers(); resetRooms(); phase = "match";
   const grid = $("match-grid");
@@ -1934,7 +1972,7 @@ function update(dt) {
 /* ================= end ================= */
 const mmss = T => `${Math.floor(T / 60)}:${String(Math.floor(T % 60)).padStart(2, "0")}`;
 function endGame(win) {
-  if (ended) return; ended = true; clearSave();
+  if (ended) return; ended = true;
   const survived = nightT, rank = win ? 1 : players.length - deaths + 1;
   phase = "end"; closeSheet(); if (win) celebrate = 5;
   const rec = store.get("tpfy-rec", { best: 0, wins: 0, fastest: 0 });
@@ -2177,53 +2215,6 @@ document.querySelectorAll("[data-meta]").forEach(b => b.addEventListener("click"
 $("meta-tabs").addEventListener("click", e => { const b = e.target.closest("[data-mt]"); if (b) { metaTab = b.dataset.mt; sfx("click"); renderMeta(); } });
 $("meta-close").addEventListener("click", () => { $("meta").hidden = true; sfx("click"); refreshMetaBadges(); });
 
-/* ================= save & resume an unfinished night ================= */
-const SAVE_KEY = "mc-save";
-const ROOM_KEYS = ["alive", "bedLv", "doorLv", "doorHp", "coins", "energy", "repairCd", "tick", "catTick", "pTick", "mult", "broken", "shieldUntil", "barrier", "barrierMax",
-  "lastHit", "built", "sosAsked", "sosUntil", "boostUntil", "rageUntil", "giftT", "skin", "warned",
-  "plankB", "crys", "alarmUntil", "alarmV", "iceT", "decoyUsed", "spareUsed", "intT", "luckT"];
-function snapshot() {
-  const ri = r => (r ? r.i : -1), pi = p => players.indexOf(p);
-  return {
-    v: 1, at: Date.now(), gt, nightT, deaths, giftT, sosCd, giveCd, avail: [...avail], stats,
-    G: Object.assign({}, G, { type: GHOSTS.indexOf(G.type), variant: G.variant.id, tal: G.tal ? G.tal.id : null, target: ri(G.target), path: [] }),
-    players: players.map(p => { const o = Object.assign({}, p, { room: ri(p.room), tal: p.tal ? p.tal.id : null }); delete o.img; delete o.url; delete o.path; return o; }),
-    rooms: rooms.map(r => { const o = {}; for (const k of ROOM_KEYS) o[k] = r[k]; o.occupant = pi(r.occupant); o.reserved = pi(r.reserved); o.tal = r.tal ? r.tal.id : null; o.slotIdx = r.slotIdx; o.slots = r.slots.map(sl => (sl.b ? Object.assign({}, sl.b) : null)); return o; }),
-  };
-}
-function saveGame() { if (phase === "night" && !ended && me && me.room && me.room.alive) store.set(SAVE_KEY, snapshot()); }
-const clearSave = () => store.set(SAVE_KEY, null);
-function loadSave() { const sv = store.get(SAVE_KEY, null); return sv && sv.v === 1 && Date.now() - sv.at < 6 * 3600e3 ? sv : null; }
-function restoreGame(sv) {
-  resetRooms();
-  const talOf = id => TALENTS.find(t => t.id === id) || null;
-  players = sv.players.map(o => Object.assign({}, o, { room: rooms[o.room] || null, tal: talOf(o.tal), path: [] }));
-  me = players.find(p => p.isPlayer);
-  for (const p of players) { p.img = avatarCanvas(p.av); p.url = avatarURL(p.av); }
-  $("me-av").src = me.url; $("me-av").className = "me-av" + frameCls(me.frame);
-  rooms.forEach((r, i) => {
-    const { slots, occupant, reserved, tal, slotIdx, ...rest } = sv.rooms[i];
-    if (slotIdx) setSlots(r, slotIdx);
-    Object.assign(r, rest, { occupant: players[occupant] || null, reserved: players[reserved] || null, tal: talOf(tal) });
-    r.slots.forEach((sl, k) => { sl.b = slots[k] ? Object.assign({}, slots[k]) : null; });
-  });
-  G = Object.assign({}, sv.G, { type: GHOSTS[sv.G.type] || GHOSTS[1], variant: VARIANTS.find(v => v.id === sv.G.variant) || VARIANTS[0], tal: GHOST_TALENTS.find(t => t.id === sv.G.tal) || null, target: rooms[sv.G.target] || null, path: [] });
-  if ((G.state === "walk" || G.state === "attack") && G.target) { G.state = "walk"; G.tele = 0; route(G, { kind: "door", room: G.target }); }
-  else if (G.state === "enter" && G.target) G.path = [{ ...G.target.doorInner }, { ...G.target.bedWay }, { ...G.target.bedPt }];
-  else if (G.state === "retreat") route(G, { kind: "altar" });
-  else if (G.state !== "heal") { G.state = "idle"; G.wait = 1; }
-  gt = sv.gt; nightT = sv.nightT; deaths = sv.deaths; giftT = sv.giftT; sosCd = sv.sosCd; giveCd = sv.giveCd; avail = new Set(sv.avail); stats = sv.stats;
-  gift = null; minions = []; helpers = []; helpQ = []; bullets = []; parts = []; floats = []; rings = []; fx = [];
-  phase = "night"; ended = false; paused = false; camMode = "focus"; visit = null; shake = 0; flash = 0; celebrate = 0; slowmo = 0;
-  closeSheet(); $("title").hidden = true; $("end").hidden = true; $("feed").innerHTML = ""; $("top").hidden = false;
-  buildStrip(); const mt = $("me-tal"); mt.hidden = !me.tal; if (me.tal) mt.innerHTML = uiImg(me.tal.ic, "");
-  feed(`接着上一局继续，已坚持 ${mmss(nightT)}`, "good");
-  togglePause(true);
-}
-setInterval(saveGame, 5000);
-addEventListener("pagehide", saveGame);
-$("resume-game").addEventListener("click", () => { auInit(); const sv = loadSave(); if (sv) { sfx("click"); restoreGame(sv); } else $("resume-game").hidden = true; });
-
 /* ================= install as an app ================= */
 let installEvt = null;
 addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (phase === "title") $("install").hidden = false; });
@@ -2240,7 +2231,7 @@ function makeShareImage() {
   const txt = (t, x, y, size, col, font = '"ZCOOL QingKe HuangYou","PingFang SC","Microsoft YaHei",sans-serif') => { c.font = `${size}px ${font}`; c.textAlign = "center"; c.textBaseline = "middle"; c.lineJoin = "round"; c.lineWidth = size * .16; c.strokeStyle = EDGE; c.strokeText(t, x, y); c.fillStyle = col; c.fillText(t, x, y); };
   txt("眠仓计划", Wd / 2, 90, 76, "#FFD23F");
   txt(r.win ? "打死猛鬼了！" : "被抓走了……", Wd / 2, 190, 64, r.win ? "#FFE58A" : "#FF8FA3");
-  c.save(); c.beginPath(); c.arc(Wd / 2, 330, 86, 0, TAU); c.fillStyle = me.av.bg; c.fill(); c.lineWidth = 8; c.strokeStyle = FRAME_COL[me.frame] || EDGE; c.stroke(); c.clip();
+  paintAvBg(c, Wd / 2, 330, 86, me.av); c.save(); c.beginPath(); c.arc(Wd / 2, 330, 86, 0, TAU); c.lineWidth = 8; c.strokeStyle = FRAME_COL[me.frame] || EDGE; c.stroke(); c.clip();
   drawAvatar(c, Wd / 2, 348, 54, me.av, r.win ? "normal" : "scared"); c.restore();
   const cells = [["坚持了", mmss(r.survived)], ["名次", `第 ${r.rank} 名`], ["猛鬼等级", `Lv.${r.lv}`], ["造成伤害", fmt(r.dmg)]];
   cells.forEach(([k, v], i) => {
@@ -3483,7 +3474,6 @@ function showTitle() {
   $("end").hidden = true; $("match").hidden = true; $("strip").hidden = true; $("visit").hidden = true; $("sos").hidden = true; $("top").hidden = true; $("hint").hidden = true; $("feed").innerHTML = "";
   demoScene(); renderBest(); refreshMetaBadges(); $("title").hidden = false;
   rotateTip(); clearInterval(tipTimer); tipTimer = setInterval(() => { if (phase === "title") rotateTip(); }, 4500);
-  const sv = loadSave(); $("resume-game").hidden = !sv; if (sv) $("resume-game").textContent = `继续上一局（已坚持 ${mmss(sv.nightT)}）`;
   $("install").hidden = !installEvt;
   $("ios-tip").hidden = !(/iphone|ipad|ipod/i.test(navigator.userAgent) && !standalone());
 }
@@ -3499,11 +3489,11 @@ function frame(ms) {
   requestAnimationFrame(frame);
 }
 if (SPEED > 1) window.__dbg = { get me() { return me; }, get G() { return G; }, get phase() { return phase; }, get nightT() { return nightT; }, get players() { return players; }, get cam() { return { camMode, visit: visit && visit.i }; },
-  rooms, npcStep, PLAN, repairDoor, get minions() { return minions; }, get helpers() { return helpers; }, uiIcon, ICONS, BUILD, TALENTS, get stats() { return stats; }, get gt() { return gt; }, get avail() { return avail; }, get gift() { return gift; }, openGift: () => gift && openGift(), toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
+  rooms, npcStep, PLAN, repairDoor, get minions() { return minions; }, get helpers() { return helpers; }, uiIcon, ICONS, BUILD, TALENTS, randomAvatar, avatarURL, get stats() { return stats; }, get gt() { return gt; }, get avail() { return avail; }, get gift() { return gift; }, openGift: () => gift && openGift(), toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
 $("start").addEventListener("click", startMatch);
 $("again").addEventListener("click", startMatch);
 $("home").addEventListener("click", () => { sfx("click"); showTitle(); });
-document.addEventListener("visibilitychange", () => { if (document.hidden) { saveGame(); if (inGame() && !paused) togglePause(true); } });
+document.addEventListener("visibilitychange", () => { if (document.hidden && inGame() && !paused) togglePause(true); });
 buildBg(); makeIcons(); paintUiIcons(); showTitle();
 requestAnimationFrame(frame);
 })();
