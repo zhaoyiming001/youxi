@@ -247,6 +247,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 120px);transform:translate(-50%,-20px);z-index:12;pointer-events:none;background:#3A2A08;color:#FFE9A0;border:3px solid var(--edge);border-radius:16px;box-shadow:0 5px 0 var(--edge);padding:8px 16px;font-weight:800;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .earn{font-weight:800;color:#FFE58A;margin:0}
+.earn small{display:block;margin-top:4px;font-weight:600;font-size:.76rem;color:var(--soft)}
 .share-img{width:min(320px,80vw);border-radius:16px;border:3px solid var(--edge);box-shadow:0 6px 0 var(--edge);-webkit-user-select:auto;user-select:auto;-webkit-touch-callout:default}
 .fr-gold{box-shadow:0 0 0 3px #FFD23F!important}
 .fr-rainbow{box-shadow:0 0 0 2px #FF4D6D,0 0 0 4px #FFD23F,0 0 0 6px #4FE3FF!important}
@@ -272,7 +273,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .who small{display:block;font-size:.72rem;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who:active{transform:translateY(2px)}
 .lobby-top .mcoin{margin-left:auto;flex:none}
-.who{flex:1 1 0;overflow:hidden}
+.who{flex:0 1 auto;overflow:hidden;margin-right:auto}
 .who > span{min-width:0;overflow:hidden}
 .who b,.who small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lobby-top .icon-btn{flex:none}
@@ -344,11 +345,6 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex:none}
 .mcoin img.ui-i{width:1.35em;height:1.35em}
 
-@media (max-width:380px){
-  .who > span{display:none}
-  .who{flex:none;padding:4px}
-  .lobby-top{gap:6px}
-}
 @media (max-width:400px){
   .pill small{display:none}
   .pill{padding:3px 8px 3px 6px}
@@ -418,8 +414,6 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
   <div class="lobby-wrap">
     <div class="lobby-top">
       <button class="who" id="who" type="button" aria-label="换个造型"><img id="lobby-av" alt=""><span><b id="lobby-rank">新手</b><small id="lobby-sub">段位</small></span></button>
-      <span class="mcoin"><img class="ui-i" data-ui="moon" alt=""><b id="meta-coins">0</b></span>
-      <button class="icon-btn" type="button" data-meta="tasks" aria-label="每日任务"><img data-ui="clipboard" alt=""><i class="dot" id="task-dot" hidden></i></button>
       <button class="icon-btn" type="button" data-meta="wardrobe" aria-label="商城"><img data-ui="shop" alt=""><i class="dot" id="ach-dot" hidden></i></button>
       <button class="icon-btn" id="lobby-gear" type="button" aria-label="设置"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M10.3 3h3.4l.5 2.6 1.9.8 2.2-1.5 2.4 2.4-1.5 2.2.8 1.9 2.6.5v3.4l-2.6.5-.8 1.9 1.5 2.2-2.4 2.4-2.2-1.5-1.9.8-.5 2.6h-3.4l-.5-2.6-1.9-.8-2.2 1.5-2.4-2.4 1.5-2.2-.8-1.9L1.4 13.7v-3.4l2.6-.5.8-1.9-1.5-2.2 2.4-2.4 2.2 1.5 1.9-.8z"/><circle cx="12" cy="12" r="3.2"/></svg></button>
     </div>
@@ -1643,7 +1637,7 @@ function updateHelpers(dt) {
     if (h.hp <= 0) {
       const c = nice(BED.inc(r.bedLv) * 20 * (1 + h.grade * 1.5)); r.coins += c; burst(h.x, h.y, "#A99BE0", 26, 200);
       feed(`${who(r)}打跑了${h.name}`, "good");
-      if (isMine(r)) { floatText(h.x, h.y - 20, "+" + fmt(c), "#FFD23F", 16, "coin"); sfx("repel"); }
+      if (isMine(r)) { floatText(h.x, h.y - 20, "+" + fmt(c), "#FFD23F", 16, "coin"); sfx("repel"); track("helper", h.grade); }
       helpers.splice(i, 1); continue;
     }
     const tx = r.doorOuter.x + (r.left ? 34 : -34), ty = r.doorOuter.y + 6, dx = tx - h.x, dy = ty - h.y, L = Math.hypot(dx, dy);
@@ -1716,6 +1710,7 @@ function smite(r) {
   hitGhost(d / (1 + G.vuln), isMine(r)); burst(G.x, G.y, "#FFE26A", 30, 240);
   if (isMine(r)) { flash = .45; shake = 10; sfx("thunder"); vibrate([40, 30, 60]); floatText(G.x, G.y - ghostR(G.lv) - 30, "天罚 -" + fmt(d), "#FFE26A", 20); }
   feed(`${isMine(r) ? "你" : r.occupant.name}召唤了天罚，劈掉猛鬼 12% 血量`, "good");
+  if (isMine(r)) track("smite");
   return true;
 }
 $("smite").addEventListener("click", () => { auInit(); if (!smite(me.room)) sfx("error"); });
@@ -2041,12 +2036,23 @@ function endGame(win) {
   let fastestNew = false;
   if (win) { rec.wins++; if (!rec.fastest || survived < rec.fastest) { rec.fastest = survived; fastestNew = true; } }
   store.set("tpfy-rec", rec);
-  const earn = Math.round(15 + (win ? 40 : 0) + Math.max(0, 6 - rank) * 6 + Math.min(40, survived / 30) + Math.min(30, Math.sqrt(stats.dmg) / 25));
-  meta.coins += earn; saveMeta();
   track("end", { win, survived, rank, alive: rooms.filter(o => o.alive && o.occupant).length });
+  // itemized 眠币 rewards
+  const dly = ensureDaily(), parts2 = [["参与", 15]];
+  if (win) parts2.push(["胜利", 40]);
+  if (6 - rank > 0) parts2.push(["名次", (6 - rank) * 6]);
+  parts2.push(["坚持", Math.round(Math.min(40, survived / 30))]);
+  parts2.push(["伤害", Math.round(Math.min(30, Math.sqrt(stats.dmg) / 25))]);
+  if (win && !dly.firstWin) { dly.firstWin = true; parts2.push(["今日首胜", 60]); }
+  if (win && meta.life.streak >= 2) parts2.push([`${meta.life.streak} 连胜`, Math.min(50, (meta.life.streak - 1) * 10)]);
+  if (stats.helperKills) parts2.push(["打跑帮手", Math.min(30, stats.helperKills * 5)]);
+  if (stats.gifts) parts2.push(["礼盒", Math.min(20, stats.gifts * 5)]);
+  if (stats.pops) parts2.push(["拍小鬼", Math.min(15, stats.pops * 3)]);
+  const earnParts = parts2.filter(([, n]) => n > 0), earn = earnParts.reduce((a, [, n]) => a + n, 0);
+  meta.coins += earn; saveMeta();
   lastResult = { win, survived, rank, lv: G.lv, dmg: stats.dmg, earn };
   setTimeout(() => {
-    $("st-earn").textContent = `+${earn} 眠币（现在共 ${meta.coins}）`;
+    $("st-earn").innerHTML = `${uiImg("moon")} +${earn} 眠币（现在共 ${meta.coins}）<small>${earnParts.map(([k2, n]) => `${k2} +${n}`).join(" · ")}</small>`;
     sfx(win ? "win" : "lose"); speak(win ? `打死${gName()}了，胜利！` : "你被抓走了", true);
     $("end-title").textContent = win ? `打死${gName()}了！` : "被抓走了";
     $("end-title").className = "end-title " + (win ? "win" : "lose");
@@ -2066,6 +2072,7 @@ function endGame(win) {
 const META_KEY = "mc-meta";
 const meta = Object.assign({ coins: 0, owned: { bed: ["def"], door: ["def"], frame: ["def"] }, equip: { bed: "def", door: "def", frame: "def" }, ach: {}, seen: 0, daily: null,
   life: { games: 0, wins: 0, gifts: 0, helps: 0, pops: 0, built: [] } }, store.get(META_KEY, {}));
+for (const k of ["helpers", "smites"]) if (meta.life[k] == null) meta.life[k] = 0;
 const saveMeta = () => store.set(META_KEY, meta);
 let lastResult = null;
 const COSMETICS = {
@@ -2159,25 +2166,50 @@ const ACHS = [
   { id: "rich", name: "万元户", desc: "一局里攒到 10 万金币", reward: 80 },
   { id: "games20", name: "宿舍常客", desc: "累计玩 20 局", reward: 100 },
   { id: "collector", name: "收藏家", desc: "累计造过 20 种不同的建筑", reward: 200 },
+  { id: "collector40", name: "大收藏家", desc: "累计造过 40 种不同的建筑", reward: 300 },
+  { id: "legend", name: "传说降临", desc: "造出一个传说品质的武器", reward: 120 },
+  { id: "boss", name: "屠魔", desc: "打跑一个首领级帮手鬼", reward: 150 },
+  { id: "helpers30", name: "帮手克星", desc: "累计打跑 30 个帮手鬼", reward: 150 },
+  { id: "smite20", name: "天罚使者", desc: "累计用 20 次天罚", reward: 120 },
+  { id: "streak3", name: "三连胜", desc: "连续 3 局打死猛鬼", reward: 150 },
+  { id: "survive20", name: "不眠之夜", desc: "一局坚持 20 分钟", reward: 150 },
+  { id: "games50", name: "宿舍老住户", desc: "累计玩 50 局", reward: 200 },
+  { id: "rank3", name: "老手上路", desc: "段位升到老手", reward: 150 },
+  { id: "rank5", name: "传说室友", desc: "段位升到传说", reward: 500 },
 ];
 const DAILY = [
   { id: "play", text: "玩 2 局", goal: 2, reward: 30 },
+  { id: "play5", text: "玩 5 局", goal: 5, reward: 80 },
   { id: "win", text: "打死 1 次猛鬼", goal: 1, reward: 60 },
+  { id: "win3", text: "打死 3 次猛鬼", goal: 3, reward: 150 },
   { id: "gift", text: "开 3 个礼盒", goal: 3, reward: 40 },
   { id: "build", text: "造 10 个建筑", goal: 10, reward: 30 },
   { id: "limited", text: "造 3 个「本局限定」建筑", goal: 3, reward: 40 },
+  { id: "epic", text: "造 1 个史诗或传说武器", goal: 1, reward: 60 },
   { id: "help", text: "送室友金币 2 次", goal: 2, reward: 40 },
   { id: "dmg", text: "累计对猛鬼造成 5 万伤害", goal: 50000, reward: 50 },
   { id: "survive", text: "一局坚持 8 分钟", goal: 1, reward: 50 },
   { id: "door", text: "把门升到 Lv.6", goal: 1, reward: 40 },
+  { id: "bed", text: "把床升到 Lv.7", goal: 1, reward: 40 },
+  { id: "helper", text: "打跑 2 个帮手鬼", goal: 2, reward: 50 },
+  { id: "smite", text: "用 1 次天罚", goal: 1, reward: 40 },
+  { id: "rich", text: "一局里攒到 2 万金币", goal: 1, reward: 50 },
 ];
 const today = () => { const d = new Date(), p = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
 function ensureDaily() {
   if (meta.daily && meta.daily.date === today()) return meta.daily;
-  meta.daily = { date: today(), list: shuffle(DAILY).slice(0, 3).map(d => ({ id: d.id, prog: 0, claimed: false })) }; saveMeta();
+  meta.daily = { date: today(), firstWin: false, list: shuffle(DAILY).slice(0, 4).map(d => ({ id: d.id, prog: 0, claimed: false })) }; saveMeta();
   return meta.daily;
 }
-function dailyAdd(id, n = 1, set) { for (const t of ensureDaily().list) if (t.id === id) t.prog = set ? Math.max(t.prog, n) : t.prog + n; }
+// finishing a daily task pays out on the spot
+function dailyAdd(id, n = 1, set) {
+  for (const t of ensureDaily().list) {
+    if (t.id !== id || t.claimed) continue;
+    t.prog = set ? Math.max(t.prog, n) : t.prog + n;
+    const d = DAILY.find(x => x.id === t.id);
+    if (t.prog >= d.goal) { t.claimed = true; meta.coins += d.reward; saveMeta(); toast(`${uiImg("clipboard")} 完成任务「${d.text}」 +${d.reward} 眠币`); sfx("coin"); }
+  }
+}
 let toastQ = [], toastBusy = false;
 function toast(msg) {
   toastQ.push(msg); if (toastBusy) return;
@@ -2195,21 +2227,32 @@ function track(k, v) {
     dailyAdd("build"); if (!CORE.includes(v)) dailyAdd("limited");
     if (!L.built.includes(v)) L.built.push(v);
     if (L.built.length >= 20) unlock("collector");
+    if (L.built.length >= 40) unlock("collector40");
+    if (BUILD[v].tier >= 3) dailyAdd("epic", 1, true);
+    if (BUILD[v].tier >= 4) unlock("legend");
     if (me.room && me.room.slots.every(sl => sl.b)) unlock("full");
   } else if (k === "gift") { L.gifts++; dailyAdd("gift"); if (L.gifts >= 20) unlock("gift20"); }
   else if (k === "help") { L.helps++; dailyAdd("help"); if (L.helps >= 10) unlock("help10"); }
   else if (k === "pop") { L.pops++; if (L.pops >= 10) unlock("pop10"); }
   else if (k === "door") { if (v >= 6) dailyAdd("door", 1, true); if (v >= DOOR.max) unlock("door12"); }
-  else if (k === "bed") { if (v >= BED.max) unlock("bed12"); }
+  else if (k === "bed") { if (v >= 7) dailyAdd("bed", 1, true); if (v >= BED.max) unlock("bed12"); }
+  else if (k === "helper") { L.helpers++; stats.helperKills = (stats.helperKills || 0) + 1; dailyAdd("helper"); if (L.helpers >= 30) unlock("helpers30"); if (v === 2) unlock("boss"); }
+  else if (k === "smite") { L.smites++; stats.smites = (stats.smites || 0) + 1; dailyAdd("smite"); if (L.smites >= 20) unlock("smite20"); }
+  else if (k === "rich") dailyAdd("rich", 1, true);
   else if (k === "end") {
-    L.games++; dailyAdd("play"); dailyAdd("dmg", Math.round(stats.dmg));
+    L.games++; dailyAdd("play"); dailyAdd("play5"); dailyAdd("dmg", Math.round(stats.dmg));
     const rk0 = rankIdx();
     L.streak = v.win ? Math.max(0, L.streak || 0) + 1 : Math.min(0, L.streak || 0) - 1;
     if (v.survived >= 480) dailyAdd("survive", 1, true);
     if (v.survived >= 900) unlock("survive15");
+    if (v.survived >= 1200) unlock("survive20");
     if (L.games >= 20) unlock("games20");
+    if (L.games >= 50) unlock("games50");
     if (v.win) {
-      L.wins++; dailyAdd("win"); unlock("first");
+      L.wins++; dailyAdd("win"); dailyAdd("win3"); unlock("first");
+      if (L.streak >= 3) unlock("streak3");
+      if (rankIdx() >= 3) unlock("rank3");
+      if (rankIdx() >= 5) unlock("rank5");
       if (v.survived < 300) unlock("fast");
       if (L.wins >= 10) unlock("wins10");
       if (deaths === 0) unlock("allsafe");
@@ -2240,8 +2283,8 @@ function renderMeta() {
     h = ensureDaily().list.map((t, i) => {
       const d = DAILY.find(x => x.id === t.id), done = t.prog >= d.goal, p = Math.min(1, t.prog / d.goal);
       return `<div class="task"><div><b>${d.text}</b><small>${fmt(Math.min(t.prog, d.goal))} / ${fmt(d.goal)} · 奖励 ${uiImg("moon")} ${d.reward}</small><div class="pbar"><i style="width:${p * 100}%"></i></div></div>
-        <button class="claim" type="button" data-claim="${i}" ${done && !t.claimed ? "" : "disabled"}>${t.claimed ? "已领取" : done ? "领取" : "进行中"}</button></div>`;
-    }).join("") + `<p class="note">每天 0 点换一批新任务。</p>`;
+        <span class="claim" ${done ? "" : "disabled"} style="${done ? "" : "opacity:.55"}">${done ? "已到账" : "进行中"}</span></div>`;
+    }).join("") + `<p class="note">每天 4 个任务，0 点刷新。玩游戏时完成就自动发奖励。</p>`;
   } else {
     $("meta-title").textContent = "成就";
     const got = ACHS.filter(a => meta.ach[a.id]).length;
@@ -2252,9 +2295,7 @@ function renderMeta() {
   refreshMetaBadges();
 }
 function refreshMetaBadges() {
-  $("meta-coins").textContent = meta.coins;
-  const d = ensureDaily(); $("task-dot").hidden = !d.list.some(t => !t.claimed && t.prog >= DAILY.find(x => x.id === t.id).goal);
-  $("ach-dot").hidden = Object.keys(meta.ach).length <= (meta.seen || 0);
+  ensureDaily(); $("ach-dot").hidden = Object.keys(meta.ach).length <= (meta.seen || 0);
 }
 $("meta-body").addEventListener("click", e => {
   const sk = e.target.closest("[data-skin]"), cl = e.target.closest("[data-claim]");
@@ -2267,9 +2308,6 @@ $("meta-body").addEventListener("click", e => {
     meta.equip[kind] = id; saveMeta();
     if (me) { if (kind === "frame") { me.frame = id; $("me-av").className = "me-av" + frameCls(id); } else me.skin[kind] = id; }
     renderMeta();
-  } else if (cl && !cl.disabled) {
-    const t = ensureDaily().list[+cl.dataset.claim], d = DAILY.find(x => x.id === t.id);
-    t.claimed = true; meta.coins += d.reward; saveMeta(); sfx("coin"); toast(`${uiImg("moon")} 领取 ${d.reward} 眠币`); renderMeta();
   }
 });
 document.querySelectorAll("[data-meta]").forEach(b => b.addEventListener("click", () => { auInit(); openMeta(b.dataset.meta); }));
@@ -3571,7 +3609,7 @@ function updateHud(dt) {
   if (!inGame() && phase !== "end") { $("hint").hidden = true; refreshStrip(); return; }
   const r = me && me.room, inBed = r && me.state === "bed";
   $("coins").textContent = fmt(r ? r.coins : START_COINS);
-  if (r && phase === "night") { stats.maxCoins = Math.max(stats.maxCoins, r.coins); if (r.coins >= 1e5) unlock("rich"); }
+  if (r && phase === "night") { stats.maxCoins = Math.max(stats.maxCoins, r.coins); if (r.coins >= 1e5) unlock("rich"); if (r.coins >= 2e4 && !stats.richDaily) { stats.richDaily = true; track("rich"); } }
   $("power").textContent = fmt(r ? r.energy : 0);
   $("income").textContent = inBed ? `+${fmtRate(incomeOf(r))}/秒` : "";
   const pr = inBed ? powerOf(r) : 0;
