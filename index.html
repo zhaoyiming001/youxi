@@ -93,8 +93,6 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .pb .bub.sos{background:var(--danger);color:#fff;animation:sosBob .5s ease-in-out infinite alternate}
 @keyframes sosBob{to{transform:translate(-50%,-3px)}}
 .sos-btn{position:fixed;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 98px);z-index:6;pointer-events:auto;border:3px solid var(--edge);background:var(--danger);color:#fff;font-weight:800;font-size:.95rem;border-radius:999px;padding:8px 14px;box-shadow:0 4px 0 var(--edge);cursor:pointer;animation:pop .25s cubic-bezier(.3,1.5,.5,1)}
-.smite-btn{right:auto;left:12px;background:var(--coin);color:#2A1A00}
-.smite-btn small{font-family:var(--f-num);font-weight:800;font-size:.8rem;margin-left:2px}
 .sos-btn[disabled]{background:#5A3A4A;color:#E8C8D0;cursor:default}
 .sos-btn:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
 .visit .vbtns{display:flex;gap:6px}
@@ -139,6 +137,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .opt b i.c{background:#4A3A10;color:var(--coin)}
 .opt b i.m{background:#2E2A50;color:#D8D2FF}
 .opt small{display:block;font-size:.76rem;color:var(--soft);line-height:1.4}
+.sheet h4.sec{margin:12px 2px 6px;font-size:.92rem;color:var(--coin);font-weight:700}
 .opt small em{font-style:normal;font-weight:700}.opt small em.ok{color:var(--heal)}.opt small em.no{color:#FFB3C0}
 .opt small .ltd{display:inline-block;margin-right:5px;padding:0 6px;border-radius:99px;background:#5A1E46;color:#FF9AD5;font-size:.64rem;font-weight:800;vertical-align:1px}
 .cost{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-family:var(--f-num);font-weight:800;font-size:.95rem}
@@ -386,7 +385,6 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
     <button class="mapbtn" id="view" type="button" aria-label="切换全图"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg><b id="view-label">全图</b></button>
   </div>
 </div>
-<button class="sos-btn smite-btn" id="smite" type="button" hidden><img class="ui-i" data-ui="bolt" alt=""><span id="smite-t">天罚</span></button>
 <button class="sos-btn" id="sos" type="button" hidden><img class="ui-i" data-ui="mega" alt=""><span id="sos-t">求救</span></button>
 <div class="banner" id="banner"></div>
 
@@ -1084,7 +1082,7 @@ function resetRooms(full) {
   for (const r of rooms) {
     if (full) setSlots(r, SLOT_LOCAL.map((_, k) => k).slice(0, 13)); else rollSlots(r);
     Object.assign(r, { occupant: null, reserved: null, alive: true, bedLv: 1, doorLv: 1, doorHp: DOOR.hp(1), coins: START_COINS, energy: 0, repairCd: 0,
-      tal: null, skin: null, tick: 0, catTick: 0, pTick: 0, mult: 1, doorShake: 0, broken: false, shieldUntil: 0, barrier: 0, barrierMax: 0, lastHit: -9, built: 0, spentGift: false, smiteCd: 0, timesTargeted: 0, plankB: 0, crys: 0, alarmUntil: 0, alarmV: 0, iceT: 0, decoyUsed: false, spareUsed: false, intT: 0, luckT: 0, sosAsked: false, sosUntil: 0, boostUntil: 0, rageUntil: 0, giftT: rand(30, 50) });
+      tal: null, skin: null, tick: 0, catTick: 0, pTick: 0, mult: 1, doorShake: 0, broken: false, shieldUntil: 0, barrier: 0, barrierMax: 0, lastHit: -9, built: 0, spentGift: false, itemCd: 0, itemUses: null, timesTargeted: 0, plankB: 0, crys: 0, alarmUntil: 0, alarmV: 0, iceT: 0, decoyUsed: false, spareUsed: false, intT: 0, luckT: 0, sosAsked: false, sosUntil: 0, boostUntil: 0, rageUntil: 0, giftT: rand(30, 50) });
     r.slots.forEach(s => s.b = null);
   }
 }
@@ -1108,7 +1106,7 @@ function newGame() {
   G.diff = RANKS[diffIdx()].mul; G.rank = RANKS[diffIdx()].n;
   G.max = G.hp = ghostMax(1); helpers = [];
   gift = null; giftT = rand(45, 90);
-  const special = rollPool();
+  const special = rollPool(); matchItems = shuffle(ITEMS).slice(0, 4);
   minions = []; sosCd = 0; giveCd = 0; helpQ = [];
   stats = { dmg: 0, gifts: 0, helps: 0, pops: 0, builds: 0, limited: 0, maxCoins: 0 }; gt = 0; selT = SELECT_LEN; nightT = 0; deaths = 0; bullets = []; parts = []; floats = []; rings = []; fx = [];
   camMode = "overview"; visit = null; shake = 0; flash = 0; ended = false; paused = false; celebrate = 0; slowmo = 0;
@@ -1118,6 +1116,7 @@ function newGame() {
   banner("20 秒内抢一间宿舍！", "info");
   feed("本局武器：" + special.weps.map(k => `${BUILD[k].name}(${TIERS[BUILD[k].tier].n})`).join("、"), "good");
   feed("本局其他限定建筑：" + special.oth.map(k => BUILD[k].name).join("、"), "good");
+  feed("本局斩杀道具：" + matchItems.map(it => it.name).join("、"), "good");
   if (me.tal) feed(`本局天赋「${me.tal.name}」：${me.tal.desc}`, "good");
 }
 
@@ -1147,7 +1146,7 @@ function startMatch() {
 }
 
 let talentTimer = null, talOpts = [], rerolls = 1;
-const TIPS = ["鬼残血逃跑时追着打，别让它回鬼井回满血", "夜里掉下来的礼盒 14 秒内要点开", "礼盒只掉给一直在花钱建设的人，光攒钱不花就不会来", "猛鬼 Lv.4 以后，钱多了就点左下角的「天罚」，直接劈掉它 12% 血量", "猛鬼每逃回鬼井一次，能回的血就少一截", "游戏机同时产金币和电，前期先造它", "门快破时升级门，耐久会直接补满",
+const TIPS = ["鬼残血逃跑时追着打，别让它回鬼井回满血", "夜里掉下来的礼盒 14 秒内要点开", "礼盒只掉给一直在花钱建设的人，光攒钱不花就不会来", "猛鬼 Lv.4 以后，「输出」列表最下面有一次性的斩杀道具，钱多了就用", "猛鬼每逃回鬼井一次，能回的血就少一截", "游戏机同时产金币和电，前期先造它", "门快破时升级门，耐久会直接补满",
   "「本局限定」建筑每局都不一样，开局先看看", "鬼砸门越多升级越快，弱的室友要帮一把", "会放小鬼的猛鬼放出小鬼时，点一下就能拍散", "被打时点「求救」，室友会送你金币",
   "中后期猛鬼会叫帮手，炮塔射程够远才打得到", "狙击台射程最远，适合帮邻居打鬼", "存钱罐攒得越多，利息越多", "电力能买天雷台、冰冻塔这类只要电的建筑"];
 const randTip = () => pick(TIPS);
@@ -1528,10 +1527,10 @@ function updateGhost(dt) {
     case "enter": if (moveAlong(G, dt, sp * .8)) killRoom(t); break;
     case "retreat": if (moveAlong(G, dt, sp * 1.25)) G.state = "heal"; break;
     case "heal":
-      { const cap = G.max * Math.max(.45, 1.15 - .15 * (G.retreats || 1));   // every escape heals a bit less
+      { const cap = G.sealed ? G.hp : G.max * Math.max(.45, 1.15 - .15 * (G.retreats || 1));   // every escape heals a bit less; a seal blocks it
         G.hp = Math.min(cap, G.hp + G.max * .12 * dt);
         if (Math.random() < dt * 8) parts.push({ x: G.x + rand(-30, 30), y: G.y + 20, vx: 0, vy: -60, life: .8, t: 0, color: "#FF4D6D", size: 3 });
-        if (G.hp >= cap - 1) pickTarget(); }
+        if (G.hp >= cap - 1) { if (G.sealed) { G.sealed = false; feed("封印符生效：猛鬼回不了血", "good"); } pickTarget(); } }
       break;
   }
 }
@@ -1699,21 +1698,59 @@ function openGift() {
   feed(`礼盒开出「${g.name}」：${msg}`, "good"); speak(`开出${g.name}`);
 }
 
-/* ================= 天罚: turn a big economy into damage ================= */
-const SMITE_CD = 25;
-const smiteCost = () => ({ c: nice(Math.max(1500, ghostMax(G.lv) * 1.2)), e: nice(30 + G.lv * 15) });
-const smiteReady = r => phase === "night" && r && r.alive && G.lv >= 4 && G.hp > 0 && !["hidden", "rise", "dead"].includes(G.state) && gt >= (r.smiteCd || 0);
-function smite(r) {
-  const k = smiteCost(); if (!smiteReady(r) || !pay(r, k.c, k.e)) return false;
-  r.smiteCd = gt + SMITE_CD;
-  const d = G.max * .12; fx.push({ type: "bolt", x: G.x, y: G.y, life: .6, t: 0, col: "#FFE26A" });
-  hitGhost(d / (1 + G.vuln), isMine(r)); burst(G.x, G.y, "#FFE26A", 30, 240);
-  if (isMine(r)) { flash = .45; shake = 10; sfx("thunder"); vibrate([40, 30, 60]); floatText(G.x, G.y - ghostR(G.lv) - 30, "天罚 -" + fmt(d), "#FFE26A", 20); }
-  feed(`${isMine(r) ? "你" : r.occupant.name}召唤了天罚，劈掉猛鬼 12% 血量`, "good");
+/* ================= 斩杀道具: one-shot finishers, a random 4 of 14 each match ================= */
+// strike: guaranteed damage as a share of the ghost's max HP (items never miss)
+function strike(p, mine, col, txt) {
+  const d = G.max * p; hitGhost(d / (1 + G.vuln), mine, true);
+  fx.push({ type: "bolt", x: G.x, y: G.y, life: .5, t: 0, col }); burst(G.x, G.y, col, 26, 230);
+  if (mine) { flash = .35; shake = 9; vibrate([40, 30, 50]); floatText(G.x, G.y - ghostR(G.lv) - 30, `${txt} -${fmt(d)}`, col, 19); }
+  return d;
+}
+const ITEMS = [
+  { id: "smite", name: "天罚", ic: "bolt", pay: "m", mult: 1.2, desc: "劈掉猛鬼 12% 血量", use: (r, m) => { strike(.12, m, "#FFE26A", "天罚"); if (m) sfx("thunder"); } },
+  { id: "execute", name: "斩鬼剑", ic: "sword", pay: "c", mult: 1.1, desc: "鬼血量低于 30% 时斩掉 25%，否则 8%", use: (r, m) => { strike(G.hp < G.max * .3 ? .25 : .08, m, "#FFFFFF", "斩"); if (m) sfx("sniper"); } },
+  { id: "storm", name: "雷暴符", icB: "thunder", pay: "e", mult: 1, desc: "5 秒内落下 5 道雷，每道 3%", use: (r, m) => { G.stormN = 5; G.stormT = 0; G.stormMine = m; } },
+  { id: "toll", name: "镇魂钟", icB: "bell", pay: "m", mult: 1, desc: "扣 8% 血量并把鬼震晕 3 秒", use: (r, m) => { strike(.08, m, "#FFD23F", "镇魂"); G.stunUntil = Math.max(G.stunUntil, gt + 3); G.tele = 0; if (m) sfx("bell"); } },
+  { id: "glacier", name: "冰封术", ic: "snow", pay: "e", mult: .9, desc: "冻住鬼 5 秒，再扣 6%", use: (r, m) => { G.frozenUntil = Math.max(G.frozenUntil, gt + 5); G.tele = 0; strike(.06, m, "#BFF4FF", "冰封"); if (m) sfx("freeze"); } },
+  { id: "hellfire", name: "业火", ic: "flame", pay: "c", mult: 1.1, desc: "让鬼燃烧 5 秒，一共烧掉 15%", use: (r, m) => { G.poisonDps = Math.max(gt < G.poisonUntil ? G.poisonDps : 0, G.max * .03); G.poisonUntil = gt + 5; G.poisonMine = m; burst(G.x, G.y, "#FF6B3D", 30, 200); if (m) sfx("flame"); } },
+  { id: "curse", name: "破甲咒", ic: "talisman", pay: "e", mult: .8, desc: "10 秒内鬼受到的伤害 +60%，再扣 4%", use: (r, m) => { timedVuln(.6, 10); strike(.04, m, "#FF8FB8", "破甲"); if (m) sfx("disrupt"); } },
+  { id: "arrow", name: "追魂箭", ic: "scope", pay: "c", mult: 1, desc: "扣 10% 血量，打掉隐身", use: (r, m) => { G.invisUntil = 0; strike(.1, m, "#7FE7FF", "追魂"); if (m) sfx("sniper"); } },
+  { id: "jar", name: "吸魂瓶", ic: "heart", pay: "m", mult: 1.1, desc: "吸走鬼 10% 血量，补到你的门上", use: (r, m) => { const d = strike(.1, m, "#8CFF7A", "吸魂"); if (r.doorHp > 0) r.doorHp = Math.min(doorMax(r), r.doorHp + d); if (m) sfx("fix"); } },
+  { id: "crackers", name: "驱鬼爆竹", icB: "cracker", pay: "c", mult: .8, desc: "扣 6% 血量，炸散所有小鬼，帮手掉 40% 血", use: (r, m) => { strike(.06, m, "#FF4D3D", "爆竹"); for (const mi of minions) burst(mi.x, mi.y, "#E9DAFF", 12, 140); minions = []; for (const h of helpers) { h.hp -= h.max * .4; h.hurt = .2; } if (m) sfx("cannon"); } },
+  { id: "sealing", name: "封印符", ic: "lock", pay: "e", mult: .9, desc: "扣 5% 血量，鬼下次逃回鬼井时回不了血", use: (r, m) => { G.sealed = true; strike(.05, m, "#C9A0FF", "封印"); if (m) sfx("decoy"); } },
+  { id: "dart", name: "金钱镖", ic: "coins", pay: "c", mult: 0, desc: "花掉你 40% 的金币，按金额造成伤害（最多 20%）", use: (r, m, paid) => { strike(Math.min(.2, paid * 1.5 / G.max), m, "#FFD23F", "金钱镖"); if (m) sfx("coin"); } },
+  { id: "meteor", name: "陨石", ic: "star", pay: "m", mult: 1.4, desc: "3 秒后砸下陨石，扣 18%", use: (r, m) => { G.meteorT = gt + 3; G.meteorMine = m; if (m) { sfx("summon"); feed("陨石正在落下……", "good"); } } },
+  { id: "timestop", name: "时停", ic: "hourglass", pay: "e", mult: 1, desc: "鬼停住 4 秒，期间你的炮塔攻速 +50%", use: (r, m) => { G.frozenUntil = Math.max(G.frozenUntil, gt + 4); G.tele = 0; r.rageUntil = Math.max(r.rageUntil, gt + 4); strike(.03, m, "#E8E4FF", "时停"); if (m) sfx("vanish"); } },
+];
+let matchItems = [];
+const itemIcon = it => it.icB ? ICONS[it.icB] : uiIcon(it.ic);
+function itemPrice(r, it) {
+  if (it.id === "dart") return { c: Math.floor(r.coins * .4), e: 0 };
+  const uses = (r.itemUses && r.itemUses[it.id]) || 0, base = Math.max(1200, ghostMax(G.lv) * it.mult) * Math.pow(1.3, uses);
+  return it.pay === "c" ? { c: nice(base), e: 0 } : it.pay === "m" ? { c: nice(base * .75), e: nice(base * .03) } : { c: 0, e: nice(base * .1) };
+}
+const itemsLive = () => phase === "night" && G.lv >= 4 && G.hp > 0 && !["hidden", "rise", "dead"].includes(G.state);
+const itemOk = (r, it) => r && r.alive && itemsLive() && gt >= (r.itemCd || 0) && (it.id === "dart" ? r.coins >= 300 : canPay(r, itemPrice(r, it).c, itemPrice(r, it).e));
+function useItem(r, id) {
+  const it = ITEMS.find(x => x.id === id); if (!it || !itemOk(r, it)) return false;
+  const k = itemPrice(r, it); if (!pay(r, k.c, k.e)) return false;
+  r.itemUses = r.itemUses || {}; r.itemUses[id] = (r.itemUses[id] || 0) + 1; r.itemCd = gt + 3;
+  it.use(r, isMine(r), k.c);
+  feed(`${isMine(r) ? "你" : r.occupant.name}用了「${it.name}」`, "good");
   if (isMine(r)) track("smite");
   return true;
 }
-$("smite").addEventListener("click", () => { auInit(); if (!smite(me.room)) sfx("error"); });
+function updateItems() {
+  if (G.stormN > 0 && gt >= (G.stormT || 0)) { G.stormN--; G.stormT = gt + 1; strike(.03, G.stormMine, "#FFE26A", "雷"); if (G.stormMine) sfx("thunder"); }
+  if (G.meteorT && gt >= G.meteorT) { G.meteorT = 0; strike(.18, G.meteorMine, "#FF9A3C", "陨石"); shake = Math.max(shake, 14); rings.push({ x: G.x, y: G.y, r: 8, max: 160, life: 0, col: "#FF9A3C" }); if (G.meteorMine) sfx("smash"); }
+}
+function renderItems() {
+  const r = me.room, live = itemsLive();
+  return `<div class="opts">${matchItems.map(it => { const k = itemPrice(r, it);
+    return `<button class="opt" type="button" data-act="item:${it.id}"><img src="${itemIcon(it)}" alt=""><span><b>${it.name}${payTag2(it)}</b><small>${it.desc}${r.itemUses && r.itemUses[it.id] ? `（已用 ${r.itemUses[it.id]} 次，变贵了）` : ""}</small></span>${it.id === "dart" ? `<span class="cost"><span><i class="coin"></i>40%</span></span>` : costHtml(k.c, k.e)}</button>`; }).join("")}</div>
+    <p class="note">${live ? "" : "猛鬼 Lv.4 以后才能用。"}买了马上生效、不占格子；本局随机出现 4 种，同一种每用一次贵 30%。</p>`;
+}
+const payTag2 = it => it.pay === "e" ? "<i>只要电力</i>" : it.pay === "m" ? '<i class="m">金币+电力</i>' : '<i class="c">只要金币</i>';
 
 /* ================= roommates helping each other ================= */
 function askHelp() {
@@ -1796,8 +1833,10 @@ function updateBot(p, dt) {
   if (!p.noRepair && G.target === r && G.state === "attack" && r.doorHp < doorMax(r) * .35) { if (repairDoor(r) || doorUp(r)) return; }
   if (Math.random() < p.lazy) return;
   // rich roommates also call down 天罚
-  { const k = smiteCost(), keep = p.kind === "神仙" || p.kind === "大佬" ? 2 : 3.5;
-    if (gt >= (G.botSmiteT || 0) && smiteReady(r) && r.coins > k.c * keep && r.energy > k.e * 2 && Math.random() < .25 && smite(r)) { G.botSmiteT = gt + 20; return; } }
+  if (gt >= (G.botSmiteT || 0) && itemsLive() && Math.random() < .25) {
+    const keep = p.kind === "神仙" || p.kind === "大佬" ? 2 : 3.5, it = pick(matchItems);
+    if (it && it.id !== "dart") { const k = itemPrice(r, it); if (r.coins >= k.c * keep && r.energy >= k.e * keep && useItem(r, it.id)) { G.botSmiteT = gt + 20; return; } }
+  }
   const i = p.pi < plan.length ? p.pi : LOOP_FROM + (p.pi - LOOP_FROM) % (plan.length - LOOP_FROM);
   if (npcStep(r, plan[i])) { p.pi++; p.stuck = 0; }
   else if ((p.stuck += 1) > 14) { p.pi++; p.stuck = 0; }
@@ -1997,7 +2036,7 @@ function update(dt) {
       const d = G.poisonDps * dt; hitGhost(d, G.poisonMine, true); G.poisonAcc += d;
       if (G.poisonAcc > G.poisonDps) { floatText(G.x + rand(-12, 12), G.y - ghostR(G.lv) - 8, "-" + fmt(G.poisonAcc), "#8CFF7A", 12); G.poisonAcc = 0; if (G.poisonMine) sfx("poison"); }
     }
-    if (phase === "night") { updateGhost(dt); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); updateMinions(dt); updateHelpers(dt); updateHelp(); }
+    if (phase === "night") { updateGhost(dt); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); updateMinions(dt); updateHelpers(dt); updateHelp(); updateItems(); }
   }
   if (phase === "title" || phase === "match") { G.x = CX + Math.sin(gt * .5) * 40; G.y = MAP_H * .5 + Math.sin(gt * .3) * MAP_H * .4; G.face = Math.cos(gt * .5) > 0 ? 1 : -1; }
   for (let i = bullets.length - 1; i >= 0; i--) {
@@ -2064,7 +2103,7 @@ function endGame(win) {
     $("st-lv").textContent = `Lv.${G.lv}`;
     $("st-dmg").textContent = fmt(stats.dmg);
     $("st-best").textContent = win ? `最快击杀 ${mmss(rec.fastest)}${fastestNew ? "（新纪录）" : ""} · 共击杀 ${rec.wins} 次` : `最久坚持 ${mmss(rec.best)}${isBest ? "（新纪录）" : ""} · 共击杀 ${rec.wins} 次`;
-    $("end").hidden = false; $("strip").hidden = true; $("visit").hidden = true; $("sos").hidden = true; $("smite").hidden = true;
+    $("end").hidden = false; $("strip").hidden = true; $("visit").hidden = true; $("sos").hidden = true;
     $("again").focus();
   }, win ? 2400 : 1600);
 }
@@ -2171,7 +2210,7 @@ const ACHS = [
   { id: "legend", name: "传说降临", desc: "造出一个传说品质的武器", reward: 120 },
   { id: "boss", name: "屠魔", desc: "打跑一个首领级帮手鬼", reward: 150 },
   { id: "helpers30", name: "帮手克星", desc: "累计打跑 30 个帮手鬼", reward: 150 },
-  { id: "smite20", name: "天罚使者", desc: "累计用 20 次天罚", reward: 120 },
+  { id: "smite20", name: "斩鬼大师", desc: "累计用 20 次斩杀道具", reward: 120 },
   { id: "streak3", name: "三连胜", desc: "连续 3 局打死猛鬼", reward: 150 },
   { id: "survive20", name: "不眠之夜", desc: "一局坚持 20 分钟", reward: 150 },
   { id: "games50", name: "宿舍老住户", desc: "累计玩 50 局", reward: 200 },
@@ -2193,7 +2232,7 @@ const DAILY = [
   { id: "door", text: "把门升到 Lv.6", goal: 1, reward: 40 },
   { id: "bed", text: "把床升到 Lv.7", goal: 1, reward: 40 },
   { id: "helper", text: "打跑 2 个帮手鬼", goal: 2, reward: 50 },
-  { id: "smite", text: "用 1 次天罚", goal: 1, reward: 40 },
+  { id: "smite", text: "用 1 次斩杀道具", goal: 1, reward: 40 },
   { id: "rich", text: "一局里攒到 2 万金币", goal: 1, reward: 50 },
 ];
 const today = () => { const d = new Date(), p = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
@@ -2716,14 +2755,17 @@ function renderSheet() {
       h = `<div class="stats"><div class="stat"><small>耐久</small><b>${fmt(o.doorHp)} / ${fmt(doorMax(o))}</b></div><div class="stat"><small>等级</small><b>${o.doorLv} / ${DOOR.max}</b></div></div>
         <p class="note">这是 ${owner} 的门。${o.barrierMax ? `护盾 ${fmt(o.barrier)} / ${fmt(o.barrierMax)}。` : ""}门快破时可以送他金币帮忙。</p>`;
     }
+  } else if (s.kind === "items") {
+    title = "斩杀道具"; h = renderItems();
   } else if (s.kind === "slot" && !s.slot.b) {
     title = "造点什么"; const reach = slotReach(r, s.slot);
     h = `<div class="tabs">${CATS.map(([k, n]) => `<button type="button" data-tab="${k}" aria-pressed="${k === buildTab}">${n}</button>`).join("")}</div>
       <div class="opts">${Object.entries(BUILD).filter(([k, D]) => D.cat === buildTab && avail.has(k)).sort(([a, A], [b2, B]) => (A.tier || 0) - (B.tier || 0) || priceOf(a) - priceOf(b2)).map(([k, D]) =>
         `<button class="opt" type="button" data-act="build:${k}"><img src="${ICONS[k]}" alt=""><span><b>${D.name}${D.tier != null ? `<i class="tier" style="--tc:${TIERS[D.tier].c}">${TIERS[D.tier].n}</i>` : ""}${payTag(k)}</b><small>${CORE.includes(k) ? "" : '<span class="ltd">本局限定</span>'}${D.desc}${D.range ? `，射程 ${D.range(1) + tl(r, "range") + REACH}${D.range(1) + tl(r, "range") + REACH >= reach ? ' <em class="ok">够得到门口</em>' : ' <em class="no">要升级才够得到门口</em>'}` : ""}</small></span>${costHtml(D.cost[0], D.en[0])}</button>`).join("")}</div>
+      ${buildTab === "atk" ? `<h4 class="sec">斩杀道具 · 一次性使用</h4>${renderItems()}` : ""}
       <p class="note">这个格子离门口 ${reach}。射程从建筑所在的格子算起，门边的格子打得到门口，靠里的格子要射程远的武器；升级后射程变远，还能帮隔壁打鬼。电力靠游戏机和发电机，特殊建筑只能用电力买。标着「本局限定」的建筑每局随机出现。</p>`;
   } else if (s.kind === "slot") {
-    const b = s.slot.b, D = BUILD[b.type], max = b.lv >= D.max;
+    const b = s.slot.b, D = BUILD[b.type], max = b.lv >= D.max, full = r.slots.every(q => q.b);
     title = `${D.name} · Lv.${b.lv}`;
     const cdLeft = b.cd2 > 0 ? `正在冷却，还剩 ${Math.ceil(b.cd2)} 秒。` : "";
     h = `<div class="stats"><div class="stat"><small>${D.unit}${D.suffix ? ` · ${D.suffix}` : ""}</small><b>${valText(b.type, b.lv)}${max ? "" : ` <em>→ ${valText(b.type, b.lv + 1)}</em>`}</b></div>
@@ -2731,7 +2773,7 @@ function renderSheet() {
       <div class="sheet-actions">
         <button class="act" type="button" data-act="up">${max ? "已满级" : upLabel(D.cost[b.lv], D.en[b.lv])}</button>
         <button class="act alt" type="button" data-act="sell">拆掉 ${b.spent ? `+<i class="coin"></i><span class="num">${fmt(b.spent * .5)}</span>` : ""}${b.spentE ? ` +<i class="volt"></i><span class="num">${fmt(b.spentE * .5)}</span>` : ""}</button>
-      </div><p class="note">${D.tier != null ? `品质：${TIERS[D.tier].n}。` : ""}${D.desc}。${cdLeft}${b.offUntil > gt ? "正被鬼干扰，暂时停摆。" : ""}拆掉返还一半花费。</p>`;
+      </div><p class="note">${D.tier != null ? `品质：${TIERS[D.tier].n}。` : ""}${D.desc}。${cdLeft}${b.offUntil > gt ? "正被鬼干扰，暂时停摆。" : ""}拆掉返还一半花费。</p>${full && phase === "night" ? `<h4 class="sec">斩杀道具 · 一次性使用</h4>${renderItems()}` : ""}`;
   } else if (s.kind === "bed") {
     const L = r.bedLv, max = L >= BED.max;
     title = `${BED.names[L - 1]} · Lv.${L}`;
@@ -2754,6 +2796,7 @@ function renderSheet() {
 }
 function canDo(act) {
   const r = me.room, s = sheetSel; if (!r || !r.alive || !s) return false;
+  if (act.startsWith("item:")) { const it = ITEMS.find(x => x.id === act.slice(5)); return !!it && itemOk(r, it); }
   if (act.startsWith("build:")) { const D = BUILD[act.slice(6)]; return !s.slot.b && canPay(r, D.cost[0], D.en[0]); }
   if (act === "up") { const b = s.slot.b; return !!b && canUpB(r, b); }
   if (act === "sell") return !!s.slot.b;
@@ -2778,6 +2821,7 @@ $("sheet-body").addEventListener("click", e => {
   const btn = e.target.closest("[data-act]"); if (!btn) return;
   if (btn.disabled) { sfx("error"); return; }
   const act = btn.dataset.act, r = me.room, s = sheetSel; let ok = false, at = null;
+  if (act.startsWith("item:")) { if (useItem(r, act.slice(5))) sfx("upgrade"); else sfx("error"); renderSheet(); return; }
   if (act.startsWith("build:")) { ok = build(r, s.slot, act.slice(6)); at = s.slot; if (ok) { stats.builds++; if (!CORE.includes(act.slice(6))) stats.limited++; track("build", act.slice(6)); } }
   else if (act === "up") { ok = upBuild(r, s.slot); at = s.slot; }
   else if (act === "sell") { sell(r, s.slot); ok = true; at = s.slot; }
@@ -3632,9 +3676,6 @@ function updateHud(dt) {
   const mrA = r && r.alive && inBed && phase === "night";
   const sb = $("sos"), showSos = mrA && G.target === r && (G.state === "attack" || G.tele > 0);
   sb.hidden = !showSos; if (showSos) { const cd = Math.ceil(sosCd - gt); sb.disabled = cd > 0; const txt = cd > 0 ? `求救 ${cd}秒` : "求救", st = $("sos-t"); if (st.textContent !== txt) st.textContent = txt; }
-  const sm = $("smite"), showSm = mrA && G.lv >= 4; sm.hidden = !showSm;
-  if (showSm) { const k = smiteCost(), cd = Math.ceil((r.smiteCd || 0) - gt), ok = cd <= 0 && canPay(r, k.c, k.e) && G.state !== "hidden" && G.state !== "rise";
-    sm.disabled = !ok; const html = cd > 0 ? `天罚 ${cd}秒` : `天罚<small>${fmt(k.c)}</small>`, st2 = $("smite-t"); if (st2.dataset.v !== html) { st2.innerHTML = html; st2.dataset.v = html; } }
   const vg = $("visit-give"), showGive = mrA && visit && visit.alive && visit.occupant && !visit.occupant.isPlayer;
   vg.hidden = !showGive; if (showGive) { vg.disabled = gt < giveCd || r.coins < 30; const txt = `送 ${fmt(nice(Math.max(30, r.coins * .15)))}`; if (vg.textContent !== txt) vg.textContent = txt; }
   const vc = $("visit");
@@ -3688,7 +3729,7 @@ function demoScene() {
 }
 function showTitle() {
   phase = "title"; ended = false; paused = false; celebrate = 0; slowmo = 0; closeSheet();
-  $("end").hidden = true; $("match").hidden = true; $("strip").hidden = true; $("visit").hidden = true; $("sos").hidden = true; $("smite").hidden = true; $("top").hidden = true; $("hint").hidden = true; $("feed").innerHTML = "";
+  $("end").hidden = true; $("match").hidden = true; $("strip").hidden = true; $("visit").hidden = true; $("sos").hidden = true; $("top").hidden = true; $("hint").hidden = true; $("feed").innerHTML = "";
   demoScene(); renderBest(); refreshMetaBadges(); $("title").hidden = false;
   rotateTip(); clearInterval(tipTimer); tipTimer = setInterval(() => { if (phase === "title") rotateTip(); }, 4500);
   $("install").hidden = !installEvt;
