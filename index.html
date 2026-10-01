@@ -159,15 +159,22 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .slider input::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--edge);cursor:pointer}
 .slider input::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--edge);cursor:pointer}
 .me-wrap{position:relative;flex:none;display:block}
-.me-tal{position:absolute;right:-6px;bottom:-5px;font-size:.8rem;line-height:1;background:var(--panel-2);border:2px solid var(--edge);border-radius:50%;width:20px;height:20px;display:grid;place-items:center}
-.talents{display:grid;gap:10px;width:100%}
-.tal{display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;gap:12px;text-align:left;padding:12px 14px;border-radius:18px;border:3px solid var(--edge);background:var(--panel-2);box-shadow:0 5px 0 var(--edge);cursor:pointer;animation:pop .3s cubic-bezier(.3,1.5,.5,1) both}
-.tal:nth-child(2){animation-delay:.08s}.tal:nth-child(3){animation-delay:.16s}
-.tal:active{transform:translateY(4px);box-shadow:0 1px 0 var(--edge)}
-.tal .em{font-size:2rem;width:52px;height:52px;display:grid;place-items:center;border-radius:14px;background:var(--panel-3)}
-.tal b{display:block;font-family:var(--f-display);font-weight:400;font-size:1.3rem;letter-spacing:.04em;color:var(--coin)}
-.tal small{display:block;color:var(--soft);font-size:.86rem;line-height:1.4}
-.tal.picked{border-color:var(--coin);background:#4A3A10}
+.me-tal{position:absolute;right:-6px;bottom:-5px;background:var(--panel-2);border:2px solid var(--edge);border-radius:50%;width:22px;height:22px;display:grid;place-items:center}
+.me-tal img{width:16px;height:16px}
+.gtal{font-family:var(--f-body);font-size:.66rem;font-weight:800;color:#FFC2CE;background:#4A1426;border:2px solid var(--edge);border-radius:8px;padding:0 5px;margin-left:5px;vertical-align:2px;letter-spacing:0;white-space:nowrap}
+.talents{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%;padding:6px 2px 4px}
+.tal{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:0 7px 12px;border:3px solid var(--edge);border-radius:var(--wob);background:linear-gradient(var(--tc) 0 46px,var(--panel-2) 46px);box-shadow:var(--hi),0 6px 0 var(--edge);cursor:pointer;min-height:210px;animation:dealIn .45s cubic-bezier(.3,1.4,.5,1) both;transition:transform .15s,opacity .2s}
+.tal:nth-child(1){--rot:-3deg}.tal:nth-child(2){--rot:0deg;animation-delay:.1s}.tal:nth-child(3){--rot:3deg;animation-delay:.2s}
+.tal{transform:rotate(var(--rot))}
+@keyframes dealIn{from{opacity:0;transform:translateY(60px) rotate(calc(var(--rot) * -4)) scale(.7)}}
+.tal:active{transform:rotate(var(--rot)) translateY(4px);box-shadow:var(--hi),0 2px 0 var(--edge)}
+.tal-cat{margin-top:6px;font-family:var(--f-display);font-size:.9rem;letter-spacing:.1em;color:#2A1A00}
+.tal-ic{width:66px;height:66px;border-radius:50%;background:var(--panel-3);border:3px solid var(--edge);display:grid;place-items:center;box-shadow:0 3px 0 var(--edge)}
+.tal-ic img{width:46px;height:46px}
+.tal b{display:block;font-family:var(--f-display);font-weight:400;font-size:1.25rem;letter-spacing:.04em;color:var(--text);margin-top:2px}
+.tal small{display:block;color:var(--soft);font-size:.76rem;line-height:1.45}
+.tal.picked{transform:rotate(0) scale(1.06);box-shadow:var(--hi),0 6px 0 var(--edge),0 0 0 4px var(--coin),0 0 26px 4px rgba(255,210,63,.55)}
+.talents.done .tal:not(.picked){opacity:.35;transform:rotate(var(--rot)) scale(.94)}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:var(--panel-3);cursor:pointer;border:0;width:100%;text-align:left;font-size:1rem}
 .toggle i{width:46px;height:26px;border-radius:99px;background:#3A3466;position:relative;flex:none;border:2px solid var(--edge);transition:background .2s}
 .toggle i::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
@@ -191,12 +198,12 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .btn.alt{background:var(--panel-2);color:var(--text)}
 .small{font-size:.8rem;color:var(--soft);margin:0}
 .match-title{font-family:var(--f-display);font-weight:400;font-size:2rem;margin:0;letter-spacing:.06em}
-.match-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
-.mslot{background:var(--panel);border:2.5px solid var(--edge);border-radius:16px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:96px;justify-content:center}
-.mslot img{width:48px;height:48px;border-radius:50%;background:var(--panel-2);border:2px solid var(--edge);animation:pop .3s cubic-bezier(.3,1.6,.5,1)}
-.mslot b{font-size:.72rem;font-weight:600;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.match-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}
+.mslot{background:var(--panel);border:3px solid var(--edge);border-radius:var(--wob);padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:118px;justify-content:center;box-shadow:var(--hi),0 4px 0 var(--edge)}
+.mslot img{width:60px;height:60px;border-radius:50%;background:var(--panel-2);border:2px solid var(--edge);animation:pop .3s cubic-bezier(.3,1.6,.5,1)}
+.mslot b{font-size:.82rem;font-weight:600;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mslot.me{border-color:#7A5600;background:#3A2F5E}
-.mslot .wait{width:48px;height:48px;border-radius:50%;border:3px dashed #4A4380;animation:spin 1.6s linear infinite}
+.mslot .wait{width:60px;height:60px;border-radius:50%;border:3px dashed #4A4380;animation:spin 1.6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .end-title{font-family:var(--f-display);font-weight:400;font-size:clamp(2.8rem,13vw,4.6rem);line-height:1.05;margin:0;-webkit-text-stroke:3px var(--edge);paint-order:stroke fill;text-shadow:0 6px 0 var(--edge)}
 .end-title.win{color:var(--coin)}.end-title.lose{color:var(--danger)}
@@ -209,7 +216,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .mcoin b{font-family:var(--f-num);font-weight:800;font-size:1.05rem;color:#FFE58A}
 .meta-btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%}
 .mbtn{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:16px;border:3px solid var(--edge);background:var(--panel-2);box-shadow:0 4px 0 var(--edge);cursor:pointer;font-weight:700;font-size:.9rem}
-.mbtn span{font-size:1.4rem;line-height:1.1}
+.mbtn img{width:34px;height:34px}
 .mbtn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
 .mbtn .dot{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:var(--danger);border:2.5px solid var(--edge)}
 .meta-card{width:min(480px,100%);max-height:100%;display:flex;flex-direction:column;gap:10px;background:var(--panel);border:3px solid var(--edge);border-radius:22px;box-shadow:0 6px 0 var(--edge);padding:12px;text-align:left}
@@ -243,6 +250,29 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .fr-heart{box-shadow:0 0 0 3px #FF8FB8,0 0 10px 2px rgba(255,143,184,.8)!important}
 .fr-night{box-shadow:0 0 0 3px #B98CFF,0 0 12px 3px rgba(185,140,255,.8)!important}
 
+/* ---------- hand-drawn sticker skin for every button ---------- */
+:root{--wob:18px 23px 16px 24px / 23px 16px 24px 18px;--wob-pill:32px 40px 30px 38px / 38px 30px 40px 32px;--hi:inset 0 3px 0 rgba(255,255,255,.26);--lo:inset 0 -4px 0 rgba(0,0,0,.16)}
+.btn{border-radius:var(--wob-pill);box-shadow:var(--hi),var(--lo),0 5px 0 var(--edge);display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn:active{box-shadow:var(--hi),0 1px 0 var(--edge)}
+.act,.opt,.mbtn,.skin,.claim,.tabs button,.visit button,.sos-btn,.mapbtn,.pb,.toggle,.slider,.task,.ach,.stat,.end-stats div,.visit,.ghostbar{border-radius:var(--wob)}
+.act,.mbtn,.claim,.visit button,.sos-btn,.tabs button{font-family:var(--f-display);font-weight:400;letter-spacing:.05em}
+.act{font-size:1.05rem;box-shadow:var(--hi),var(--lo),0 4px 0 var(--edge)}
+.act .num{font-family:var(--f-num)}
+.act:active:not([disabled]){box-shadow:var(--hi),0 1px 0 var(--edge)}
+.mbtn{font-size:1.02rem;box-shadow:var(--hi),var(--lo),0 4px 0 var(--edge)}
+.claim{font-size:.98rem;box-shadow:var(--hi),var(--lo),0 3px 0 var(--edge)}
+.tabs button{font-size:1.02rem;box-shadow:0 3px 0 var(--edge)}
+.tabs button[aria-pressed="true"]{box-shadow:var(--hi),var(--lo),0 3px 0 var(--edge)}
+.opt,.skin{box-shadow:var(--hi),0 3px 0 var(--edge)}
+.mapbtn{box-shadow:var(--hi),var(--lo),0 3px 0 var(--edge)}
+.mapbtn b{font-family:var(--f-display);font-weight:400;font-size:.78rem}
+.icon-btn,.x{box-shadow:var(--hi),var(--lo),0 3px 0 var(--edge);display:grid;place-items:center;padding:0}
+.x{color:var(--text)}
+.visit button{font-size:.95rem;box-shadow:var(--hi),var(--lo),0 3px 0 var(--edge)}
+.sos-btn{display:flex;align-items:center;gap:6px;font-size:1.05rem;box-shadow:var(--hi),var(--lo),0 4px 0 var(--edge)}
+img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex:none}
+.mcoin img.ui-i{width:1.35em;height:1.35em}
+
 @media (max-width:400px){
   .pill small{display:none}
   .pill{padding:3px 8px 3px 6px}
@@ -265,7 +295,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
     <button class="icon-btn" id="gear" type="button" aria-label="暂停与设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M8 5v14M16 5v14"/></svg></button>
   </div>
   <div class="ghostbar" id="ghostbar">
-    <span class="gname"><span id="gname">猛鬼</span> <b id="glv">Lv.1</b></span>
+    <span class="gname"><span id="gname">猛鬼</span> <b id="glv">Lv.1</b><span class="gtal" id="gtal" hidden></span></span>
     <div class="bars"><div class="bar"><i id="ghp"></i></div><div class="xbar" title="砸门越多升级越快"><i id="gxp"></i></div></div>
     <span id="gstate">还没出动</span>
   </div>
@@ -284,16 +314,16 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
     <button class="mapbtn" id="view" type="button" aria-label="切换全图"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg><b id="view-label">全图</b></button>
   </div>
 </div>
-<button class="sos-btn" id="sos" type="button" hidden>📣 求救</button>
+<button class="sos-btn" id="sos" type="button" hidden><img class="ui-i" data-ui="mega" alt=""><span id="sos-t">求救</span></button>
 <div class="banner" id="banner"></div>
 
 <div class="sheet" id="sheet" hidden>
-  <div class="sheet-head"><h3 id="sheet-title"></h3><div class="res" id="sheet-res"></div><button class="x" id="sheet-close" type="button" aria-label="关闭">✕</button></div>
+  <div class="sheet-head"><h3 id="sheet-title"></h3><div class="res" id="sheet-res"></div><button class="x" id="sheet-close" type="button" aria-label="关闭"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
   <div id="sheet-body"></div>
 </div>
 
 <div class="sheet" id="settings" hidden>
-  <div class="sheet-head"><h3>已暂停</h3><span class="small" id="pause-info" style="margin-left:auto"></span><button class="x" id="set-close" type="button" aria-label="继续游戏">✕</button></div>
+  <div class="sheet-head"><h3>已暂停</h3><span class="small" id="pause-info" style="margin-left:auto"></span><button class="x" id="set-close" type="button" aria-label="继续游戏"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
   <div class="toggles">
     <label class="slider"><span>背景音乐</span><input type="range" id="v-music" min="0" max="100" step="5" aria-label="背景音乐音量"><b id="v-music-n"></b></label>
     <label class="slider"><span>音效</span><input type="range" id="v-sfx" min="0" max="100" step="5" aria-label="音效音量"><b id="v-sfx-n"></b></label>
@@ -313,14 +343,14 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
     <p class="tag">躺下赚钱，造塔守门，把鬼打死。</p>
     <button class="btn big" id="start" type="button">开始匹配</button>
     <button class="btn alt" id="resume-game" type="button" hidden>继续上一局</button>
-    <span class="mcoin">🌙 <b id="meta-coins">0</b> 眠币</span>
+    <span class="mcoin"><img class="ui-i" data-ui="moon" alt=""><b id="meta-coins">0</b> 眠币</span>
     <div class="meta-btns">
-      <button class="mbtn" type="button" data-meta="wardrobe"><span>👕</span>衣柜</button>
-      <button class="mbtn" type="button" data-meta="tasks"><span>📋</span>每日任务<i class="dot" id="task-dot" hidden></i></button>
-      <button class="mbtn" type="button" data-meta="ach"><span>🏆</span>成就<i class="dot" id="ach-dot" hidden></i></button>
+      <button class="mbtn" type="button" data-meta="wardrobe"><img data-ui="shirt" alt="">衣柜</button>
+      <button class="mbtn" type="button" data-meta="tasks"><img data-ui="clipboard" alt="">每日任务<i class="dot" id="task-dot" hidden></i></button>
+      <button class="mbtn" type="button" data-meta="ach"><img data-ui="trophy" alt="">成就<i class="dot" id="ach-dot" hidden></i></button>
     </div>
     <p class="small" id="best">还没有战绩</p>
-    <button class="btn alt" id="install" type="button" hidden>📲 添加到手机桌面</button>
+    <button class="btn alt" id="install" type="button" hidden><img class="ui-i" data-ui="phone" alt=""> 添加到手机桌面</button>
     <p class="small" id="ios-tip" hidden>想像 App 一样打开？在 Safari 点「分享」→「添加到主屏幕」</p>
     <p class="how">抢房躺下 · 造建筑守门 · 鬼越砸越强</p>
   </div>
@@ -328,7 +358,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 
 <div class="overlay" id="meta" hidden>
   <div class="meta-card">
-    <div class="sheet-head" style="margin:0"><h3 id="meta-title">衣柜</h3><span class="mcoin" style="margin-left:auto">🌙 <b id="meta-coins2">0</b></span><button class="x" id="meta-close" type="button" aria-label="关闭">✕</button></div>
+    <div class="sheet-head" style="margin:0"><h3 id="meta-title">衣柜</h3><span class="mcoin" style="margin-left:auto"><img class="ui-i" data-ui="moon" alt=""><b id="meta-coins2">0</b></span><button class="x" id="meta-close" type="button" aria-label="关闭"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
     <div class="tabs" style="grid-template-columns:repeat(3,1fr);margin:0" id="meta-tabs">
       <button type="button" data-mt="wardrobe">衣柜</button><button type="button" data-mt="tasks">每日任务</button><button type="button" data-mt="ach">成就</button>
     </div>
@@ -372,7 +402,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
     <p class="earn" id="st-earn"></p>
     <div class="row-btns">
       <button class="btn big" id="again" type="button">再来一局</button>
-      <button class="btn alt" id="share" type="button">战绩图</button>
+      <button class="btn alt" id="share" type="button"><img class="ui-i" data-ui="picture" alt=""> 战绩图</button>
       <button class="btn alt" id="home" type="button">回到首页</button>
     </div>
   </div>
@@ -473,21 +503,22 @@ const payTag = k => {
 };
 // pick one perk per match; roommates get a random one too
 const TALENTS = [
-  { id: "bed", em: "🛌", name: "睡神", desc: "床的金币收入 +30%", v: .3 },
-  { id: "dmg", em: "🔥", name: "火力全开", desc: "输出建筑伤害 +20%", v: .2 },
-  { id: "range", em: "🔭", name: "千里眼", desc: "输出建筑射程 +30", v: 30 },
-  { id: "door", em: "🚪", name: "铜墙铁壁", desc: "门的耐久上限 +30%", v: .3 },
-  { id: "power", em: "🔋", name: "电力满格", desc: "游戏机和发电机的电力 +50%", v: .5 },
-  { id: "refund", em: "🧮", name: "精打细算", desc: "建造、升级、修门都省 15% 金币", v: .15 },
-  { id: "start", em: "💰", name: "富二代", desc: "躺下时多拿 200 金币和 30 电力", v: 1 },
-  { id: "gift", em: "🍀", name: "幸运星", desc: "礼盒来得更勤，开出的金币电力 +50%", v: .5 },
-  { id: "repair", em: "🔧", name: "巧手", desc: "手动修门冷却减半，维修台 +30%", v: .3 },
-  { id: "hitcoin", em: "💢", name: "越挫越勇", desc: "鬼每砸你一下，你拿 3 秒的床收入", v: 3 },
-  { id: "rate", em: "🎸", name: "摇滚宿舍", desc: "所有炮塔攻速 +15%", v: .15 },
-  { id: "regen", em: "🌿", name: "自愈门", desc: "门 5 秒没挨打就每秒回 2% 耐久", v: .02 },
-  { id: "chill", em: "❄️", name: "寒气逼人", desc: "鬼砸你的门慢 15%", v: .15 },
-  { id: "calm", em: "🕯️", name: "安神香", desc: "鬼砸你的门时 25% 不涨经验", v: 25 },
+  { id: "bed", ic: "bed", cat: "eco", name: "睡神", desc: "床的金币收入 +30%", v: .3 },
+  { id: "dmg", ic: "flame", cat: "atk", name: "火力全开", desc: "输出建筑伤害 +20%", v: .2 },
+  { id: "range", ic: "scope", cat: "atk", name: "千里眼", desc: "输出建筑射程 +30", v: 30 },
+  { id: "door", ic: "door", cat: "def", name: "铜墙铁壁", desc: "门的耐久上限 +30%", v: .3 },
+  { id: "power", ic: "battery", cat: "eco", name: "电力满格", desc: "游戏机和发电机的电力 +50%", v: .5 },
+  { id: "refund", ic: "tag", cat: "eco", name: "精打细算", desc: "建造、升级、修门都省 15% 金币", v: .15 },
+  { id: "start", ic: "bag", cat: "eco", name: "富二代", desc: "躺下时多拿 200 金币和 30 电力", v: 1 },
+  { id: "gift", ic: "clover", cat: "aux", name: "幸运星", desc: "礼盒来得更勤，开出的金币电力 +50%", v: .5 },
+  { id: "repair", ic: "wrench", cat: "def", name: "巧手", desc: "手动修门冷却减半，维修台 +30%", v: .3 },
+  { id: "hitcoin", ic: "anger", cat: "eco", name: "越挫越勇", desc: "鬼每砸你一下，你拿 3 秒的床收入", v: 3 },
+  { id: "rate", ic: "note", cat: "atk", name: "摇滚宿舍", desc: "所有炮塔攻速 +15%", v: .15 },
+  { id: "regen", ic: "leaf", cat: "def", name: "自愈门", desc: "门 5 秒没挨打就每秒回 2% 耐久", v: .02 },
+  { id: "chill", ic: "snow", cat: "aux", name: "寒气逼人", desc: "鬼砸你的门慢 15%", v: .15 },
+  { id: "calm", ic: "candle", cat: "aux", name: "安神香", desc: "鬼砸你的门时 25% 不涨经验", v: 25 },
 ];
+const TAL_CAT = { eco: ["经济", "#FFD23F"], atk: ["输出", "#FF7A7A"], def: ["防守", "#6CB8FF"], aux: ["特殊", "#C9A0FF"] };
 const tl = (r, k) => (r && r.tal && r.tal.id === k ? r.tal.v : 0);
 const SELECT_LEN = 20, START_COINS = 40, REPAIR_CD = 12, STUN_IMMUNE = 1.5, BERSERK_AT = 720;
 // each match draws a ghost breed: some nights are a quick win, some are a long fight
@@ -500,8 +531,20 @@ const GHOSTS = [
   { w: 24, hp: 1.18, dmg: 1.12, xp: .92 },
   { w: 12, hp: 1.38, dmg: 1.2, xp: .88 },
 ];
-const ghostMax = (lv, ty = G.type) => Math.round(720 * Math.pow(1.415, lv - 1) * ty.hp);
-const ghostDmg = lv => Math.round(14 * Math.pow(1.335, lv - 1) * G.type.dmg * (G.berserk ? 1.3 + .35 * (nightT - BERSERK_AT) / 60 : 1));
+// the ghost also draws a talent every night (shown to players; all of them make it a bit nastier in different ways)
+const GHOST_TALENTS = [
+  { id: "iron", name: "铁头", desc: "砸门伤害 +15%" },
+  { id: "thick", name: "厚皮", desc: "血量 +12%" },
+  { id: "swift", name: "飞毛腿", desc: "走得快 30%" },
+  { id: "glutton", name: "贪吃", desc: "抓到人回 50% 血" },
+  { id: "scholar", name: "学霸", desc: "涨经验快 20%" },
+  { id: "regen", name: "自愈", desc: "不在鬼井也会慢慢回血" },
+  { id: "dodge", name: "滑溜", desc: "12% 几率躲开攻击" },
+  { id: "caller", name: "呼朋引伴", desc: "更早、更容易叫来帮手" },
+];
+const gtal = k => !!(G && G.tal && G.tal.id === k);
+const ghostMax = (lv, ty = G.type) => Math.round(720 * Math.pow(1.415, lv - 1) * ty.hp * (gtal("thick") ? 1.12 : 1));
+const ghostDmg = lv => Math.round(14 * Math.pow(1.335, lv - 1) * G.type.dmg * (gtal("iron") ? 1.15 : 1) * (G.berserk ? 1.3 + .35 * (nightT - BERSERK_AT) / 60 : 1));
 const ghostNeed = lv => Math.round(Math.min(48, 15 + lv * 5) * G.type.xp);
 const ghostR = lv => Math.min(64, 24 + lv * 2.4);
 const doorMax = r => DOOR.hp(r.doorLv) * (1 + tl(r, "door"));
@@ -802,7 +845,8 @@ function newGame() {
   resetRooms();
   const type = (SPEED > 1 && window.__forceGhost != null && GHOSTS[+window.__forceGhost]) || weighted(GHOSTS);
   G = { type, x: ALTAR.x, y: ALTAR.y, lv: 1, xp: 0, hp: ghostMax(1, type), max: ghostMax(1, type), state: "hidden", target: null, path: [], atk: 1, rise: 0, lunge: 0, hurt: 0,
-    slow: 0, vuln: 0, attackT: 0, wait: 0, face: 1, frozenUntil: 0, stunUntil: 0, stunImmune: 0, smashT: 14, tele: 0, disruptT: 18, enrageUntil: 0, enraged: false, berserk: false, variant: (SPEED > 1 && window.__forceVariant != null && VARIANTS[+window.__forceVariant]) || pick(VARIANTS), invisUntil: 0, skillT: 16, poisonDps: 0, poisonUntil: 0, poisonMine: false, poisonAcc: 0 };
+    slow: 0, vuln: 0, attackT: 0, wait: 0, face: 1, frozenUntil: 0, stunUntil: 0, stunImmune: 0, smashT: 14, tele: 0, disruptT: 18, enrageUntil: 0, enraged: false, berserk: false, variant: (SPEED > 1 && window.__forceVariant != null && VARIANTS[+window.__forceVariant]) || pick(VARIANTS), invisUntil: 0, skillT: 16, helperT: 22, tal: (SPEED > 1 && window.__forceGTal != null && GHOST_TALENTS[+window.__forceGTal]) || pick(GHOST_TALENTS), poisonDps: 0, poisonUntil: 0, poisonMine: false, poisonAcc: 0 };
+  G.max = G.hp = ghostMax(1); helpers = [];
   gift = null; giftT = rand(28, 40);
   const special = rollPool();
   minions = []; sosCd = 0; giveCd = 0; helpQ = [];
@@ -810,7 +854,7 @@ function newGame() {
   camMode = "overview"; visit = null; shake = 0; flash = 0; ended = false; paused = false; celebrate = 0; slowmo = 0;
   closeSheet(); $("settings").hidden = true; $("feed").innerHTML = ""; $("top").hidden = false;
   phase = "select"; buildStrip();
-  const mt = $("me-tal"); mt.hidden = !me.tal; if (me.tal) { mt.textContent = me.tal.em; mt.title = me.tal.name; }
+  const mt = $("me-tal"); mt.hidden = !me.tal; if (me.tal) { mt.innerHTML = uiImg(me.tal.ic, ""); mt.title = me.tal.name; }
   banner("20 秒内抢一间宿舍！", "info");
   feed("本局限定建筑：" + special.map(k => BUILD[k].name).join("、"), "good");
   if (me.tal) feed(`本局天赋「${me.tal.name}」：${me.tal.desc}`, "good");
@@ -846,12 +890,13 @@ function showTalents() {
   $("match-title").textContent = "选一个本局天赋";
   $("match-grid").hidden = true;
   const box = $("talents"); box.hidden = false;
-  box.innerHTML = opts.map((o, i) => `<button class="tal" type="button" data-i="${i}"><span class="em">${o.em}</span><span><b>${o.name}</b><small>${o.desc}</small></span></button>`).join("");
+  box.classList.remove("done");
+  box.innerHTML = opts.map((o, i) => `<button class="tal" type="button" data-i="${i}" style="--tc:${TAL_CAT[o.cat][1]}"><span class="tal-cat">${TAL_CAT[o.cat][0]}</span><span class="tal-ic">${uiImg(o.ic, "")}</span><b>${o.name}</b><small>${o.desc}</small></button>`).join("");
   let left = 10; $("match-count").textContent = `${left} 秒后随机选一个`;
   const choose = i => {
     if (phase !== "match" || me.tal) return;
     clearInterval(talentTimer); me.tal = opts[i]; sfx("upgrade");
-    box.querySelectorAll(".tal").forEach((b, k) => b.classList.toggle("picked", k === i));
+    box.classList.add("done"); box.querySelectorAll(".tal").forEach((b, k) => b.classList.toggle("picked", k === i));
     setTimeout(() => { if (phase !== "match") return; $("match").hidden = true; newGame(); }, 500);
   };
   box.onclick = e => { const b = e.target.closest(".tal"); if (b) choose(+b.dataset.i); };
@@ -886,7 +931,7 @@ const VARIANTS = [
   { id: "summoner", body: "#E9DAFF", eye: "#C27BFF", intro: "今晚的猛鬼会放小鬼去砸别人的门，点一下小鬼就能拍散它" },
   { id: "wrecker", body: "#DDF5D2", eye: "#4FD43A", intro: "今晚的猛鬼会拆家，砸门时会把建筑打掉一级" },
 ];
-let minions = [], sosCd = 0, giveCd = 0, helpQ = [];
+let minions = [], helpers = [], sosCd = 0, giveCd = 0, helpQ = [];
 const bubbleT = {};
 function bubble(p, text, sec = 2.6) {
   const i = players.indexOf(p), el = document.querySelector(`#players .pb[data-i="${i}"] .bub`); if (!el) return;
@@ -975,11 +1020,12 @@ function startNight() {
   banner("猛鬼出动了！", "danger"); sfx("spawn"); speak("猛鬼出动了，大家小心", true);
   feed("猛鬼从鬼井里爬出来了：它每砸一次门都会变强", "bad");
   feed(G.variant.intro, "bad");
+  feed(`猛鬼的天赋「${G.tal.name}」：${G.tal.desc}`, "bad");
 }
 
 /* ================= ghost ================= */
 function gainXp(n) {
-  G.xp += n;
+  G.xp += n * (gtal("scholar") ? 1.2 : 1);
   while (G.xp >= ghostNeed(G.lv)) {
     G.xp -= ghostNeed(G.lv);
     const ratio = G.hp / G.max; G.lv++; G.max = ghostMax(G.lv); G.hp = Math.max(1, G.max * ratio);
@@ -1004,6 +1050,7 @@ function pickTarget(exclude) {
 function hitGhost(dmg, mine, quiet) {
   if (phase !== "night" || G.hp <= 0) return;
   dmg *= 1 + G.vuln;
+  if (gtal("dodge")) { if (quiet) dmg *= .88; else if (Math.random() < .12) { floatText(G.x + rand(-14, 14), G.y - ghostR(G.lv) - 10, "躲开", "#C9F0FF", 12); return; } }
   G.hp -= dmg; G.hurt = .12; if (mine) stats.dmg += dmg;
   if (!quiet) floatText(G.x + rand(-14, 14), G.y - ghostR(G.lv) - 10, "-" + fmt(dmg), mine ? "#FFE26A" : "#FFFFFF", mine ? 16 : 12);
   if (G.hp <= 0) { G.hp = 0; G.state = "dead"; burst(G.x, G.y, "#F1EEFF", 50, 280); burst(G.x, G.y, "#FFD23F", 30, 220); slowmo = 1.2; flash = .5; endGame(true); }
@@ -1050,7 +1097,7 @@ function damageDoor(r, dmg) {
 function killRoom(r) {
   const occ = r.occupant; occ.state = "dead"; r.alive = false; deaths++;
   burst(r.headPt.x, r.headPt.y, "#FF4D6D", 26, 200); sfx("kill");
-  G.hp = Math.min(G.max, G.hp + G.max * .3); gainXp(Math.ceil(ghostNeed(G.lv) / 3));
+  G.hp = Math.min(G.max, G.hp + G.max * (gtal("glutton") ? .5 : .3)); gainXp(Math.ceil(ghostNeed(G.lv) / 3));
   if (occ.isPlayer) { banner("你被抓走了……", "danger"); endGame(false); G.state = "idle"; G.wait = 99; return; }
   feed(`${occ.name} 被抓走了，${gName()}回血又涨经验`, "bad"); speak(`${occ.name}被抓走了`);
   G.state = "idle"; G.wait = 1.4; G.target = null;
@@ -1060,7 +1107,8 @@ function updateGhost(dt) {
   G.lunge = Math.max(0, G.lunge - dt * 5); G.hurt = Math.max(0, G.hurt - dt);
   if (G.state === "hidden" || G.state === "dead") return;
   if (gt < G.frozenUntil || gt < G.stunUntil) return;
-  const sp = 110 + G.lv * 5;
+  const sp = (110 + G.lv * 5) * (gtal("swift") ? 1.3 : 1);
+  if (gtal("regen") && G.state !== "heal" && G.state !== "rise") G.hp = Math.min(G.max, G.hp + G.max * .004 * dt);
   if (!G.berserk && nightT > BERSERK_AT) { G.berserk = true; banner(`${gName()}暴走了！不再逃跑`, "danger"); sfx("roar"); speak(`${gName()}暴走了，不会再逃跑`, true); feed("暴走：不会再逃回鬼井，伤害每分钟变高", "bad"); }
   if (!G.berserk && (G.state === "walk" || G.state === "attack") && G.hp < G.max * .25) {
     if (isMine(t)) {
@@ -1073,6 +1121,11 @@ function updateGhost(dt) {
     return;
   }
   if (G.lv >= 2 && (G.state === "walk" || G.state === "attack") && G.tele <= 0) { G.skillT -= dt; if (G.skillT <= 0) variantSkill(); }
+  // from mid-game on, any ghost may call a helper to go smash someone else's door
+  if (G.lv >= (gtal("caller") ? 4 : 5) && (G.state === "walk" || G.state === "attack")) {
+    G.helperT -= dt;
+    if (G.helperT <= 0) { G.helperT = rand(35, 50); if (helpers.length < (G.lv >= 10 ? 2 : 1) && Math.random() < (gtal("caller") ? .75 : .45)) spawnHelper(); }
+  }
   switch (G.state) {
     case "rise": G.rise += dt; if (G.rise > 1.6) pickTarget(); break;
     case "idle": G.wait -= dt; if (G.wait <= 0) pickTarget(); break;
@@ -1165,6 +1218,41 @@ function updateMinions(dt) {
     if (L < 8) { minionHit(r, m.dmg); minions.splice(i, 1); continue; }
     const st = Math.min(L, 115 * dt); m.x += dx / L * st; m.y += dy / L * st;
   }
+}
+function spawnHelper() {
+  let pool = rooms.filter(r => r.alive && r.occupant && r !== G.target); if (!pool.length) return;
+  const r = pick(pool), hp = G.max * .22;
+  helpers.push({ x: G.x, y: G.y - 10, room: r, hp, max: hp, atk: 1.2, t: 0, life: 45, hurt: 0, lunge: 0, acc: 0 });
+  sfx("summon"); setTimeout(() => sfx("roar"), 250); burst(G.x, G.y, "#A99BE0", 24, 200);
+  feed(`猛鬼叫来了帮手，去砸 ${who(r)}的门！`, "bad");
+  if (isMine(r)) { banner("帮手鬼来砸你的门了！", "danger"); speak("猛鬼叫来了帮手", true); }
+  else banner("猛鬼叫来了帮手！", "danger");
+}
+function updateHelpers(dt) {
+  for (let i = helpers.length - 1; i >= 0; i--) {
+    const h = helpers[i], r = h.room; h.t += dt; h.hurt = Math.max(0, h.hurt - dt); h.lunge = Math.max(0, h.lunge - dt * 5);
+    if (!r.alive || h.t > h.life) { burst(h.x, h.y, "#A99BE0", 14, 120); helpers.splice(i, 1); continue; }
+    let dps = 0;
+    for (const o of rooms) {
+      if (!o.alive || !o.occupant) continue;
+      const d = Math.hypot(h.x - o.doorC.x, h.y - o.doorC.y);
+      for (const sl of o.slots) if (sl.b && sl.b.offUntil <= gt && ATTACKERS.includes(sl.b.type) && sl.b.type !== "thunder" && d <= rangeOf(o, sl.b)) dps += BUILD[sl.b.type].val(sl.b.lv) * .5;
+    }
+    if (dps) { const d = dps * dt; h.hp -= d; h.acc += d; h.hurt = .08; if (h.acc > h.max * .08) { floatText(h.x + rand(-8, 8), h.y - 34, "-" + fmt(h.acc), "#FFFFFF", 11); h.acc = 0; } }
+    if (h.hp <= 0) {
+      const c = nice(BED.inc(r.bedLv) * 20); r.coins += c; burst(h.x, h.y, "#A99BE0", 26, 200);
+      feed(`${who(r)}打跑了猛鬼的帮手`, "good");
+      if (isMine(r)) { floatText(h.x, h.y - 20, "+" + fmt(c), "#FFD23F", 16, "coin"); sfx("repel"); }
+      helpers.splice(i, 1); continue;
+    }
+    const tx = r.doorOuter.x + (r.left ? 34 : -34), ty = r.doorOuter.y + 6, dx = tx - h.x, dy = ty - h.y, L = Math.hypot(dx, dy);
+    if (L > 4) { const st = Math.min(L, 120 * dt); h.x += dx / L * st; h.y += dy / L * st; }
+    else { h.atk -= dt; if (h.atk <= 0) { h.atk = 1.3; h.lunge = 1; minionHit(r, ghostDmg(G.lv) * .55); } }
+  }
+}
+function hitHelper(i) {
+  const h = helpers[i], d = h.max * .07; h.hp -= d; h.hurt = .15;
+  floatText(h.x, h.y - 34, "-" + fmt(d), "#FFE26A", 14); burst(h.x, h.y, "#FFFFFF", 6, 100); sfx("pop"); vibrate(12);
 }
 function popMinion(i) {
   const m = minions[i]; minions.splice(i, 1);
@@ -1391,7 +1479,7 @@ function update(dt) {
       const d = G.poisonDps * dt; hitGhost(d, G.poisonMine, true); G.poisonAcc += d;
       if (G.poisonAcc > G.poisonDps) { floatText(G.x + rand(-12, 12), G.y - ghostR(G.lv) - 8, "-" + fmt(G.poisonAcc), "#8CFF7A", 12); G.poisonAcc = 0; if (G.poisonMine) sfx("poison"); }
     }
-    if (phase === "night") { updateGhost(dt); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); updateMinions(dt); updateHelp(); }
+    if (phase === "night") { updateGhost(dt); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); updateMinions(dt); updateHelpers(dt); updateHelp(); }
   }
   if (phase === "title" || phase === "match") { G.x = CX + Math.sin(gt * .5) * 40; G.y = MAP_H * .5 + Math.sin(gt * .3) * MAP_H * .4; G.face = Math.cos(gt * .5) > 0 ? 1 : -1; }
   for (let i = bullets.length - 1; i >= 0; i--) {
@@ -1550,13 +1638,13 @@ function dailyAdd(id, n = 1, set) { for (const t of ensureDaily().list) if (t.id
 let toastQ = [], toastBusy = false;
 function toast(msg) {
   toastQ.push(msg); if (toastBusy) return;
-  const next = () => { const m = toastQ.shift(); if (!m) { toastBusy = false; return; } toastBusy = true; const el = $("toast"); el.textContent = m; el.classList.add("show"); setTimeout(() => { el.classList.remove("show"); setTimeout(next, 300); }, 2200); };
+  const next = () => { const m = toastQ.shift(); if (!m) { toastBusy = false; return; } toastBusy = true; const el = $("toast"); el.innerHTML = m; el.classList.add("show"); setTimeout(() => { el.classList.remove("show"); setTimeout(next, 300); }, 2200); };
   next();
 }
 function unlock(id) {
   if (meta.ach[id]) return; const a = ACHS.find(x => x.id === id); if (!a) return;
   meta.ach[id] = Date.now(); meta.coins += a.reward; saveMeta();
-  toast(`🏆 成就「${a.name}」 +${a.reward} 眠币`); sfx("thanks");
+  toast(`${uiImg("trophy")} 成就「${a.name}」 +${a.reward} 眠币`); sfx("thanks");
 }
 function track(k, v) {
   const L = meta.life; ensureDaily();
@@ -1597,7 +1685,7 @@ function renderMeta() {
       h += `<div class="meta-sec"><h4>${label}</h4><div class="skins">` + COSMETICS[kind].map(k => {
         const own = meta.owned[kind].includes(k.id), on = meta.equip[kind] === k.id;
         const img = kind === "frame" ? `<img class="av${frameCls(k.id)}" src="${me.url}" alt="">` : `<img src="${previewOf(kind, k.id)}" alt="">`;
-        return `<button class="skin${on ? " on" : ""}" type="button" data-skin="${kind}:${k.id}">${img}<span>${k.name}</span>${on ? `<small class="own">使用中</small>` : own ? `<small class="own">已拥有</small>` : `<small>🌙 ${k.price}</small>`}</button>`;
+        return `<button class="skin${on ? " on" : ""}" type="button" data-skin="${kind}:${k.id}">${img}<span>${k.name}</span>${on ? `<small class="own">使用中</small>` : own ? `<small class="own">已拥有</small>` : `<small>${uiImg("moon")} ${k.price}</small>`}</button>`;
       }).join("") + `</div></div>`;
     }
     h += `<p class="note">皮肤只改变外观。打完一局按名次、坚持时间和伤害发眠币。</p>`;
@@ -1605,13 +1693,13 @@ function renderMeta() {
     $("meta-title").textContent = "每日任务";
     h = ensureDaily().list.map((t, i) => {
       const d = DAILY.find(x => x.id === t.id), done = t.prog >= d.goal, p = Math.min(1, t.prog / d.goal);
-      return `<div class="task"><div><b>${d.text}</b><small>${fmt(Math.min(t.prog, d.goal))} / ${fmt(d.goal)} · 奖励 🌙 ${d.reward}</small><div class="pbar"><i style="width:${p * 100}%"></i></div></div>
+      return `<div class="task"><div><b>${d.text}</b><small>${fmt(Math.min(t.prog, d.goal))} / ${fmt(d.goal)} · 奖励 ${uiImg("moon")} ${d.reward}</small><div class="pbar"><i style="width:${p * 100}%"></i></div></div>
         <button class="claim" type="button" data-claim="${i}" ${done && !t.claimed ? "" : "disabled"}>${t.claimed ? "已领取" : done ? "领取" : "进行中"}</button></div>`;
     }).join("") + `<p class="note">每天 0 点换一批新任务。</p>`;
   } else {
     $("meta-title").textContent = "成就";
     const got = ACHS.filter(a => meta.ach[a.id]).length;
-    h = `<p class="note" style="margin:0 2px">已解锁 ${got} / ${ACHS.length}</p>` + ACHS.map(a => `<div class="ach${meta.ach[a.id] ? "" : " lock"}"><div><b>${meta.ach[a.id] ? "🏆" : "🔒"} ${a.name}</b><small>${a.desc}</small></div><span class="rw">${meta.ach[a.id] ? "已获得" : "🌙 " + a.reward}</span></div>`).join("");
+    h = `<p class="note" style="margin:0 2px">已解锁 ${got} / ${ACHS.length}</p>` + ACHS.map(a => `<div class="ach${meta.ach[a.id] ? "" : " lock"}"><div><b>${uiImg(meta.ach[a.id] ? "trophy" : "lock")} ${a.name}</b><small>${a.desc}</small></div><span class="rw">${meta.ach[a.id] ? "已获得" : uiImg("moon") + " " + a.reward}</span></div>`).join("");
     meta.seen = Object.keys(meta.ach).length; saveMeta();
   }
   $("meta-body").innerHTML = h;
@@ -1635,7 +1723,7 @@ $("meta-body").addEventListener("click", e => {
     renderMeta();
   } else if (cl && !cl.disabled) {
     const t = ensureDaily().list[+cl.dataset.claim], d = DAILY.find(x => x.id === t.id);
-    t.claimed = true; meta.coins += d.reward; saveMeta(); sfx("coin"); toast(`领取 🌙 ${d.reward} 眠币`); renderMeta();
+    t.claimed = true; meta.coins += d.reward; saveMeta(); sfx("coin"); toast(`${uiImg("moon")} 领取 ${d.reward} 眠币`); renderMeta();
   }
 });
 document.querySelectorAll("[data-meta]").forEach(b => b.addEventListener("click", () => { auInit(); openMeta(b.dataset.meta); }));
@@ -1650,7 +1738,7 @@ function snapshot() {
   const ri = r => (r ? r.i : -1), pi = p => players.indexOf(p);
   return {
     v: 1, at: Date.now(), gt, nightT, deaths, giftT, sosCd, giveCd, avail: [...avail], stats,
-    G: Object.assign({}, G, { type: GHOSTS.indexOf(G.type), variant: G.variant.id, target: ri(G.target), path: [] }),
+    G: Object.assign({}, G, { type: GHOSTS.indexOf(G.type), variant: G.variant.id, tal: G.tal ? G.tal.id : null, target: ri(G.target), path: [] }),
     players: players.map(p => { const o = Object.assign({}, p, { room: ri(p.room), tal: p.tal ? p.tal.id : null }); delete o.img; delete o.url; delete o.path; return o; }),
     rooms: rooms.map(r => { const o = {}; for (const k of ROOM_KEYS) o[k] = r[k]; o.occupant = pi(r.occupant); o.reserved = pi(r.reserved); o.tal = r.tal ? r.tal.id : null; o.slots = r.slots.map(sl => (sl.b ? Object.assign({}, sl.b) : null)); return o; }),
   };
@@ -1670,16 +1758,16 @@ function restoreGame(sv) {
     Object.assign(r, rest, { occupant: players[occupant] || null, reserved: players[reserved] || null, tal: talOf(tal) });
     r.slots.forEach((sl, k) => { sl.b = slots[k] ? Object.assign({}, slots[k]) : null; });
   });
-  G = Object.assign({}, sv.G, { type: GHOSTS[sv.G.type] || GHOSTS[1], variant: VARIANTS.find(v => v.id === sv.G.variant) || VARIANTS[0], target: rooms[sv.G.target] || null, path: [] });
+  G = Object.assign({}, sv.G, { type: GHOSTS[sv.G.type] || GHOSTS[1], variant: VARIANTS.find(v => v.id === sv.G.variant) || VARIANTS[0], tal: GHOST_TALENTS.find(t => t.id === sv.G.tal) || null, target: rooms[sv.G.target] || null, path: [] });
   if ((G.state === "walk" || G.state === "attack") && G.target) { G.state = "walk"; G.tele = 0; route(G, { kind: "door", room: G.target }); }
   else if (G.state === "enter" && G.target) G.path = [{ ...G.target.doorInner }, { ...G.target.bedWay }, { ...G.target.bedPt }];
   else if (G.state === "retreat") route(G, { kind: "altar" });
   else if (G.state !== "heal") { G.state = "idle"; G.wait = 1; }
   gt = sv.gt; nightT = sv.nightT; deaths = sv.deaths; giftT = sv.giftT; sosCd = sv.sosCd; giveCd = sv.giveCd; avail = new Set(sv.avail); stats = sv.stats;
-  gift = null; minions = []; helpQ = []; bullets = []; parts = []; floats = []; rings = []; fx = [];
+  gift = null; minions = []; helpers = []; helpQ = []; bullets = []; parts = []; floats = []; rings = []; fx = [];
   phase = "night"; ended = false; paused = false; camMode = "focus"; visit = null; shake = 0; flash = 0; celebrate = 0; slowmo = 0;
   closeSheet(); $("title").hidden = true; $("end").hidden = true; $("feed").innerHTML = ""; $("top").hidden = false;
-  buildStrip(); const mt = $("me-tal"); mt.hidden = !me.tal; if (me.tal) mt.textContent = me.tal.em;
+  buildStrip(); const mt = $("me-tal"); mt.hidden = !me.tal; if (me.tal) mt.innerHTML = uiImg(me.tal.ic, "");
   feed(`接着上一局继续，已坚持 ${mmss(nightT)}`, "good");
   togglePause(true);
 }
@@ -1712,7 +1800,11 @@ function makeShareImage() {
     c.font = `600 28px "PingFang SC","Microsoft YaHei",sans-serif`; c.textAlign = "left"; c.fillStyle = "#B8B1DE"; c.fillText(k, x + 24, y + 34);
     c.font = `800 46px "Baloo 2","PingFang SC",sans-serif`; c.fillStyle = "#F5F2FF"; c.fillText(v, x + 24, y + 80);
   });
-  if (me.tal) { c.font = `700 30px "PingFang SC","Microsoft YaHei",sans-serif`; c.textAlign = "center"; c.fillStyle = "#A8F0C0"; c.fillText(`本局天赋：${me.tal.em} ${me.tal.name}`, Wd / 2, 755); }
+  if (me.tal) {
+    c.font = `700 30px "PingFang SC","Microsoft YaHei",sans-serif`; c.textAlign = "left"; c.fillStyle = "#A8F0C0";
+    const label2 = `本局天赋：${me.tal.name}`, w2 = c.measureText(label2).width, x0 = Wd / 2 - (w2 + 50) / 2;
+    c.save(); c.translate(x0, 735); c.scale(.85, .85); drawUi(c, me.tal.ic); c.restore(); c.fillText(label2, x0 + 50, 757);
+  }
   players.forEach((p, i) => {
     const x = 105 + i * 102, y = 840;
     c.save(); c.drawImage(p.img, x - 40, y - 40, 80, 80);
@@ -1766,7 +1858,10 @@ function goHome() { visit = null; camMode = "focus"; }
 function tap(sx, sy) {
   if ((phase !== "select" && phase !== "night") || paused) return;
   const p = toWorld(sx, sy), r = roomAt(p.x, p.y);
-  if (phase === "night" && me.room && me.room.alive) { const mi = minions.findIndex(m => Math.hypot(p.x - m.x, p.y - m.y) < 26); if (mi >= 0) return popMinion(mi); }
+  if (phase === "night" && me.room && me.room.alive) {
+    const mi = minions.findIndex(m => Math.hypot(p.x - m.x, p.y - m.y) < 26); if (mi >= 0) return popMinion(mi);
+    const hi = helpers.findIndex(h => Math.hypot(p.x - h.x, p.y - h.y) < 30); if (hi >= 0) return hitHelper(hi);
+  }
   if (me.state !== "bed") { if (r && phase === "select") choose(r); return; }
   const mine = me.room;
   if (camMode === "overview") { if (r) focusRoom(r); return; }
@@ -1845,6 +1940,137 @@ function refreshStrip() {
 const ICONS = {};
 function makeIcon(draw) { const c = document.createElement("canvas"); c.width = c.height = 96; const x = c.getContext("2d"); x.scale(2, 2); draw(x); return c.toDataURL(); }
 function makeIcons() { for (const type of Object.keys(BUILD)) ICONS[type] = makeIcon(x => drawBuilding(x, type, 1, 24, 24, 38, { aim: -Math.PI / 4, flash: 0, active: true, offUntil: 0 }, 0, true)); }
+
+/* ================= hand-drawn UI icons (same flat cartoon style as the buildings) ================= */
+function drawUi(c, name) {
+  c.save(); c.lineJoin = "round"; c.lineCap = "round"; c.lineWidth = 2.6; c.strokeStyle = EDGE;
+  const F = col => { c.fillStyle = col; c.fill(); c.stroke(); };
+  const circ = (x, y, r) => { c.beginPath(); c.arc(x, y, r, 0, TAU); };
+  const poly = pts => { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); };
+  const line2 = (draw, col, w) => { c.save(); draw(); c.lineWidth = w + 3.4; c.strokeStyle = EDGE; c.stroke(); c.lineWidth = w; c.strokeStyle = col; c.stroke(); c.restore(); };
+  switch (name) {
+    case "bed":
+      rrPath(c, 5, 11, 7, 29, 3); F("#8A5CC8");
+      rrPath(c, 9, 24, 34, 11, 4); F("#EDE8FF");
+      rrPath(c, 21, 19, 22, 16, 5); F("#5AB0FF");
+      rrPath(c, 11, 17, 11, 8, 4); F("#FFFFFF");
+      rrPath(c, 10, 34, 4, 6, 1); F("#5A3E7A"); rrPath(c, 38, 34, 4, 6, 1); F("#5A3E7A");
+      c.fillStyle = "#FFFFFF"; c.font = "800 10px sans-serif"; c.textAlign = "center"; c.lineWidth = 2.4; c.strokeText("z", 33, 12); c.fillText("z", 33, 12); c.strokeText("z", 40, 6); c.fillText("z", 40, 6); break;
+    case "flame":
+      c.beginPath(); c.moveTo(24, 4); c.bezierCurveTo(30, 13, 40, 19, 38, 31); c.bezierCurveTo(37, 40, 31, 45, 24, 45); c.bezierCurveTo(16, 45, 10, 39, 10, 31); c.bezierCurveTo(10, 24, 15, 20, 17, 14); c.bezierCurveTo(19, 19, 21, 21, 23, 21); c.bezierCurveTo(22, 15, 22, 9, 24, 4); c.closePath(); F("#FF6B3D");
+      c.beginPath(); c.moveTo(24, 23); c.bezierCurveTo(28, 28, 31, 31, 30, 36); c.bezierCurveTo(29, 40, 27, 41, 24, 41); c.bezierCurveTo(20, 41, 18, 38, 18, 35); c.bezierCurveTo(18, 31, 22, 29, 24, 23); c.closePath(); F("#FFD23F"); break;
+    case "scope":
+      circ(24, 24, 16); F("#FFFFFF"); circ(24, 24, 10); F("#FF6B6B"); circ(24, 24, 4); F("#FFFFFF");
+      line2(() => { c.beginPath(); c.moveTo(24, 3); c.lineTo(24, 11); c.moveTo(24, 37); c.lineTo(24, 45); c.moveTo(3, 24); c.lineTo(11, 24); c.moveTo(37, 24); c.lineTo(45, 24); }, "#FFFFFF", 3); break;
+    case "door":
+      rrPath(c, 10, 4, 28, 41, 4); F("#5A3E2A");
+      rrPath(c, 14, 8, 20, 37, 3); F("#C98B52");
+      rrPath(c, 17, 12, 14, 11, 2); c.stroke(); rrPath(c, 17, 27, 14, 12, 2); c.stroke();
+      circ(30, 26, 2.6); F("#FFD23F"); break;
+    case "battery":
+      rrPath(c, 7, 12, 31, 25, 5); F("#2E3354"); rrPath(c, 38, 19, 4, 11, 2); F("#2E3354");
+      rrPath(c, 10, 15, 25, 19, 3); F("#5CE08A");
+      poly([[25, 13], [16, 26], [23, 26], [20, 36], [31, 22], [24, 22]]); c.lineWidth = 2; F("#FFE26A"); break;
+    case "tag":
+      c.save(); c.translate(24, 24); c.rotate(-Math.PI / 4);
+      poly([[-19, 0], [-9, -12], [18, -12], [18, 12], [-9, 12]]); F("#FFD23F");
+      circ(-9, 0, 3); F("#2B2458"); c.restore();
+      line2(() => { c.beginPath(); c.moveTo(31, 20); c.lineTo(22, 33); }, "#FFFFFF", 2.6);
+      circ(22, 21, 3); F("#FFFFFF"); circ(31, 32, 3); F("#FFFFFF"); break;
+    case "bag":
+      c.beginPath(); c.moveTo(17, 15); c.bezierCurveTo(7, 21, 5, 31, 8, 37); c.bezierCurveTo(10, 44, 38, 44, 40, 37); c.bezierCurveTo(43, 31, 41, 21, 31, 15); c.closePath(); F("#C98B52");
+      poly([[17, 15], [13, 6], [20, 9], [24, 4], [28, 9], [35, 6], [31, 15]]); F("#C98B52");
+      rrPath(c, 15, 12, 18, 5, 2); F("#E2B843");
+      circ(24, 31, 8); F("#FFD23F"); line2(() => { c.beginPath(); c.moveTo(24, 26.5); c.lineTo(24, 35.5); }, "#E2A520", 1); break;
+    case "clover":
+      line2(() => { c.beginPath(); c.moveTo(24, 26); c.quadraticCurveTo(25, 37, 33, 44); }, "#3E8E4A", 3.4);
+      for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { circ(24 + dx * 7.5, 19 + dy * 7.5, 7.5); F("#5CE08A"); }
+      circ(24, 19, 3.2); F("#3E8E4A"); break;
+    case "wrench":
+      c.save(); c.translate(24, 25); c.rotate(-Math.PI / 4);
+      rrPath(c, -4.5, -6, 9, 27, 4); F("#D8DEEA");
+      circ(0, -12, 10); F("#D8DEEA");
+      rrPath(c, -4, -24, 8, 11, 2); c.fillStyle = "#2B2458"; c.fill(); c.restore(); break;
+    case "anger":
+      circ(21, 28, 15); F("#FFD23F"); circ(21, 28, 10); c.lineWidth = 2; c.strokeStyle = "#E2A520"; c.stroke(); c.strokeStyle = EDGE; c.lineWidth = 2.6;
+      c.save(); c.translate(36, 12);
+      for (let k = 0; k < 4; k++) { c.rotate(Math.PI / 2); line2(() => { c.beginPath(); c.moveTo(3, -8); c.quadraticCurveTo(3, -3, 8, -3); }, "#FF4D6D", 3.2); }
+      c.restore(); break;
+    case "note":
+      rrPath(c, 18, 11, 4.5, 26, 1.5); F("#FF8FB8"); rrPath(c, 36, 7, 4.5, 26, 1.5); F("#FF8FB8");
+      poly([[18, 11], [40.5, 6], [40.5, 13], [18, 18]]); F("#FF8FB8");
+      c.beginPath(); c.ellipse(15, 37, 7, 5.5, -.4, 0, TAU); F("#FF8FB8"); c.beginPath(); c.ellipse(33, 33, 7, 5.5, -.4, 0, TAU); F("#FF8FB8"); break;
+    case "leaf":
+      c.beginPath(); c.moveTo(7, 41); c.bezierCurveTo(7, 18, 22, 6, 42, 6); c.bezierCurveTo(42, 27, 30, 41, 7, 41); c.closePath(); F("#5CE08A");
+      c.beginPath(); c.moveTo(10, 38); c.quadraticCurveTo(23, 27, 37, 11); c.lineWidth = 2.2; c.stroke();
+      line2(() => { c.beginPath(); c.moveTo(34, 30); c.lineTo(34, 42); c.moveTo(28, 36); c.lineTo(40, 36); }, "#FFFFFF", 3); break;
+    case "snow":
+      for (let k = 0; k < 3; k++) {
+        const a = k * Math.PI / 3, ca = Math.cos(a), sa = Math.sin(a);
+        line2(() => { c.beginPath(); c.moveTo(24 - ca * 18, 24 - sa * 18); c.lineTo(24 + ca * 18, 24 + sa * 18);
+          for (const sd of [-1, 1]) { const bx = 24 + ca * 12 * sd, by = 24 + sa * 12 * sd; c.moveTo(bx, by); c.lineTo(bx + (ca * 5 - sa * 5) * sd, by + (sa * 5 + ca * 5) * sd); c.moveTo(bx, by); c.lineTo(bx + (ca * 5 + sa * 5) * sd, by + (sa * 5 - ca * 5) * sd); } }, "#BDEBFF", 3.2);
+      }
+      circ(24, 24, 4); F("#FFFFFF"); break;
+    case "candle":
+      rrPath(c, 10, 39, 28, 6, 2); F("#C9A44A");
+      rrPath(c, 16, 18, 16, 22, 3); F("#FFF1D6");
+      c.beginPath(); c.moveTo(16, 23); c.quadraticCurveTo(19, 27, 21, 23); c.lineWidth = 2; c.stroke(); c.lineWidth = 2.6;
+      c.beginPath(); c.moveTo(24, 18); c.lineTo(24, 15); c.stroke();
+      c.beginPath(); c.moveTo(24, 3); c.bezierCurveTo(31, 10, 30, 16, 24, 16); c.bezierCurveTo(18, 16, 17, 10, 24, 3); F("#FFB15A");
+      c.beginPath(); c.ellipse(24, 12, 2.2, 3, 0, 0, TAU); c.fillStyle = "#FFF3B0"; c.fill(); break;
+    case "shirt":
+      poly([[16, 7], [32, 7], [44, 16], [39, 24], [34, 21], [34, 42], [14, 42], [14, 21], [9, 24], [4, 16]]); F("#5AB0FF");
+      rrPath(c, 14, 27, 20, 5, 1); F("#FFD23F");
+      c.beginPath(); c.moveTo(19, 7); c.quadraticCurveTo(24, 14, 29, 7); c.stroke(); break;
+    case "clipboard":
+      rrPath(c, 8, 8, 32, 37, 5); F("#C98B52"); rrPath(c, 12, 13, 24, 28, 3); F("#FFFFFF"); rrPath(c, 17, 4, 14, 8, 3); F("#8D98AE");
+      for (const [y, done] of [[20, true], [28, true], [36, false]]) {
+        if (done) line2(() => { c.beginPath(); c.moveTo(15, y); c.lineTo(17.5, y + 2.5); c.lineTo(21.5, y - 2.5); }, "#5CE08A", 2.2);
+        else { c.beginPath(); c.arc(18, y, 2.6, 0, TAU); c.lineWidth = 2; c.stroke(); }
+        c.beginPath(); c.moveTo(25, y); c.lineTo(32, y); c.lineWidth = 2.4; c.strokeStyle = "#B8B1DE"; c.stroke(); c.strokeStyle = EDGE; c.lineWidth = 2.6;
+      } break;
+    case "trophy":
+      c.beginPath(); c.arc(12, 15, 6, Math.PI * .5, Math.PI * 1.5); c.lineWidth = 7; c.stroke(); c.lineWidth = 3; c.strokeStyle = "#FFD23F"; c.stroke();
+      c.beginPath(); c.arc(36, 15, 6, -Math.PI * .5, Math.PI * .5); c.strokeStyle = EDGE; c.lineWidth = 7; c.stroke(); c.lineWidth = 3; c.strokeStyle = "#FFD23F"; c.stroke();
+      c.strokeStyle = EDGE; c.lineWidth = 2.6;
+      c.beginPath(); c.moveTo(13, 6); c.lineTo(35, 6); c.lineTo(34, 19); c.bezierCurveTo(33, 28, 28, 31, 24, 31); c.bezierCurveTo(20, 31, 15, 28, 14, 19); c.closePath(); F("#FFD23F");
+      rrPath(c, 21, 30, 6, 7, 1); F("#E2A520"); rrPath(c, 13, 36, 22, 8, 2); F("#94653A");
+      c.beginPath(); c.moveTo(18, 10); c.quadraticCurveTo(17, 20, 21, 25); c.strokeStyle = "rgba(255,255,255,.85)"; c.lineWidth = 2.6; c.stroke(); break;
+    case "moon":
+      circ(24, 24, 19); F("#FFD23F"); circ(24, 24, 14); c.lineWidth = 2; c.strokeStyle = "#E2A520"; c.stroke(); c.strokeStyle = EDGE; c.lineWidth = 2.6;
+      c.save(); circ(23, 24, 10); c.clip(); c.fillStyle = "#7A5CE0"; c.fillRect(0, 0, 48, 48); circ(28, 20, 9); c.fillStyle = "#FFD23F"; c.fill(); c.restore();
+      c.beginPath(); c.arc(23, 24, 10, .9, 5.1); c.lineWidth = 2; c.stroke(); break;
+    case "mega":
+      line2(() => { c.beginPath(); c.arc(33, 24, 7, -.7, .7); c.moveTo(33 + Math.cos(-.7) * 13, 24 + Math.sin(-.7) * 13); c.arc(33, 24, 13, -.7, .7); }, "#FFFFFF", 2.6);
+      poly([[9, 18], [27, 9], [27, 39], [9, 30]]); F("#FFFFFF");
+      rrPath(c, 4, 17, 7, 14, 2); F("#FFD23F"); rrPath(c, 25, 7, 6, 34, 3); F("#FFD23F");
+      rrPath(c, 12, 30, 6, 10, 2); F("#FFFFFF"); break;
+    case "lock":
+      line2(() => { c.beginPath(); c.arc(24, 20, 8, Math.PI, 0); }, "#B8B1DE", 4);
+      rrPath(c, 12, 20, 24, 21, 4); F("#8D98AE");
+      circ(24, 28, 3); c.fillStyle = EDGE; c.fill(); rrPath(c, 22.5, 28, 3, 7, 1); c.fill(); break;
+    case "check":
+      circ(24, 24, 18); F("#5CE08A");
+      line2(() => { c.beginPath(); c.moveTo(15, 24); c.lineTo(21, 30); c.lineTo(33, 17); }, "#FFFFFF", 3.6); break;
+    case "phone":
+      rrPath(c, 13, 4, 22, 40, 5); F("#2E3354"); rrPath(c, 16, 8, 16, 28, 2); F("#7FE7FF");
+      poly([[20, 15], [28, 15], [28, 22], [32, 22], [24, 31], [16, 22], [20, 22]]); c.lineWidth = 2; F("#FFD23F");
+      circ(24, 40, 1.8); c.fillStyle = "#FFFFFF"; c.fill(); break;
+    case "picture":
+      rrPath(c, 5, 9, 38, 30, 4); F("#FFFFFF"); rrPath(c, 9, 13, 30, 22, 2); F("#7FE7FF");
+      poly([[9, 35], [19, 23], [25, 29], [31, 23], [39, 33], [39, 35]]); F("#5CE08A");
+      circ(32, 19, 3.2); F("#FFD23F"); break;
+  }
+  c.restore();
+}
+const UI_CACHE = {};
+function uiIcon(name) {
+  if (UI_CACHE[name]) return UI_CACHE[name];
+  const cv = document.createElement("canvas"); cv.width = cv.height = 96; const c = cv.getContext("2d"); c.scale(2, 2); drawUi(c, name);
+  return (UI_CACHE[name] = cv.toDataURL());
+}
+const uiImg = (name, cls = "ui-i") => `<img class="${cls}" src="${uiIcon(name)}" alt="">`;
+function paintUiIcons(root = document) { root.querySelectorAll("img[data-ui]").forEach(el => { el.src = uiIcon(el.dataset.ui); }); }
 
 /* ================= sheets ================= */
 const costHtml = (c, e) => `<span class="cost">${c ? `<span><i class="coin"></i>${fmt(c)}</span>` : ""}${e ? `<span><i class="volt"></i>${fmt(e)}</span>` : ""}</span>`;
@@ -1954,7 +2180,7 @@ function togglePause(force) {
   if (!inGame()) return;
   paused = force != null ? force : !paused;
   $("settings").hidden = !paused; if (paused) closeSheet();
-  $("pause-info").textContent = [phase === "night" ? `已坚持 ${mmss(nightT)} · 存活 ${rooms.filter(r => r.alive && r.occupant).length}/6` : "", me && me.tal ? `天赋 ${me.tal.em}${me.tal.name}` : ""].filter(Boolean).join(" · ");
+  $("pause-info").textContent = [phase === "night" ? `已坚持 ${mmss(nightT)} · 存活 ${rooms.filter(r => r.alive && r.occupant).length}/6` : "", me && me.tal ? `天赋 ${me.tal.name}` : ""].filter(Boolean).join(" · ");
   sfx("click");
 }
 $("gear").addEventListener("click", () => { auInit(); if (inGame()) togglePause(); else $("settings").hidden = !$("settings").hidden; });
@@ -2367,6 +2593,21 @@ function drawMinion(m, t) {
   ctx.fillStyle = "#7A2BC2"; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.arc(sd * 4, -3, 2.4, 0, TAU); ctx.fill(); }
   ctx.restore();
 }
+function drawHelper(h, t) {
+  const R = 20, x = h.x + (h.room.left ? -1 : 1) * h.lunge * 8, y = h.y + Math.sin(t * 5 + h.t) * 3;
+  ctx.save(); ctx.translate(x, y); ctx.lineJoin = "round"; ctx.scale(h.room.left ? -1 : 1, 1);
+  ctx.globalAlpha = h.life - h.t < 3 ? .5 + .5 * Math.sin(t * 14) : 1;
+  ctx.beginPath(); ctx.arc(0, -3, R, Math.PI, 0); ctx.lineTo(R, R * .7);
+  for (let k = 0; k < 3; k++) { const xa = R - k * 2 * R / 3, xb = xa - 2 * R / 3; ctx.quadraticCurveTo((xa + xb) / 2, R * .4, xb, R * .7); }
+  ctx.closePath(); ctx.fillStyle = h.hurt > 0 ? "#FFFFFF" : "#A99BE0"; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = EDGE; ctx.stroke();
+  ctx.fillStyle = "#4A2E7A"; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * R * .35, -R * .95); ctx.lineTo(sd * R * .55, -R * 1.35); ctx.lineTo(sd * R * .65, -R * .8); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  for (const sd of [-1, 1]) { ctx.beginPath(); ctx.ellipse(sd * R * .35, -R * .25, R * .16, R * .2, 0, 0, TAU); ctx.fillStyle = EDGE; ctx.fill(); ctx.beginPath(); ctx.arc(sd * R * .35 + 1, -R * .25, R * .07, 0, TAU); ctx.fillStyle = "#FFE26A"; ctx.fill(); }
+  ctx.beginPath(); ctx.moveTo(-R * .25, R * .2); ctx.lineTo(R * .25, R * .2); ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.restore();
+  const bw = 40; rrPath(ctx, x - bw / 2, y - R - 16, bw, 6, 3); ctx.fillStyle = "#100D26"; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = EDGE; ctx.stroke();
+  rrPath(ctx, x - bw / 2 + 1, y - R - 15, (bw - 2) * clamp(h.hp / h.max, 0, 1), 4, 2); ctx.fillStyle = "#C9A0FF"; ctx.fill();
+  label(ctx, "帮手", x, y - R - 25, 10, "#E0D0FF");
+}
 function drawGift(g, t) {
   const pop = Math.min(1, g.t / .3), bob = reduce ? 0 : Math.sin(t * 4) * 3, left = g.life - g.t;
   ctx.save(); ctx.translate(g.x, g.y + bob - (1 - pop) * 30); ctx.scale(pop, pop);
@@ -2463,6 +2704,7 @@ function render(t) {
   }
   drawGhost(t);
   for (const m of minions) drawMinion(m, t);
+  for (const h of helpers) drawHelper(h, t);
   for (const r of rooms) drawPlaque(r, t);
   for (const [ax, ay] of arrows) upArrow(ax, ay, t);
   if (gift && phase === "night") drawGift(gift, t);
@@ -2512,6 +2754,7 @@ function updateHud(dt) {
   else { $("time-label").textContent = `存活 ${rooms.filter(o => o.alive && o.occupant).length}/6 ·`; $("clock").textContent = mmss(nightT); }
   $("gname").textContent = "猛鬼";
   $("glv").textContent = "Lv." + G.lv;
+  const gtEl = $("gtal"), gtTxt = phase === "night" && G.tal ? G.tal.name : ""; gtEl.hidden = !gtTxt; if (gtEl.textContent !== gtTxt) gtEl.textContent = gtTxt;
   $("ghp").style.width = clamp(G.hp / G.max * 100, 0, 100) + "%";
   $("gxp").style.width = phase === "night" ? clamp(G.xp / ghostNeed(G.lv) * 100, 0, 100) + "%" : "0%";
   const frozen = phase === "night" && gt < G.frozenUntil;
@@ -2523,7 +2766,7 @@ function updateHud(dt) {
   $("ghostbar").classList.toggle("alarm", phase === "night" && !!r && G.target === r && (G.state === "attack" || G.state === "walk"));
   const mrA = r && r.alive && inBed && phase === "night";
   const sb = $("sos"), showSos = mrA && G.target === r && (G.state === "attack" || G.state === "walk" || G.tele > 0);
-  sb.hidden = !showSos; if (showSos) { const cd = Math.ceil(sosCd - gt); sb.disabled = cd > 0; const txt = cd > 0 ? `求救 ${cd}秒` : "📣 求救"; if (sb.textContent !== txt) sb.textContent = txt; }
+  sb.hidden = !showSos; if (showSos) { const cd = Math.ceil(sosCd - gt); sb.disabled = cd > 0; const txt = cd > 0 ? `求救 ${cd}秒` : "求救", st = $("sos-t"); if (st.textContent !== txt) st.textContent = txt; }
   const vg = $("visit-give"), showGive = mrA && visit && visit.alive && visit.occupant && !visit.occupant.isPlayer;
   vg.hidden = !showGive; if (showGive) { vg.disabled = gt < giveCd || r.coins < 30; const txt = `送 ${fmt(nice(Math.max(30, r.coins * .15)))}`; if (vg.textContent !== txt) vg.textContent = txt; }
   const vc = $("visit");
@@ -2531,7 +2774,7 @@ function updateHud(dt) {
     vc.hidden = false;
     const o = visit.occupant, built = visit.slots.filter(s => s.b).length;
     if (vc.dataset.who !== o.name) { vc.dataset.who = o.name; $("visit-av").src = o.url; $("visit-name").textContent = o.name; }
-    $("visit-info").textContent = visit.alive ? `战力 ${powerScore(visit)} · 床 Lv${visit.bedLv} · 门 Lv${visit.doorLv} ${Math.round(visit.doorHp / doorMax(visit) * 100)}% · 建筑 ${built}` : "已经被抓走了";
+    $("visit-info").textContent = visit.alive ? `天赋 ${o.tal ? o.tal.name : "无"} · 战力 ${powerScore(visit)} · 床 Lv${visit.bedLv} · 门 Lv${visit.doorLv} ${Math.round(visit.doorHp / doorMax(visit) * 100)}% · 建筑 ${built}` : "已经被抓走了";
   } else vc.hidden = true;
   let hint = "";
   if (phase === "select" && !inBed) hint = me.state === "walk" ? "正在走去床边……" : "点一间<b>空宿舍</b>，抢先躺平";
@@ -2580,12 +2823,12 @@ function frame(ms) {
   requestAnimationFrame(frame);
 }
 if (SPEED > 1) window.__dbg = { get me() { return me; }, get G() { return G; }, get phase() { return phase; }, get nightT() { return nightT; }, get players() { return players; }, get cam() { return { camMode, visit: visit && visit.i }; },
-  rooms, npcStep, PLAN, repairDoor, get minions() { return minions; }, get stats() { return stats; }, get gt() { return gt; }, get avail() { return avail; }, get gift() { return gift; }, openGift: () => gift && openGift(), toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
+  rooms, npcStep, PLAN, repairDoor, get minions() { return minions; }, get helpers() { return helpers; }, get stats() { return stats; }, get gt() { return gt; }, get avail() { return avail; }, get gift() { return gift; }, openGift: () => gift && openGift(), toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
 $("start").addEventListener("click", startMatch);
 $("again").addEventListener("click", startMatch);
 $("home").addEventListener("click", () => { sfx("click"); showTitle(); });
 document.addEventListener("visibilitychange", () => { if (document.hidden) { saveGame(); if (inGame() && !paused) togglePause(true); } });
-buildBg(); makeIcons(); showTitle();
+buildBg(); makeIcons(); paintUiIcons(); showTitle();
 requestAnimationFrame(frame);
 })();
 </script>
