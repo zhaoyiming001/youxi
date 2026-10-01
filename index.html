@@ -1074,7 +1074,7 @@ function newGame() {
     slow: 0, vuln: 0, attackT: 0, wait: 0, face: 1, frozenUntil: 0, stunUntil: 0, stunImmune: 0, smashT: 14, tele: 0, disruptT: 18, enrageUntil: 0, enraged: false, berserk: false, variant: (SPEED > 1 && window.__forceVariant != null && VARIANTS[+window.__forceVariant]) || pick(VARIANTS), invisUntil: 0, skillT: 16, helperT: 22, tal: (SPEED > 1 && window.__forceGTal != null && GHOST_TALENTS[+window.__forceGTal]) || pick(GHOST_TALENTS), poisonDps: 0, poisonUntil: 0, poisonMine: false, poisonAcc: 0 };
   G.diff = RANKS[diffIdx()].mul; G.rank = RANKS[diffIdx()].n;
   G.max = G.hp = ghostMax(1); helpers = [];
-  gift = null; giftT = rand(20, 45);
+  gift = null; giftT = rand(45, 90);
   const special = rollPool();
   minions = []; sosCd = 0; giveCd = 0; helpQ = [];
   stats = { dmg: 0, gifts: 0, helps: 0, pops: 0, builds: 0, limited: 0, maxCoins: 0 }; gt = 0; selT = SELECT_LEN; nightT = 0; deaths = 0; bullets = []; parts = []; floats = []; rings = []; fx = [];
@@ -1615,14 +1615,14 @@ function updateGifts(dt) {
       gift = { x: p.x, y: p.y, t: 0, life: 14 };
       sfx("gift"); feed("房间里掉了个礼盒，快点开它！", "good");
     }
-    if (gift && (gift.t += dt) >= gift.life) { gift = null; giftT = nightT + rand(20, 80) * (tl(mr, "gift") ? .65 : 1); }
+    if (gift && (gift.t += dt) >= gift.life) { gift = null; giftT = nightT + rand(60, 150) * (tl(mr, "gift") ? .65 : 1); }
   }
   // roommates open their own boxes off-screen
   for (const r of rooms) if (r.alive && r.occupant && !r.occupant.isPlayer && nightT >= r.giftT) { r.giftT = nightT + rand(40, 60); r.coins += incomeOf(r) * 15; }
 }
 function openGift() {
   const r = me.room, g = weighted(GIFTS), at = { x: gift.x, y: gift.y };
-  gift = null; giftT = nightT + rand(20, 80) * (tl(r, "gift") ? .65 : 1);
+  gift = null; giftT = nightT + rand(60, 150) * (tl(r, "gift") ? .65 : 1);
   const msg = g.use(r); stats.gifts++; track("gift");
   sfx("open"); vibrate(25); burst(at.x, at.y, "#FFD23F", 24, 210); burst(at.x, at.y, "#FF7A95", 12, 160);
   floatText(at.x, at.y - 24, g.name, "#FFFFFF", 18); floatText(at.x, at.y - 48, msg, "#FFD23F", 13);
