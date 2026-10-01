@@ -60,6 +60,9 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .xbar{height:4px;border-radius:99px;background:#100D26;overflow:hidden}
 .xbar i{display:block;height:100%;width:0;background:var(--rage);border-radius:99px;transition:width .2s}
 #gstate{font-size:.74rem;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw;text-align:right}
+.ghostbar.g2{padding:2px 10px}
+.ghostbar.g2 .gname{font-size:.9rem}
+.ghostbar.g2 .bar i{background:linear-gradient(90deg,#3DBE8B,#8CFF7A)}
 .ghostbar.alarm{animation:alarm .5s ease-in-out infinite alternate;border-color:#5A0F1F}
 @keyframes alarm{from{box-shadow:0 3px 0 var(--edge),0 0 0 0 rgba(255,77,109,0)}to{box-shadow:0 3px 0 var(--edge),0 0 22px 3px rgba(255,77,109,.6)}}
 .visit{pointer-events:auto;display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;background:var(--panel);border:2.5px solid var(--edge);border-radius:16px;padding:6px 8px;box-shadow:0 3px 0 var(--edge);animation:pop .25s cubic-bezier(.3,1.5,.5,1)}
@@ -369,6 +372,11 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
     <span class="gname"><span id="gname">猛鬼</span> <b id="glv">Lv.1</b><span class="gtal" id="gtal" hidden></span></span>
     <div class="bars"><div class="bar"><i id="ghp"></i></div><div class="xbar" title="砸门越多升级越快"><i id="gxp"></i></div></div>
     <span id="gstate">还没出动</span>
+  </div>
+  <div class="ghostbar g2" id="ghostbar2" hidden>
+    <span class="gname">僵尸 <b id="glv2">Lv.1</b><span class="gtal" id="gtal2"></span></span>
+    <div class="bars"><div class="bar"><i id="ghp2"></i></div></div>
+    <span id="gstate2"></span>
   </div>
   <div class="visit" id="visit" hidden>
     <img id="visit-av" alt="">
@@ -744,15 +752,28 @@ const GHOST_TALENTS = [
   { id: "rage", name: "狂怒", desc: "血越少砸得越快" },
   { id: "warlord", name: "鬼王", desc: "帮手更多更结实，Lv.3 就会叫帮手" },
 ];
-// the more you win, the tougher the ghost; three losses in a row eases off one step
+// the more you win, the tougher the ghost; streaks bend the matchmaking (see rollLuck)
 const RANKS = [{ n: "新手", w: 0, mul: .9 }, { n: "见习", w: 2, mul: 1 }, { n: "熟练", w: 5, mul: 1.08 }, { n: "老手", w: 10, mul: 1.16 }, { n: "大神", w: 20, mul: 1.26 }, { n: "传说", w: 35, mul: 1.38 }];
 const rankIdx = (wins = meta.life.wins) => { let k = 0; RANKS.forEach((R, i) => { if (wins >= R.w) k = i; }); return k; };
-const diffIdx = () => Math.max(0, rankIdx() - ((meta.life.streak || 0) <= -3 ? 1 : 0));
+const diffIdx = () => rankIdx();
+// matchmaking luck, like a ranked queue: a win streak tends to land you a nastier ghost and dead-weight roommates,
+// a losing streak tends to hand you a sleepy ghost and carry-level roommates. Never guaranteed, never announced.
+const MATE_W = { hard: [1, 8, 30, 35, 26], easy: [18, 40, 30, 9, 3] };
+let luck = { kind: "normal", g: 1 };
+function rollLuck() {
+  const st = meta.life.streak || 0, x = Math.random();
+  let pHard = .1, pEasy = .1;
+  if (st >= 2) { pHard = Math.min(.5, .12 + .1 * (st - 1)); pEasy = .06; }
+  else if (st <= -2) { pEasy = Math.min(.55, .15 + .1 * (-st - 1)); pHard = .05; }
+  const kind = x < pHard ? "hard" : x < pHard + pEasy ? "easy" : "normal";
+  luck = { kind, g: kind === "hard" ? rand(1.12, 1.3) : kind === "easy" ? rand(.72, .88) : 1 };
+  if (SPEED > 1 && window.__forceLuck) luck = { kind: window.__forceLuck, g: window.__forceLuck === "hard" ? 1.2 : window.__forceLuck === "easy" ? .8 : 1 };
+}
 const gdiff = () => (G && G.diff) || 1;
 const berserkAt = () => (gtal("night") ? 540 : BERSERK_AT);
 const gtal = k => !!(G && G.tal && G.tal.id === k);
-const ghostMax = (lv, ty = G.type) => Math.round(820 * Math.pow(1.44, lv - 1) * ty.hp * (gtal("thick") ? 1.12 : 1) * (gtal("giant") ? 1.2 : 1) * gdiff() * (1 + .08 * ((G && G.kills) || 0)));
-const ghostDmg = lv => Math.round(14 * Math.pow(1.36, lv - 1) * G.type.dmg * (gtal("iron") ? 1.15 : 1) * (1 + (gdiff() - 1) * .8) * (1 + .1 * ((G && G.kills) || 0)) * (G.berserk ? 1.3 + .35 * (nightT - berserkAt()) / 60 : 1));
+const ghostMax = (lv, ty = G.type) => Math.round(820 * Math.pow(1.44, lv - 1) * ty.hp * ((G && G.hpMul) || 1) * (gtal("thick") ? 1.12 : 1) * (gtal("giant") ? 1.2 : 1) * gdiff() * (1 + .08 * ((G && G.kills) || 0)));
+const ghostDmg = lv => Math.round(14 * Math.pow(1.36, lv - 1) * G.type.dmg * ((G && G.dmgMul) || 1) * (gt < ((G && G.bloodUntil) || 0) ? 1.3 : 1) * (gtal("iron") ? 1.15 : 1) * (1 + (gdiff() - 1) * .8) * (1 + .1 * ((G && G.kills) || 0)) * (G.berserk ? 1.3 + .35 * (nightT - berserkAt()) / 60 : 1));
 const ghostNeed = lv => Math.round(Math.min(48, 15 + lv * 5) * G.type.xp);
 const ghostR = lv => Math.min(64, 24 + lv * 2.4) * (gtal("giant") ? 1.15 : 1);
 const doorMax = r => DOOR.hp(r.doorLv) * (1 + tl(r, "door") + (r.plankB || 0));
@@ -776,7 +797,9 @@ const DOOR_COLORS = ["#B98450", "#94653A", "#A9927A", "#8D98AE", "#6B7894", "#5E
 const BLANKETS = ["#7D86B5", "#6E9BC4", "#E08A7A", "#D9A84E", "#9C7BE0", "#4FB6C9", "#F5A0C8", "#7BD389", "#8FD3FF", "#3B3170", "#FFD23F", "#FF6B6B"];
 // candidate build spots; every match each room opens a random number of them (some rooms are roomy, some are cramped)
 const SLOT_LOCAL = [[148, 50], [198, 50], [248, 50], [40, 186], [92, 186], [144, 186], [196, 186], [248, 186], [40, 238], [92, 238], [144, 238], [196, 238], [248, 238], [40, 134], [92, 140]];
-const SLOT_COUNTS = [9, 10, 10, 11, 11, 12, 12, 12, 13, 13, 13, 14, 14, 15];
+// some rooms are cramped (as few as 3 spots), most are roomy; cramped rooms always keep one spot by the door
+const SLOT_COUNTS = [3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 12, 13, 13, 13, 14, 14, 15];
+const DOOR_SLOTS = [2, 7, 12];
 const rooms = Array.from({ length: ROWS * 2 }, (_, i) => {
   const row = Math.floor(i / 2), left = i % 2 === 0;
   const r = { i, row, left, x0: left ? 0 : RW + CW, y0: row * RH, floor: FLOORS[i] };
@@ -798,8 +821,8 @@ const roomAt = (x, y) => rooms.find(r => x >= r.x0 && x <= r.x0 + RW && y >= r.y
 function route(e, target) {
   const r0 = roomAt(e.x, e.y), p = [];
   if (r0) p.push(r0.doorInner, r0.doorOuter, { x: CX, y: r0.doorY });
-  else p.push({ x: CX, y: e.y });
-  if (target.kind === "altar") p.push(ALTAR);
+  else p.push({ x: CX, y: Math.max(20, e.y) });
+  if (target.kind === "altar") { if (e.home) p.push({ x: CX, y: e.home.y + 20 }, e.home); else p.push(ALTAR); }
   else {
     const r = target.room;
     p.push({ x: CX, y: r.doorY }, r.doorOuter);
@@ -1039,7 +1062,7 @@ const CHORDS = [[220, 261.6, 329.6], [174.6, 220, 261.6], [261.6, 329.6, 392], [
 const ARP = [0, 1, 2, 1, 3, 1, 2, 1];
 function musicTick() {
   const c = AU.ctx; if (!c || !vol("music") || paused) return;
-  const danger = phase === "night" && me && me.room && G.target === me.room && G.state === "attack";
+  const danger = phase === "night" && me && me.room && !!ghostAt(me.room);
   const beat = danger ? .2 : .3;
   if (AU.next < c.currentTime) AU.next = c.currentTime + .05;
   while (AU.next < c.currentTime + .25) {
@@ -1077,20 +1100,26 @@ function personalPlan() {
 }
 
 function setSlots(r, idx) { r.slotIdx = idx.slice().sort((a, b) => a - b); r.allSlots.forEach(sl => { sl.b = null; }); r.slots = r.slotIdx.map(k => r.allSlots[k]); }
-function rollSlots(r) { const n = pick(SLOT_COUNTS); setSlots(r, shuffle(SLOT_LOCAL.map((_, k) => k)).slice(0, n)); }
+function rollSlots(r) {
+  const n = pick(SLOT_COUNTS), idx = shuffle(SLOT_LOCAL.map((_, k) => k)).slice(0, n);
+  if (!idx.some(k => DOOR_SLOTS.includes(k))) idx[0] = pick(DOOR_SLOTS);
+  setSlots(r, idx);
+}
 function resetRooms(full) {
   for (const r of rooms) {
     if (full) setSlots(r, SLOT_LOCAL.map((_, k) => k).slice(0, 13)); else rollSlots(r);
     Object.assign(r, { occupant: null, reserved: null, alive: true, bedLv: 1, doorLv: 1, doorHp: DOOR.hp(1), coins: START_COINS, energy: 0, repairCd: 0,
-      tal: null, skin: null, tick: 0, catTick: 0, pTick: 0, mult: 1, doorShake: 0, broken: false, shieldUntil: 0, barrier: 0, barrierMax: 0, lastHit: -9, built: 0, spentGift: false, itemCd: 0, itemUses: null, timesTargeted: 0, plankB: 0, crys: 0, alarmUntil: 0, alarmV: 0, iceT: 0, decoyUsed: false, spareUsed: false, intT: 0, luckT: 0, sosAsked: false, sosUntil: 0, boostUntil: 0, rageUntil: 0, giftT: rand(30, 50) });
+      tal: null, skin: null, tick: 0, catTick: 0, pTick: 0, mult: 1, doorShake: 0, broken: false, shieldUntil: 0, barrier: 0, barrierMax: 0, lastHit: -9, built: 0, spentGift: false, venomUntil: 0, cursedUntil: 0, itemCd: 0, itemUses: null, timesTargeted: 0, plankB: 0, crys: 0, alarmUntil: 0, alarmV: 0, iceT: 0, decoyUsed: false, spareUsed: false, intT: 0, luckT: 0, sosAsked: false, sosUntil: 0, boostUntil: 0, rageUntil: 0, giftT: rand(30, 50) });
     r.slots.forEach(s => s.b = null);
   }
 }
 function makePlayers() {
   const names = shuffle(NAMES).slice(0, 5);
   me = { name: "我", isPlayer: true, skin: { bed: meta.equip.bed, door: meta.equip.door }, frame: meta.equip.frame, av: meta.av || (meta.av = randomAvatar()), x: CX, y: rand(300, 800), path: [], state: "idle", room: null, speed: 210, face: 1 };
+  rollLuck();
+  const mw = MATE_W[luck.kind], arch = mw ? ARCHETYPES.map((a, i) => ({ ...a, w: mw[i] })) : ARCHETYPES;
   const bots = names.map(name => {
-    const a = weighted(ARCHETYPES);
+    const a = weighted(arch);
     return { name, kind: a.kind, av: randomAvatar(), x: CX + rand(-50, 50), y: rand(60, MAP_H - 60), path: [], state: "idle", room: null, speed: rand(120, 170),
       delay: rand(...a.delay) * (Math.random() < .3 ? .35 : 1), think: rand(1, 3), thinkMul: a.think, noRepair: !!a.noRepair, pi: 0, stuck: 0, lazy: rand(...a.lazy), mult: rand(...a.mult), plan: personalPlan(), face: 1, tal: pick(TALENTS), pickStyle: weighted([{ k: "grab", w: 30 }, { k: "hesitate", w: 25 }, { k: "normal", w: 45 }]).k, skin: { bed: botSkin("bed"), door: botSkin("door") }, frame: botSkin("frame") };
   });
@@ -1103,8 +1132,14 @@ function newGame() {
   const type = (SPEED > 1 && window.__forceGhost != null && GHOSTS[+window.__forceGhost]) || weighted(GHOSTS);
   G = { type, x: ALTAR.x, y: ALTAR.y, lv: 1, xp: 0, hp: ghostMax(1, type), max: ghostMax(1, type), state: "hidden", target: null, path: [], atk: 1, rise: 0, lunge: 0, hurt: 0,
     slow: 0, vuln: 0, attackT: 0, wait: 0, face: 1, frozenUntil: 0, stunUntil: 0, stunImmune: 0, smashT: 14, tele: 0, disruptT: 18, enrageUntil: 0, enraged: false, berserk: false, variant: (SPEED > 1 && window.__forceVariant != null && VARIANTS[+window.__forceVariant]) || pick(VARIANTS), invisUntil: 0, skillT: 16, helperT: 22, tal: (SPEED > 1 && window.__forceGTal != null && GHOST_TALENTS[+window.__forceGTal]) || pick(GHOST_TALENTS), poisonDps: 0, poisonUntil: 0, poisonMine: false, poisonAcc: 0 };
-  G.diff = RANKS[diffIdx()].mul; G.rank = RANKS[diffIdx()].n;
-  G.max = G.hp = ghostMax(1); helpers = [];
+  G.diff = RANKS[diffIdx()].mul * luck.g; G.rank = RANKS[diffIdx()].n; G.hpMul = 1; G.dmgMul = .9;
+  G.max = G.hp = ghostMax(1); helpers = []; G0 = G;
+  // the second ghost: a hopping jiangshi that comes in through the 3F corridor at the top
+  const jt = weighted(GHOSTS), J = Object.assign({}, G, { type: jt, jiang: true, x: CX, y: -40, home: { x: CX, y: 40 }, state: "hidden", spawnAt: rand(25, 40), path: [], target: null,
+    variant: VARIANTS[0], tal: pick(GHOST_TALENTS), lv: 1, xp: 0, kills: 0, retreats: 0, hpMul: .9, dmgMul: .82, skillT: 999, helperT: 30,
+    jskills: shuffle(JSKILLS).slice(0, 4).map(k => ({ id: k.id, cd: rand(6, 14) })) });
+  J.max = J.hp = withGhost(J, () => ghostMax(1));
+  ghostsAll = [G, J];
   gift = null; giftT = rand(45, 90);
   const special = rollPool(); matchItems = shuffle(ITEMS).slice(0, 4);
   minions = []; sosCd = 0; giveCd = 0; helpQ = [];
@@ -1174,7 +1209,7 @@ function showTalents() {
   $("match-title").textContent = "选一个本局天赋";
   $("match-grid").hidden = true; $("talents").hidden = false; $("match-foot").hidden = true; $("tal-foot").hidden = false;
   $("mates").innerHTML = players.slice(1).map(p => `<img src="${p.url}" alt="">`).join("");
-  $("intel-rank").textContent = RANKS[diffIdx()].n + ((meta.life.streak || 0) <= -3 ? " · 放水" : "");
+  $("intel-rank").textContent = RANKS[diffIdx()].n;
   const rr = $("tal-reroll"); rr.disabled = false; rr.textContent = "换一批 · 剩 1 次";
   dealTalents([]); startTalentTimer(10);
 }
@@ -1204,7 +1239,54 @@ function burst(x, y, color, n, sp = 140) {
 }
 const isMine = r => !!me && !!r && r === me.room;
 const who = r => r && r.occupant ? (r.occupant.isPlayer ? "你" : r.occupant.name) : "";
-const gName = () => "猛鬼";
+const gName = () => (G && G.jiang ? "僵尸" : "猛鬼");
+// two ghosts share all the ghost code: G is the "current" ghost and gets swapped while each one acts
+let ghostsAll = [], G0 = null;
+function withGhost(g, fn) { const sv = G; G = g; try { return fn(); } finally { G = sv; } }
+const ghostAt = r => ghostsAll.find(g => g.target === r && (g.state === "attack" || g.state === "enter" || g.tele > 0)) || null;
+const otherGhosts = () => ghostsAll.filter(g => g !== G && g.state !== "dead");
+// for items / gifts: the ghost bothering this room, else the weakest one that's out
+function focusGhost(r) {
+  const a = ghostAt(r) || ghostsAll.find(g => g.target === r && g.state === "walk"); if (a) return a;
+  const out = ghostsAll.filter(g => !["hidden", "dead"].includes(g.state)); out.sort((p, q) => p.hp / p.max - q.hp / q.max);
+  return out[0] || G0 || G;
+}
+// the jiangshi's skill pool: four are dealt each match
+const JSKILLS = [
+  { id: "leap", name: "跳砸", cd: 16 }, { id: "venom", name: "尸毒", cd: 20 }, { id: "roar", name: "尸吼", cd: 22 }, { id: "drain", name: "吸阳气", cd: 18 },
+  { id: "armor", name: "铁甲尸", cd: 22 }, { id: "frenzy", name: "狂跳", cd: 20 }, { id: "mend", name: "尸气护体", cd: 26 }, { id: "nails", name: "拆门钉", cd: 18 },
+  { id: "chill", name: "尸寒", cd: 18 }, { id: "bolt", name: "引雷", cd: 26 }, { id: "brood", name: "召小僵尸", cd: 20 }, { id: "split", name: "分尸", cd: 30 },
+  { id: "bell", name: "夺魂铃", cd: 24 }, { id: "fog", name: "黑雾", cd: 18 }, { id: "corrode", name: "腐蚀", cd: 20 }, { id: "quake", name: "震地", cd: 24 },
+  { id: "step", name: "缩地", cd: 22 }, { id: "ally", name: "唤醒同伴", cd: 28 }, { id: "bind", name: "定身反噬", cd: 24 }, { id: "blood", name: "血祭", cd: 26 },
+];
+function useJSkill(id) {
+  const t = G.target, sk = JSKILLS.find(x => x.id === id), mineT = isMine(t), say = () => { if (mineT || camMode === "overview" || visit === t) feed(`僵尸使出「${sk.name}」${t && t.occupant ? `（${who(t)}）` : ""}`, "bad"); };
+  const atDoor = G.state === "attack" && t;
+  switch (id) {
+    case "leap": if (!atDoor) return false; G.lunge = 2; damageDoor(t, ghostDmg(G.lv) * 2.5); if (mineT) { shake = 14; sfx("smash"); } break;
+    case "venom": if (!atDoor) return false; t.venomUntil = gt + 8; burst(t.wallX, t.doorY, "#8CFF7A", 16, 140); break;
+    case "roar": rings.push({ x: G.x, y: G.y, r: 8, max: 280, life: 0, col: "#8CFF7A" }); for (const o of rooms) { if (!o.alive || !o.occupant || Math.hypot(o.doorC.x - G.x, o.doorC.y - G.y) > 300) continue; const l = o.slots.filter(q => q.b); if (l.length) pick(l).b.offUntil = gt + 4; } sfx("roar"); break;
+    case "drain": if (!atDoor) return false; { const st = Math.min(t.coins * .08, BED.inc(t.bedLv) * t.mult * 15); t.coins -= st; G.hp = Math.min(G.max, G.hp + G.max * .06); if (mineT && st >= 1) floatText(t.headPt.x, t.headPt.y - 36, "阳气 -" + fmt(st), "#FFB3C0", 13, "coin"); } break;
+    case "armor": G.armorUntil = gt + 6; break;
+    case "frenzy": G.frenzyUntil = gt + 6; break;
+    case "mend": G.mendUntil = gt + 5; break;
+    case "nails": G.nailHits = 3; break;
+    case "chill": if (!atDoor) return false; shuffle(t.slots.filter(q => q.b)).slice(0, 3).forEach(q => { q.b.offUntil = gt + 5; burst(q.x, q.y, "#BFEBFF", 10, 110); }); if (mineT) sfx("freeze"); break;
+    case "bolt": if (!atDoor) return false; { const ups = t.slots.filter(q => q.b && q.b.lv > 1); if (ups.length) { const q = pick(ups); q.b.lv--; recalcBarrier(t); fx.push({ type: "bolt", x: q.x, y: q.y, life: .4, t: 0, col: "#8CFF7A" }); if (mineT) sfx("wreck"); } } break;
+    case "brood": for (let i = 0; i < 3; i++) { const pool = rooms.filter(o => o.alive && o.occupant); if (!pool.length) break; minions.push({ x: G.x + rand(-20, 20), y: G.y - 20, room: pick(pool), t: rand(0, 3), hp: ghostDmg(G.lv) * 2.2, dmg: ghostDmg(G.lv) * 1.2 }); } sfx("summon"); break;
+    case "split": spawnHelper(); break;
+    case "bell": if (!t) return false; t.cursedUntil = gt + 10; if (mineT) sfx("disrupt"); break;
+    case "fog": G.invisUntil = gt + 3; burst(G.x, G.y, "#3A3A4A", 20, 140); sfx("vanish"); break;
+    case "corrode": if (!atDoor) return false; t.doorHp = Math.max(1, t.doorHp - doorMax(t) * .1); burst(t.wallX, t.doorY, "#8CFF7A", 20, 160); break;
+    case "quake": shake = Math.max(shake, 8); for (const o of rooms) if (o.alive && o.occupant) minionHit(o, ghostDmg(G.lv) * .6); break;
+    case "step": { const pool = rooms.filter(o => o.alive && o.occupant && o !== t); if (!pool.length) return false; const r2 = pick(pool); burst(G.x, G.y, "#8CFF7A", 20, 180); G.x = r2.doorOuter.x; G.y = r2.doorOuter.y; G.target = r2; G.state = "attack"; G.atk = .6; G.attackT = 0; G.path = []; G.face = r2.left ? -1 : 1; onAttackStart(r2); } break;
+    case "ally": { const o = otherGhosts()[0]; if (!o) return false; o.hp = Math.min(o.max, o.hp + o.max * .15); G.hp = Math.min(G.max, G.hp + G.max * .05); burst(o.x, o.y, "#8CFF7A", 20, 160); } break;
+    case "bind": if (!atDoor) return false; t.slots.forEach(q => { if (q.b && ATTACKERS.includes(q.b.type)) q.b.offUntil = gt + 5; }); break;
+    case "blood": G.hp = Math.max(1, G.hp - G.max * .08); G.bloodUntil = gt + 10; burst(G.x, G.y, "#FF3355", 24, 180); break;
+  }
+  say(); return true;
+}
+
 // every ghost is called 猛鬼, but each night it has one of these looks and tricks (never tied to how strong it is)
 const VARIANTS = [
   { id: "classic", body: "#F1EEFF", eye: "#FF3355", intro: "今晚的猛鬼没什么花招，就是一个劲地砸门" },
@@ -1270,7 +1352,7 @@ function roomMods(r) {
   for (const s of r.slots) if (s.b && s.b.offUntil <= gt) { if (s.b.type === "speaker") rate += BUILD.speaker.val(s.b.lv) / 100; else if (s.b.type === "tree") tree += BUILD.tree.val(s.b.lv) / 100; }
   if (gt < r.rageUntil) rate *= 1.5;
   rate *= (1 + tl(r, "rate")) * (1 + tl(r, "overclock")) * (gt < (r.alarmUntil || 0) ? 1 + r.alarmV : 1);
-  return { rate, tree: tree + tl(r, "bed"), boost: gt < r.boostUntil ? 2 : 1 };
+  return { rate, tree: tree + tl(r, "bed"), boost: (gt < r.boostUntil ? 2 : 1) * (gt < (r.cursedUntil || 0) ? .5 : 1) };
 }
 const incomeOf = r => { const m = roomMods(r); return (BED.inc(r.bedLv) * (1 + m.tree) + r.slots.reduce((a, s) => a + (s.b && s.b.offUntil <= gt ? (s.b.type === "cat" ? BUILD.cat.val(s.b.lv) * (1 + tl(r, "catlover")) : s.b.type === "arcade" ? BUILD.arcade.coin(s.b.lv) * (1 + tl(r, "arcade")) : BUILD[s.b.type].coinRate ? BUILD[s.b.type].coinRate(s.b.lv, r) : 0) : 0), 0)) * r.mult * m.boost; };
 const powerMul = r => (1 + tl(r, "power")) * (1 - (tl(r, "overclock") ? .2 : 0));
@@ -1334,11 +1416,13 @@ function choose(r) {
 function startNight() {
   for (const ch of players) if (ch.state !== "bed") { if (!ch.room || ch.room.occupant) ch.room = openRooms()[0]; lieDown(ch); }
   phase = "night"; G.state = "rise"; G.rise = 0;
+  const J = ghostsAll.find(g => g.jiang); if (J) feed(`今晚还有一只僵尸，大约 ${Math.round(J.spawnAt)} 秒后从楼顶 3 楼路口进来`, "bad");
   banner("猛鬼出动了！", "danger"); sfx("spawn"); speak("猛鬼出动了，大家小心", true);
   feed("猛鬼从鬼井里爬出来了：它每砸一次门都会变强", "bad");
   feed(G.variant.intro, "bad");
   feed(`猛鬼的天赋「${G.tal.name}」：${G.tal.desc}`, "bad");
-  feed(`本局难度：${G.rank}${(meta.life.streak || 0) <= -3 ? "（连输了几局，猛鬼稍微收敛一点）" : ""}`, "");
+  feed(`本局难度：${G.rank}`, "");
+  if (luck.kind !== "normal" && Math.random() < .4) feed(luck.kind === "hard" ? pick(["今晚的猛鬼眼睛特别红……", "楼道里的风比平时冷", "听说今晚的鬼饿了好几天"]) : pick(["今晚的猛鬼好像没睡醒", "猛鬼打了个哈欠", "室友们今天看起来很靠谱"]), luck.kind === "hard" ? "bad" : "good");
 }
 
 /* ================= ghost ================= */
@@ -1360,7 +1444,8 @@ function pickTarget(exclude) {
   if (!c.length) { G.state = "idle"; G.wait = 1; G.target = null; return; }
   const top = Math.max(...c.map(r => r.doorHp + r.barrier));
   const score = r => (r.doorHp + r.barrier) / top * (gtal("sly") ? 2.2 : .8) + Math.random() * (gtal("sly") ? .2 : .6) + Math.abs(r.doorY - G.y) / MAP_H * .25
-    + (r === G.lastTarget && c.length > 1 ? .75 : 0) + Math.min(.6, (r.timesTargeted || 0) * .12);   // it gets bored of the same door
+    + (r === G.lastTarget && c.length > 1 ? .75 : 0) + Math.min(.6, (r.timesTargeted || 0) * .12)   // it gets bored of the same door
+    + (c.length > 1 && otherGhosts().some(g => g.target === r) ? .6 : 0);
   c.sort((a, b) => score(a) - score(b));
   const r = c[0]; G.target = r; G.state = "walk"; r.sosAsked = false; G.lastTarget = r; r.timesTargeted = (r.timesTargeted || 0) + 1;
   G.attackT = 0; G.tele = 0; r.warned = false; route(G, { kind: "door", room: r });
@@ -1374,10 +1459,16 @@ function onAttackStart(r) {
 function hitGhost(dmg, mine, quiet) {
   if (phase !== "night" || G.hp <= 0) return;
   dmg *= 1 + G.vuln;
+  if (gt < (G.armorUntil || 0)) dmg *= .5;
   if (gtal("dodge")) { if (quiet) dmg *= .88; else if (Math.random() < .12) { floatText(G.x + rand(-14, 14), G.y - ghostR(G.lv) - 10, "躲开", "#C9F0FF", 12); return; } }
   G.hp -= dmg; G.hurt = .12; if (mine) stats.dmg += dmg;
   if (!quiet) floatText(G.x + rand(-14, 14), G.y - ghostR(G.lv) - 10, "-" + fmt(dmg), mine ? "#FFE26A" : "#FFFFFF", mine ? 16 : 12);
-  if (G.hp <= 0) { G.hp = 0; G.state = "dead"; burst(G.x, G.y, "#F1EEFF", 50, 280); burst(G.x, G.y, "#FFD23F", 30, 220); slowmo = 1.2; flash = .5; endGame(true); }
+  if (G.hp <= 0) {
+    G.hp = 0; G.state = "dead"; G.target = null; burst(G.x, G.y, G.jiang ? "#8CFF7A" : "#F1EEFF", 50, 280); burst(G.x, G.y, "#FFD23F", 30, 220); slowmo = 1.2; flash = .5;
+    const left = ghostsAll.filter(g => g.state !== "dead");
+    if (!left.length) endGame(true);
+    else { banner(`${gName()}被打死了！还剩${left.map(g => g.jiang ? "僵尸" : "猛鬼").join("、")}`, "good"); speak(`${gName()}被打死了`, true); sfx("repel"); feed(`${gName()}被打死了！再把${left[0].jiang ? "僵尸" : "猛鬼"}也干掉就赢了`, "good"); }
+  }
 }
 function timedSlow(v, sec) { if (gt >= (G.slowT || 0) || v >= G.slowV) { G.slowV = Math.max(v, gt < (G.slowT || 0) ? G.slowV : 0); G.slowT = Math.max(G.slowT || 0, gt + sec); } G.slow = Math.max(G.slow, v); }
 function timedVuln(v, sec) { G.vulnV = Math.max(v, gt < (G.vulnT || 0) ? G.vulnV : 0); G.vulnT = Math.max(G.vulnT || 0, gt + sec); G.vuln = Math.max(G.vuln, v); }
@@ -1456,8 +1547,8 @@ function killRoom(r) {
   const ratio = G.hp / G.max; G.kills = (G.kills || 0) + 1;
   gainXp(Math.max(0, ghostNeed(G.lv) - G.xp)); G.max = ghostMax(G.lv); G.hp = Math.min(G.max, G.max * ratio + G.max * .15);
   burst(G.x, G.y, "#FF3355", 40, 260); rings.push({ x: G.x, y: G.y, r: 8, max: 200, life: 0, col: "#FF4D6D" }); sfx("roar"); shake = Math.max(shake, 8);
-  banner(`猛鬼吞掉了 ${occ.name}，实力大涨！`, "danger");
-  feed(`${occ.name} 被抓走了！猛鬼升到 Lv.${G.lv}，血量和伤害都大涨（已吞噬 ${G.kills} 人）`, "bad"); speak(`${occ.name}被抓走了，猛鬼变强了`, true);
+  banner(`${gName()}吞掉了 ${occ.name}，实力大涨！`, "danger");
+  feed(`${occ.name} 被抓走了！${gName()}升到 Lv.${G.lv}，血量和伤害都大涨（已吞噬 ${G.kills} 人）`, "bad"); speak(`${occ.name}被抓走了，${gName()}变强了`, true);
   G.state = "idle"; G.wait = 1.4; G.target = null;
 }
 function updateGhost(dt) {
@@ -1465,7 +1556,9 @@ function updateGhost(dt) {
   G.lunge = Math.max(0, G.lunge - dt * 5); G.hurt = Math.max(0, G.hurt - dt);
   if (G.state === "hidden" || G.state === "dead") return;
   if (gt < G.frozenUntil || gt < G.stunUntil) return;
-  const sp = (110 + G.lv * 5) * (gtal("swift") ? 1.3 : 1) * (gtal("giant") ? .8 : 1);
+  const sp = (110 + G.lv * 5) * (gtal("swift") ? 1.3 : 1) * (gtal("giant") ? .8 : 1) * (gt < (G.frenzyUntil || 0) ? 1.4 : 1) * (G.jiang ? .9 : 1);
+  if (gt < (G.mendUntil || 0)) G.hp = Math.min(G.max, G.hp + G.max * .03 * dt);
+  if (G.jiang && (G.state === "walk" || G.state === "attack") && G.tele <= 0) for (const sk of G.jskills) { sk.cd -= dt * (1 - (G.skillSlow || 0)); if (sk.cd <= 0) { sk.cd = JSKILLS.find(x => x.id === sk.id).cd + rand(0, 4); if (useJSkill(sk.id)) break; sk.cd = 2; } }
   if (gtal("regen") && G.state !== "heal" && G.state !== "rise") G.hp = Math.min(G.max, G.hp + G.max * .004 * dt);
   if (!G.berserk && nightT > berserkAt()) { G.berserk = true; banner(`${gName()}暴走了！不再逃跑`, "danger"); sfx("roar"); speak(`${gName()}暴走了，不会再逃跑`, true); feed("暴走：不会再逃回鬼井，伤害每分钟变高", "bad"); }
   if (!G.berserk && (G.state === "walk" || G.state === "attack") && G.hp < G.max * .25) {
@@ -1477,7 +1570,7 @@ function updateGhost(dt) {
     if (G.variant && G.variant.id === "split" && G.lv >= 2) { spawnHelper("imp"); spawnHelper("imp"); }
     G.retreats = (G.retreats || 0) + 1;
     G.state = "retreat"; route(G, { kind: "altar" }); G.target = null; G.tele = 0; G.enraged = false;
-    feed(`${gName()}残血了，正逃回鬼井！快追着打`, "good");
+    feed(`${gName()}残血了，正逃回${G.jiang ? "楼顶" : "鬼井"}！快追着打`, "good");
     return;
   }
   if (G.lv >= 2 && (G.state === "walk" || G.state === "attack") && G.tele <= 0) { G.skillT -= dt * (1 - (G.skillSlow || 0)); if (G.skillT <= 0) variantSkill(); }
@@ -1502,7 +1595,7 @@ function updateGhost(dt) {
         if (isMine(t)) banner(`${gName()}狂暴了！`, "danger");
         feed(`${gName()}狂暴了，砸门更快`, "bad");
       }
-      if (G.lv >= 5 && G.disruptT <= 0) {
+      if (!G.jiang && G.lv >= 5 && G.disruptT <= 0) {
         G.disruptT = 24;
         const list = shuffle(t.slots.filter(s => s.b && s.b.type !== "cat")).slice(0, 2);
         list.forEach(s => { s.b.offUntil = gt + 6; burst(s.x, s.y, "#B98CFF", 10, 100); });
@@ -1513,14 +1606,14 @@ function updateGhost(dt) {
         if (G.tele <= 0) { G.lunge = 1.6; damageDoor(t, ghostDmg(G.lv) * 3); if (isMine(t)) { shake = 14; sfx("smash"); vibrate([60, 40, 60]); } }
         break;
       }
-      if (G.lv >= 3 && G.smashT <= 0 && t.doorHp > 0) {
+      if (!G.jiang && G.lv >= 3 && G.smashT <= 0 && t.doorHp > 0) {
         G.smashT = gtal("nimble") ? 11 : 18; G.tele = 1.3;
         if (isMine(t)) { banner(`${gName()}要重击了！`, "danger"); sfx("alarm"); speak("小心重击", true); }
         break;
       }
-      const spd = (1 - G.slow) * (gt < G.enrageUntil ? 1.5 : 1) * (G.berserk ? 1.3 : 1) * (gtal("rage") ? 1 + (1 - G.hp / G.max) * .6 : 1);
+      const spd = (1 - G.slow) * (gt < (G.frenzyUntil || 0) ? 1.7 : 1) * (gt < G.enrageUntil ? 1.5 : 1) * (G.berserk ? 1.3 : 1) * (gtal("rage") ? 1 + (1 - G.hp / G.max) * .6 : 1);
       G.atk -= dt * spd;
-      if (G.atk <= 0) { G.atk = 1; G.lunge = 1; damageDoor(t, ghostDmg(G.lv)); }
+      if (G.atk <= 0) { G.atk = 1; G.lunge = 1; damageDoor(t, ghostDmg(G.lv) * (G.nailHits > 0 ? (G.nailHits--, 2) : 1)); }
       else if (G.attackT > 30 && t.doorHp > doorMax(t) * .75) { feed(`${gName()}砸不动 ${who(t)}的门，换目标了`, "good"); pickTarget(t); }
       break;
     }
@@ -1530,7 +1623,7 @@ function updateGhost(dt) {
       { const cap = G.sealed ? G.hp : G.max * Math.max(.45, 1.15 - .15 * (G.retreats || 1));   // every escape heals a bit less; a seal blocks it
         G.hp = Math.min(cap, G.hp + G.max * .12 * dt);
         if (Math.random() < dt * 8) parts.push({ x: G.x + rand(-30, 30), y: G.y + 20, vx: 0, vy: -60, life: .8, t: 0, color: "#FF4D6D", size: 3 });
-        if (G.hp >= cap - 1) { if (G.sealed) { G.sealed = false; feed("封印符生效：猛鬼回不了血", "good"); } pickTarget(); } }
+        if (G.hp >= cap - 1) { if (G.sealed) { G.sealed = false; feed(`封印符生效：${gName()}回不了血`, "good"); } pickTarget(); } }
       break;
   }
 }
@@ -1617,16 +1710,19 @@ function spawnHelper(kind) {
   const kl = G.kills || 0, pBoss = Math.min(.35, .03 + kl * .06 + Math.max(0, G.lv - 6) * .03), pElite = Math.min(.5, .16 + kl * .05 + G.lv * .02), x = Math.random();
   const grade = kind === "imp" ? 0 : x < pBoss ? 2 : x < pBoss + pElite ? 1 : 0, GR = HELPER_GRADES[grade];
   const r = pick(pool), hp = G.max * ty.hp * GR.hp * (gtal("warlord") ? 1.5 : 1), name = GR.pre + ty.name;
-  helpers.push({ ty, grade, name, x: G.x + rand(-16, 16), y: G.y - 10, room: r, hp, max: hp, atk: 1.2, t: 0, life: ty.bomb ? 60 : grade === 2 ? 60 : 45, hurt: 0, lunge: 0, acc: 0 });
+  helpers.push({ owner: G, ty, grade, name, x: G.x + rand(-16, 16), y: G.y - 10, room: r, hp, max: hp, atk: 1.2, t: 0, life: ty.bomb ? 60 : grade === 2 ? 60 : 45, hurt: 0, lunge: 0, acc: 0 });
   sfx("summon"); setTimeout(() => sfx("roar"), 250); burst(G.x, G.y, ty.col, 24 + grade * 12, 200);
   feed(`猛鬼叫来了${name}，去砸 ${who(r)}的门！${grade === 2 ? "它比猛鬼还强！" : ""}`, "bad");
   if (isMine(r)) { banner(`${name}来砸你的门了！`, "danger"); speak(`猛鬼叫来了${name}`, true); }
   else banner(`猛鬼叫来了${name}！`, "danger");
 }
 function updateHelpers(dt) {
-  for (let i = helpers.length - 1; i >= 0; i--) {
-    const h = helpers[i], r = h.room; h.t += dt; h.hurt = Math.max(0, h.hurt - dt); h.lunge = Math.max(0, h.lunge - dt * 5);
-    if (!r.alive || h.t > h.life) { burst(h.x, h.y, "#A99BE0", 14, 120); helpers.splice(i, 1); continue; }
+  for (let i = helpers.length - 1; i >= 0; i--) { const h = helpers[i]; if (withGhost(h.owner || G, () => helperStep(h, dt))) helpers.splice(i, 1); }
+}
+function helperStep(h, dt) {
+  {
+    const r = h.room; h.t += dt; h.hurt = Math.max(0, h.hurt - dt); h.lunge = Math.max(0, h.lunge - dt * 5);
+    if (!r.alive || h.t > h.life) { burst(h.x, h.y, "#A99BE0", 14, 120); return true; }
     let dps = 0;
     for (const o of rooms) {
       if (!o.alive || !o.occupant) continue;
@@ -1637,14 +1733,15 @@ function updateHelpers(dt) {
       const c = nice(BED.inc(r.bedLv) * 20 * (1 + h.grade * 1.5)); r.coins += c; burst(h.x, h.y, "#A99BE0", 26, 200);
       feed(`${who(r)}打跑了${h.name}`, "good");
       if (isMine(r)) { floatText(h.x, h.y - 20, "+" + fmt(c), "#FFD23F", 16, "coin"); sfx("repel"); track("helper", h.grade); }
-      helpers.splice(i, 1); continue;
+      return true;
     }
     const tx = r.doorOuter.x + (r.left ? 34 : -34), ty = r.doorOuter.y + 6, dx = tx - h.x, dy = ty - h.y, L = Math.hypot(dx, dy);
-    if (h.ty.heal && G.state !== "dead") { G.hp = Math.min(G.max, G.hp + G.max * h.ty.heal * dt); if (Math.random() < dt * 4) parts.push({ x: h.x, y: h.y - 10, vx: (G.x - h.x) * .8, vy: (G.y - h.y) * .8, life: .9, t: 0, color: "#8CFF7A", size: 4 }); }
+    if (h.ty.heal && G.state !== "dead" && G.state !== "hidden") { G.hp = Math.min(G.max, G.hp + G.max * h.ty.heal * dt); if (Math.random() < dt * 4) parts.push({ x: h.x, y: h.y - 10, vx: (G.x - h.x) * .8, vy: (G.y - h.y) * .8, life: .9, t: 0, color: "#8CFF7A", size: 4 }); }
     if (L > 4) { const st = Math.min(L, h.ty.sp * dt); h.x += dx / L * st; h.y += dy / L * st; }
-    else if (h.ty.bomb) { minionHit(r, ghostDmg(G.lv) * h.ty.dmg * HELPER_GRADES[h.grade].dmg); burst(h.x, h.y, "#FFB15A", 40, 280); shake = Math.max(shake, isMine(r) ? 12 : 0); sfx("cannon"); flash = isMine(r) ? .3 : flash; feed(`爆破鬼在 ${who(r)}门口炸了！`, "bad"); helpers.splice(i, 1); }
+    else if (h.ty.bomb) { minionHit(r, ghostDmg(G.lv) * h.ty.dmg * HELPER_GRADES[h.grade].dmg); burst(h.x, h.y, "#FFB15A", 40, 280); shake = Math.max(shake, isMine(r) ? 12 : 0); sfx("cannon"); flash = isMine(r) ? .3 : flash; feed(`爆破鬼在 ${who(r)}门口炸了！`, "bad"); return true; }
     else { h.atk -= dt; if (h.atk <= 0) { h.atk = h.ty.rate; h.lunge = 1; minionHit(r, ghostDmg(G.lv) * h.ty.dmg * HELPER_GRADES[h.grade].dmg); } }
   }
+  return false;
 }
 function hitHelper(i) {
   const h = helpers[i], d = h.max * .07; h.hp -= d; h.hurt = .15;
@@ -1692,7 +1789,7 @@ function updateGifts(dt) {
 function openGift() {
   const r = me.room, g = weighted(GIFTS), at = { x: gift.x, y: gift.y };
   gift = null; giftT = nightT + rand(60, 150) * (tl(r, "gift") ? .65 : 1);
-  const msg = g.use(r); stats.gifts++; track("gift");
+  const msg = withGhost(focusGhost(r), () => g.use(r)); stats.gifts++; track("gift");
   sfx("open"); vibrate(25); burst(at.x, at.y, "#FFD23F", 24, 210); burst(at.x, at.y, "#FF7A95", 12, 160);
   floatText(at.x, at.y - 24, g.name, "#FFFFFF", 18); floatText(at.x, at.y - 48, msg, "#FFD23F", 13);
   feed(`礼盒开出「${g.name}」：${msg}`, "good"); speak(`开出${g.name}`);
@@ -1729,13 +1826,13 @@ function itemPrice(r, it) {
   const uses = (r.itemUses && r.itemUses[it.id]) || 0, base = Math.max(1200, ghostMax(G.lv) * it.mult) * Math.pow(1.3, uses);
   return it.pay === "c" ? { c: nice(base), e: 0 } : it.pay === "m" ? { c: nice(base * .75), e: nice(base * .03) } : { c: 0, e: nice(base * .1) };
 }
-const itemsLive = () => phase === "night" && G.lv >= 4 && G.hp > 0 && !["hidden", "rise", "dead"].includes(G.state);
+const itemsLive = () => phase === "night" && ghostsAll.some(g => g.lv >= 4 && g.hp > 0 && !["hidden", "rise", "dead"].includes(g.state));
 const itemOk = (r, it) => r && r.alive && itemsLive() && gt >= (r.itemCd || 0) && (it.id === "dart" ? r.coins >= 300 : canPay(r, itemPrice(r, it).c, itemPrice(r, it).e));
 function useItem(r, id) {
   const it = ITEMS.find(x => x.id === id); if (!it || !itemOk(r, it)) return false;
   const k = itemPrice(r, it); if (!pay(r, k.c, k.e)) return false;
   r.itemUses = r.itemUses || {}; r.itemUses[id] = (r.itemUses[id] || 0) + 1; r.itemCd = gt + 3;
-  it.use(r, isMine(r), k.c);
+  withGhost(focusGhost(r), () => it.use(r, isMine(r), k.c));
   feed(`${isMine(r) ? "你" : r.occupant.name}用了「${it.name}」`, "good");
   if (isMine(r)) track("smite");
   return true;
@@ -1760,7 +1857,7 @@ function askHelp() {
   const bots = shuffle(players.filter(p => !p.isPlayer && p.room && p.room.alive && p.state === "bed"));
   const social = tl(r, "social"); let givers = 0;
   bots.forEach((p, i) => {
-    const at = gt + rand(.8, 3.2) + i * .4, busy = G.target === p.room && G.state === "attack";
+    const at = gt + rand(.8, 3.2) + i * .4, busy = !!ghostAt(p.room);
     const chance = social ? 1 : ({ 神仙: .6, 大佬: .55, 普通: .35, 摸鱼: .15, 挂机: .03 }[p.kind] || .3) * (busy ? .1 : 1) * (p.room.coins < 60 ? .2 : 1);
     if (givers < 2 && Math.random() < chance) { givers++; helpQ.push({ at, p }); }
     else if (Math.random() < .55) helpQ.push({ at, p, say: busy ? pick(["我自己都在挨打！", "顾不上了", "救不了…"]) : p.room.coins < 60 ? pick(["没钱了", "穷啊", "等我攒攒"]) : pick(["加油！", "顶住！", "在忙", "等会儿", "冲冲冲", "…", "门升级啊"]) });
@@ -1830,7 +1927,7 @@ function updateBot(p, dt) {
   p.think -= dt; if (p.think > 0) return;
   p.think = rand(1.1, 2.2) * (p.thinkMul || 1);
   const r = p.room, plan = p.plan;
-  if (!p.noRepair && G.target === r && G.state === "attack" && r.doorHp < doorMax(r) * .35) { if (repairDoor(r) || doorUp(r)) return; }
+  if (!p.noRepair && ghostAt(r) && r.doorHp < doorMax(r) * .35) { if (repairDoor(r) || doorUp(r)) return; }
   if (Math.random() < p.lazy) return;
   // rich roommates also call down 天罚
   if (gt >= (G.botSmiteT || 0) && itemsLive() && Math.random() < .25) {
@@ -1862,10 +1959,12 @@ function update(dt) {
   }
   if (phase === "select" || phase === "night") {
     if (phase === "night") nightT += dt;
-    G.slow = gt < (G.slowT || 0) ? G.slowV : 0; G.vuln = gt < (G.vulnT || 0) ? G.vulnV : 0; G.skillSlow = 0;
-    const live = ghostTargetable(), gx = G.x, gy = G.y - 10;
-    const atDoorOf = G.state === "attack" ? G.target : null;
-    let poisonNow = 0, poisonMine = false;
+    for (const g of ghostsAll) { g.slow = gt < (g.slowT || 0) ? g.slowV : 0; g.vuln = gt < (g.vulnT || 0) ? g.vulnV : 0; g.skillSlow = 0; g._poison = 0; g._poisonMine = false; }
+    // the second ghost arrives through the 3F corridor at the top
+    for (const g of ghostsAll) if (phase === "night" && g.jiang && g.state === "hidden" && nightT >= g.spawnAt) {
+      g.state = "rise"; g.rise = 0; g.x = CX; g.y = 30; banner("僵尸从 3 楼路口跳进来了！", "danger"); sfx("spawn"); speak("僵尸来了，小心", true);
+      feed(`僵尸登场：它的技能是 ${g.jskills.map(k => JSKILLS.find(x => x.id === k.id).name).join("、")}；天赋「${g.tal.name}」`, "bad");
+    }
     for (const r of rooms) {
       if (!r.alive || !r.occupant || r.occupant.state !== "bed") continue;
       const { rate, tree, boost } = roomMods(r);
@@ -1873,31 +1972,43 @@ function update(dt) {
       r.coins += inc * dt; r.tick += dt;
       if (r.tick >= 1) { r.tick -= 1; if (mine) floatText(r.headPt.x + rand(-6, 6), r.headPt.y - 24, "+" + Math.round(inc), "#FFD23F", 14, "coin"); }
       r.doorShake = Math.max(0, r.doorShake - dt);
+      const atkG = ghostsAll.find(g => g.state === "attack" && g.target === r) || null;
+      if (gt < (r.venomUntil || 0) && r.doorHp > 0) r.doorHp = Math.max(1, r.doorHp - doorMax(r) * .012 * dt);
+      if (atkG) withGhost(atkG, () => {
+      const atDoorOf = r;
       if (!mine && atDoorOf === r && !r.sosAsked && r.doorHp < doorMax(r) * .45) {
         r.sosAsked = true;
         if (Math.random() < .65) { r.sosUntil = gt + 15; bubble(r.occupant, "救命！", 4); feed(`${r.occupant.name} 在求救！点他头像可以送金币`, "bad"); if (camMode !== "focus" || visit === r) sfx("sos"); }
       }
+      });
       if (tl(r, "regen") && gt - r.lastHit > 5 && r.doorHp > 0 && r.doorHp < doorMax(r)) r.doorHp = Math.min(doorMax(r), r.doorHp + doorMax(r) * tl(r, "regen") * dt);
+      if (atkG) withGhost(atkG, () => { const atDoorOf = r;
       if (tl(r, "chill") && atDoorOf === r) G.slow = Math.max(G.slow, tl(r, "chill"));
       if (tl(r, "pierce") && atDoorOf === r) G.vuln = Math.min(.8, G.vuln + tl(r, "pierce"));
       if (tl(r, "ward") && atDoorOf === r && phase === "night") hitGhost(G.max * tl(r, "ward") * dt, mine, true);
       if (tl(r, "icecore") && atDoorOf === r && gt >= (r.iceT || 0) && gt >= G.frozenUntil) { r.iceT = gt + 30; G.frozenUntil = gt + 2; G.tele = 0; burst(G.x, G.y, "#9FE8FF", 18, 160); if (mine) { sfx("freeze"); feed("冰心冻住了猛鬼", "good"); } }
       if (tl(r, "decoy") && atDoorOf === r && !r.decoyUsed && r.doorHp < doorMax(r) * .2 && rooms.some(o => o !== r && o.alive && o.occupant)) {
-        r.decoyUsed = true; fx.push({ type: "decoy", x: r.doorOuter.x, y: r.doorOuter.y, life: 1.2, t: 0 }); feed(`${who(r)}的替身娃娃骗走了猛鬼`, mine ? "good" : ""); if (mine) sfx("decoy"); G.tele = 0; pickTarget(r);
+        r.decoyUsed = true; fx.push({ type: "decoy", x: r.doorOuter.x, y: r.doorOuter.y, life: 1.2, t: 0 }); feed(`${who(r)}的替身娃娃骗走了${gName()}`, mine ? "good" : ""); if (mine) sfx("decoy"); G.tele = 0; pickTarget(r);
       }
+      });
       if (tl(r, "interest") && phase === "night") { r.intT = (r.intT || 0) + dt; if (r.intT >= 15) { r.intT = 0; const g = Math.min(nice(80 * Math.pow(1.6, r.bedLv - 1)), r.coins * tl(r, "interest")); r.coins += g; if (mine && g >= 1) floatText(r.headPt.x, r.headPt.y - 40, "利息 +" + fmt(g), "#FFD23F", 13, "coin"); } }
       if (tl(r, "lucky") && phase === "night") { r.luckT = (r.luckT || 0) + dt; if (r.luckT >= 60) { r.luckT = 0; const g = BED.inc(r.bedLv) * r.mult * 20; r.coins += g; if (mine) { floatText(r.headPt.x, r.headPt.y - 40, "横财 +" + fmt(g), "#FFD23F", 15, "coin"); sfx("coin"); } } }
       if (r.barrierMax > 0 && gt - r.lastHit > 3) r.barrier = Math.min(r.barrierMax, r.barrier + r.barrierMax * .08 * dt);
-      const dGhost = Math.hypot(G.x - r.doorC.x, G.y - r.doorC.y), inside = roomAt(G.x, G.y) === r, atMine = atDoorOf === r;
       let extra = 0, pw = 0;
       for (const s of r.slots) {
         const b = s.b; if (!b) continue;
         const D = BUILD[b.type], off = b.offUntil > gt;
+        // guns pick the nearest ghost they can reach; door gadgets work on whoever is smashing this door
+        let tg = null;
+        if (ATTACKERS.includes(b.type)) { let best = 1e9; for (const g of ghostsAll) { if (!withGhost(g, ghostTargetable)) continue; const d = Math.hypot(g.x - s.x, g.y - 10 - s.y); if ((roomAt(g.x, g.y) === r || d <= rangeOf(r, b)) && d < best) { best = d; tg = g; } } }
+        withGhost(tg || atkG || G0, () => {
+        const live = !!tg, gx = G.x, gy = G.y - 10, atDoorOf = atkG && G === atkG ? r : null;
+        const dGhost = Math.hypot(G.x - r.doorC.x, G.y - r.doorC.y), inside = roomAt(G.x, G.y) === r, atMine = atDoorOf === r;
         const val = D.val(b.lv) * (ATTACKERS.includes(b.type) ? (1 + tl(r, "dmg")) * (tl(r, "crit") && Math.random() < .15 ? 2 : 1)
           : b.type === "repair" ? (1 + tl(r, "repair")) * (tl(r, "lightsleep") && atDoorOf === r ? 2 : 1)
           : b.type === "arcade" ? powerMul(r) * (1 + tl(r, "arcade")) : b.type === "dynamo" ? powerMul(r) : b.type === "cat" ? 1 + tl(r, "catlover") : 1);
         b.flash = Math.max(0, b.flash - dt); b.firing = false; b.cd2 = Math.max(0, b.cd2 - dt);
-        if (off) { b.ramp = 0; continue; }
+        if (off) { b.ramp = 0; return; }
         switch (b.type) {
           case "arcade": { r.energy += val * dt; pw += val; const c = D.coin(b.lv) * r.mult * boost * (1 + tl(r, "arcade")); r.coins += c * dt; extra += c; break; }
           case "dynamo": r.energy += val * dt; pw += val; break;
@@ -1988,13 +2099,13 @@ function update(dt) {
                   if (k === "spray" && Math.random() < dt * 40) { const a = b.aim + rand(-.25, .25), v = rand(170, 260); parts.push({ x: s.x + Math.cos(b.aim) * 20, y: s.y + Math.sin(b.aim) * 20, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 50, life: rand(.25, .4), t: 0, color: Math.random() < .3 ? "#FFFFFF" : D.col, size: rand(4, 7) }); }
                   if (b.acc > val * .8) { floatText(G.x + rand(-10, 10), G.y - ghostR(G.lv) - 4, "-" + fmt(b.acc), D.col, 12); b.acc = 0; if (mine) sfx(k === "spray" ? "flame" : "laser"); }
                 } else if (k === "dot") {
-                  b.firing = true; poisonNow += val * rate; if (mine) poisonMine = true; if (D.slow) timedSlow(D.slow, .6);
+                  b.firing = true; G._poison += val * rate; if (mine) G._poisonMine = true; if (D.slow) timedSlow(D.slow, .6);
                   b.fx -= dt; if (b.fx <= 0) { b.fx = .4; for (let q = 0; q < 4; q++) { const a = rand(0, TAU); parts.push({ x: gx + Math.cos(a) * 34, y: gy + Math.sin(a) * 34, vx: -Math.cos(a) * 80, vy: -Math.sin(a) * 80 - 20, life: .45, t: 0, color: D.look.col, size: rand(3, 6) }); } }
                 } else if (b.cd <= 0) {
                   b.cd = D.int; b.flash = .15;
                   if (k === "bullet") {
                     const n = D.n || 1;
-                    for (let q = 0; q < n; q++) { const a = b.aim + (n > 1 ? (q - (n - 1) / 2) * .2 : 0); bullets.push({ x: s.x + Math.cos(a) * 22, y: s.y + Math.sin(a) * 22, dmg: val / n, mine, sp: (D.sp || 620) * (n > 1 ? rand(.9, 1.1) : 1), kind: "g", col: D.col, size: D.size || 5, D, r }); }
+                    for (let q = 0; q < n; q++) { const a = b.aim + (n > 1 ? (q - (n - 1) / 2) * .2 : 0); bullets.push({ g: G, x: s.x + Math.cos(a) * 22, y: s.y + Math.sin(a) * 22, dmg: val / n, mine, sp: (D.sp || 620) * (n > 1 ? rand(.9, 1.1) : 1), kind: "g", col: D.col, size: D.size || 5, D, r }); }
                     if (mine) sfx(D.snd || "shot");
                   } else if (k === "arc") {
                     fx.push({ type: "arc", x1: s.x, y1: s.y - 14, x2: gx, y2: gy, life: .25, t: 0, col: D.col }); hitGhost(val, mine); hitFx(D, val, mine, r); if (mine) sfx(D.snd || "tesla");
@@ -2009,7 +2120,7 @@ function update(dt) {
                 if (b.acc > val * .8) { floatText(G.x + rand(-10, 10), G.y - ghostR(G.lv) - 4, "-" + fmt(b.acc), "#FFB15A", 12); b.acc = 0; }
                 if (mine) sfx("flame");
               } else if (b.type === "poison") {
-                b.firing = true; poisonNow += val * rate; if (mine) poisonMine = true;
+                b.firing = true; G._poison += val * rate; if (mine) G._poisonMine = true;
                 b.fx -= dt; if (b.fx <= 0) { b.fx = .5; for (let k = 0; k < 3; k++) parts.push({ x: gx + rand(-20, 20), y: gy + rand(-10, 20), vx: rand(-20, 20), vy: rand(-90, -50), life: rand(.5, .8), t: 0, color: pick(["#8CFF7A", "#5CE08A", "#B4FF6A"]), size: rand(4, 7) }); }
               } else if (b.type === "laser") {
                 b.firing = true; b.ramp = Math.min(1, b.ramp + dt / 3);
@@ -2017,39 +2128,45 @@ function update(dt) {
                 if (b.acc > val * .8) { floatText(G.x + rand(-10, 10), G.y - ghostR(G.lv) - 4, "-" + fmt(b.acc), "#FF9AF0", 12); b.acc = 0; if (mine) sfx("laser"); }
               } else if (b.cd <= 0) {
                 b.cd = D.int; b.flash = b.type === "turret" ? .08 : .2;
-                if (b.type === "sniper") { bullets.push({ x: s.x + Math.cos(b.aim) * 26, y: s.y + Math.sin(b.aim) * 26, dmg: val, mine, sp: 1500, kind: "s" }); if (mine) sfx("sniper"); }
-                if (b.type === "turret") { bullets.push({ x: s.x + Math.cos(b.aim) * 22, y: s.y + Math.sin(b.aim) * 22, dmg: val, mine, sp: 650, kind: "b" }); if (mine) sfx("shot"); }
-                if (b.type === "cannon") { bullets.push({ x: s.x + Math.cos(b.aim) * 24, y: s.y + Math.sin(b.aim) * 24, dmg: val, mine, sp: 520, kind: "c" }); if (mine) sfx("cannon"); }
+                if (b.type === "sniper") { bullets.push({ g: G, x: s.x + Math.cos(b.aim) * 26, y: s.y + Math.sin(b.aim) * 26, dmg: val, mine, sp: 1500, kind: "s" }); if (mine) sfx("sniper"); }
+                if (b.type === "turret") { bullets.push({ g: G, x: s.x + Math.cos(b.aim) * 22, y: s.y + Math.sin(b.aim) * 22, dmg: val, mine, sp: 650, kind: "b" }); if (mine) sfx("shot"); }
+                if (b.type === "cannon") { bullets.push({ g: G, x: s.x + Math.cos(b.aim) * 24, y: s.y + Math.sin(b.aim) * 24, dmg: val, mine, sp: 520, kind: "c" }); if (mine) sfx("cannon"); }
                 if (b.type === "tesla") { fx.push({ type: "arc", x1: s.x, y1: s.y - 16, x2: gx, y2: gy, life: .25, t: 0 }); hitGhost(val, mine); if (Math.random() < .3) stun(.4); if (mine) sfx("tesla"); }
                 if (b.type === "thunder") { fx.push({ type: "bolt", x: G.x, y: G.y, life: .45, t: 0 }); hitGhost(G.max * val / 100 / (1 + G.vuln), mine); if (mine) { flash = .35; shake = 8; sfx("thunder"); } }
               }
             }
         }
+        });
       }
       if (mine) {
         if (extra) { r.catTick += dt; if (r.catTick >= 3) { r.catTick = 0; const cs = r.slots.find(s => s.b && (s.b.type === "cat" || s.b.type === "arcade")); if (cs) { floatText(cs.x, cs.y - 28, "+" + Math.round(extra * 3), "#FFD23F", 13, "coin"); sfx("coin"); } } }
         if (pw) { r.pTick += dt; if (r.pTick >= 3) { r.pTick = 0; const ps = r.slots.find(s => s.b && (s.b.type === "arcade" || s.b.type === "dynamo")); if (ps) floatText(ps.x + 6, ps.y - 12, "+" + fmtRate(pw * 3), "#4FE3FF", 13, "volt"); } }
       }
     }
-    if (poisonNow > 0) { G.poisonDps = poisonNow; G.poisonUntil = gt + 4; G.poisonMine = poisonMine; }
-    if (phase === "night" && gt < G.poisonUntil && G.hp > 0 && !["hidden", "rise", "dead", "heal"].includes(G.state)) {
-      const d = G.poisonDps * dt; hitGhost(d, G.poisonMine, true); G.poisonAcc += d;
-      if (G.poisonAcc > G.poisonDps) { floatText(G.x + rand(-12, 12), G.y - ghostR(G.lv) - 8, "-" + fmt(G.poisonAcc), "#8CFF7A", 12); G.poisonAcc = 0; if (G.poisonMine) sfx("poison"); }
-    }
-    if (phase === "night") { updateGhost(dt); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); updateMinions(dt); updateHelpers(dt); updateHelp(); updateItems(); }
+    for (const g of ghostsAll) withGhost(g, () => {
+      if (G._poison > 0) { G.poisonDps = G._poison; G.poisonUntil = gt + 4; G.poisonMine = G._poisonMine; }
+      if (phase === "night" && gt < G.poisonUntil && G.hp > 0 && !["hidden", "rise", "dead", "heal"].includes(G.state)) {
+        const d = G.poisonDps * dt; hitGhost(d, G.poisonMine, true); G.poisonAcc = (G.poisonAcc || 0) + d;
+        if (G.poisonAcc > G.poisonDps) { floatText(G.x + rand(-12, 12), G.y - ghostR(G.lv) - 8, "-" + fmt(G.poisonAcc), "#8CFF7A", 12); G.poisonAcc = 0; if (G.poisonMine) sfx("poison"); }
+      }
+    });
+    if (phase === "night") { for (const g of ghostsAll) withGhost(g, () => { updateGhost(dt); updateItems(); }); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); updateMinions(dt); updateHelpers(dt); updateHelp(); }
   }
   if (phase === "title" || phase === "match") { G.x = CX + Math.sin(gt * .5) * 40; G.y = MAP_H * .5 + Math.sin(gt * .3) * MAP_H * .4; G.face = Math.cos(gt * .5) > 0 ? 1 : -1; }
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
-    if (!ghostTargetable()) { bullets.splice(i, 1); continue; }
-    const tx = G.x, ty = G.y - 10, dx = tx - b.x, dy = ty - b.y, L = Math.hypot(dx, dy), step = b.sp * dt;
-    if (L < ghostR(G.lv) * .6 + step) {
-      bullets.splice(i, 1); hitGhost(b.dmg, b.mine);
-      if (b.kind === "g") { burst(b.x, b.y, b.col, b.size > 7 ? 18 : 6, b.size > 7 ? 200 : 100); hitFx(b.D, b.dmg, b.mine, b.r); }
-      else if (b.kind === "c") { burst(b.x, b.y, "#FFB15A", 12, 160); stun(.3); } else if (b.kind === "s") burst(b.x, b.y, "#BFF4FF", 10, 200); else burst(b.x, b.y, "#FFE26A", 4, 90);
-      continue;
-    }
-    b.x += dx / L * step; b.y += dy / L * step;
+    const done = withGhost(b.g || G, () => {
+      if (!ghostTargetable()) return true;
+      const tx = G.x, ty = G.y - 10, dx = tx - b.x, dy = ty - b.y, L = Math.hypot(dx, dy), step = b.sp * dt;
+      if (L < ghostR(G.lv) * .6 + step) {
+        hitGhost(b.dmg, b.mine);
+        if (b.kind === "g") { burst(b.x, b.y, b.col, b.size > 7 ? 18 : 6, b.size > 7 ? 200 : 100); hitFx(b.D, b.dmg, b.mine, b.r); }
+        else if (b.kind === "c") { burst(b.x, b.y, "#FFB15A", 12, 160); stun(.3); } else if (b.kind === "s") burst(b.x, b.y, "#BFF4FF", 10, 200); else burst(b.x, b.y, "#FFE26A", 4, 90);
+        return true;
+      }
+      b.x += dx / L * step; b.y += dy / L * step; return false;
+    });
+    if (done) bullets.splice(i, 1);
   }
   for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.t += dt; p.vy += 260 * dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.t >= p.life) parts.splice(i, 1); }
   for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.t += dt; f.y -= 34 * dt; if (f.t >= f.life) floats.splice(i, 1); }
@@ -2513,7 +2630,7 @@ function refreshStrip() {
     const r = p.room, dead = p.state === "dead";
     btn.classList.toggle("dead", dead);
     btn.classList.toggle("focus", !!r && r === focusR);
-    btn.classList.toggle("target", phase === "night" && !!r && G.target === r && (G.state === "attack" || G.state === "enter"));
+    btn.classList.toggle("target", phase === "night" && !!r && !!ghostAt(r));
     const ratio = r && r.occupant === p ? clamp(r.doorHp / doorMax(r), 0, 1) : (dead ? 0 : 1);
     const bar = btn.querySelector(".hpb i"); bar.style.width = ratio * 100 + "%"; bar.style.background = ratio > .5 ? "#5CE08A" : ratio > .25 ? "#FFD23F" : "#FF4D6D";
   });
@@ -2745,7 +2862,7 @@ function renderSheet() {
       const b = s.slot.b, D = BUILD[b.type]; title = `${D.name} · Lv.${b.lv}`;
       h = `<div class="stats"><div class="stat"><small>${D.unit}${D.suffix ? ` · ${D.suffix}` : ""}</small><b>${valText(b.type, b.lv)}</b></div>
         ${D.range ? `<div class="stat"><small>射程</small><b>${rangeOf(o, b)}</b></div>` : `<div class="stat"><small>等级</small><b>${b.lv} / ${D.max}</b></div>`}</div>
-        <p class="note">这是 ${owner} 的建筑。${D.tier != null ? `品质：${TIERS[D.tier].n}。` : ""}${D.desc}。${b.offUntil > gt ? "正被鬼干扰，暂时停摆。" : ""}</p>`;
+        <p class="note">这是 ${owner} 的建筑。${D.tier != null ? `品质：${TIERS[D.tier].n}。` : ""}${D.desc}。外观：${lvSkin(b.lv).n}。${b.offUntil > gt ? "正被鬼干扰，暂时停摆。" : ""}</p>`;
     } else if (s.bed) {
       title = `${BED.names[o.bedLv - 1]} · Lv.${o.bedLv}`;
       h = `<div class="stats"><div class="stat"><small>每秒总收入</small><b>${fmtRate(incomeOf(o))}</b></div><div class="stat"><small>等级</small><b>${o.bedLv} / ${BED.max}</b></div></div>
@@ -2766,14 +2883,14 @@ function renderSheet() {
       <p class="note">这个格子离门口 ${reach}。射程从建筑所在的格子算起，门边的格子打得到门口，靠里的格子要射程远的武器；升级后射程变远，还能帮隔壁打鬼。电力靠游戏机和发电机，特殊建筑只能用电力买。标着「本局限定」的建筑每局随机出现。</p>`;
   } else if (s.kind === "slot") {
     const b = s.slot.b, D = BUILD[b.type], max = b.lv >= D.max, full = r.slots.every(q => q.b);
-    title = `${D.name} · Lv.${b.lv}`;
+    title = `${D.name} · Lv.${b.lv}`; const skinTxt = `外观：${lvSkin(b.lv).n}${max ? "" : `，升级后换成「${lvSkin(b.lv + 1).n}」`}。`;
     const cdLeft = b.cd2 > 0 ? `正在冷却，还剩 ${Math.ceil(b.cd2)} 秒。` : "";
     h = `<div class="stats"><div class="stat"><small>${D.unit}${D.suffix ? ` · ${D.suffix}` : ""}</small><b>${valText(b.type, b.lv)}${max ? "" : ` <em>→ ${valText(b.type, b.lv + 1)}</em>`}</b></div>
       ${D.range ? `<div class="stat"><small>射程</small><b>${rangeOf(r, b)}${max ? "" : ` <em>→ ${D.range(b.lv + 1) + tl(r, "range") + REACH}</em>`}</b></div>` : `<div class="stat"><small>等级</small><b>${b.lv} / ${D.max}</b></div>`}</div>
       <div class="sheet-actions">
         <button class="act" type="button" data-act="up">${max ? "已满级" : upLabel(D.cost[b.lv], D.en[b.lv])}</button>
         <button class="act alt" type="button" data-act="sell">拆掉 ${b.spent ? `+<i class="coin"></i><span class="num">${fmt(b.spent * .5)}</span>` : ""}${b.spentE ? ` +<i class="volt"></i><span class="num">${fmt(b.spentE * .5)}</span>` : ""}</button>
-      </div><p class="note">${D.tier != null ? `品质：${TIERS[D.tier].n}。` : ""}${D.desc}。${cdLeft}${b.offUntil > gt ? "正被鬼干扰，暂时停摆。" : ""}拆掉返还一半花费。</p>${full && phase === "night" ? `<h4 class="sec">斩杀道具 · 一次性使用</h4>${renderItems()}` : ""}`;
+      </div><p class="note">${D.tier != null ? `品质：${TIERS[D.tier].n}。` : ""}${D.desc}。${skinTxt}${cdLeft}${b.offUntil > gt ? "正被鬼干扰，暂时停摆。" : ""}拆掉返还一半花费。</p>${full && phase === "night" ? `<h4 class="sec">斩杀道具 · 一次性使用</h4>${renderItems()}` : ""}`;
   } else if (s.kind === "bed") {
     const L = r.bedLv, max = L >= BED.max;
     title = `${BED.names[L - 1]} · Lv.${L}`;
@@ -2896,15 +3013,69 @@ function upArrow(x, y, t) {
   ctx.beginPath(); ctx.moveTo(0, -5.5); ctx.lineTo(5.5, .5); ctx.lineTo(2, .5); ctx.lineTo(2, 5); ctx.lineTo(-2, 5); ctx.lineTo(-2, .5); ctx.lineTo(-5.5, .5); ctx.closePath(); ctx.fillStyle = "#FFFFFF"; ctx.fill();
   ctx.restore();
 }
+// every level re-skins the building: its own colour theme plus extra parts that pile up as it grows
+const LV_SKINS = [
+  { n: "原色" }, { n: "暖阳", to: "#FF9F43", a: .22 }, { n: "冰蓝", to: "#4FB6FF", a: .3 }, { n: "钢铁", to: "#8D98AE", a: .38 }, { n: "翡翠", to: "#3FD98A", a: .32 },
+  { n: "赤焰", to: "#FF5A4E", a: .34 }, { n: "黄金", to: "#FFC83A", a: .45 }, { n: "紫晶", to: "#A97CFF", a: .42 }, { n: "樱花", to: "#FF8FD0", a: .4 }, { n: "钻石", to: "#BFF4FF", a: .5 }
+];
+const lvSkin = lv => LV_SKINS[clamp(lv, 1, LV_SKINS.length) - 1];
+const tintCache = new Map();
+function tintCol(v, lv) {
+  const sk = lvSkin(lv); if (!sk.to || typeof v !== "string" || v[0] !== "#" || v === EDGE) return v;
+  const key = lv + v; let o = tintCache.get(key); if (o) return o;
+  const hx = v.length === 4 ? v.slice(1).split("").map(ch => ch + ch).join("") : v.slice(1, 7);
+  if (hx.length !== 6) return v;
+  const a = [0, 2, 4].map(i => parseInt(hx.slice(i, i + 2), 16)), b = [1, 3, 5].map(i => parseInt(sk.to.slice(i, i + 2), 16));
+  const lum = (a[0] * .3 + a[1] * .59 + a[2] * .11) / 255, k = sk.a * (lum < .18 ? .45 : 1);
+  o = "#" + a.map((x, i) => Math.round(x + (b[i] - x) * k).toString(16).padStart(2, "0")).join(""); tintCache.set(key, o); return o;
+}
+const FILL = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "fillStyle");
+function tintOn(c, lv) {
+  if (!FILL || !lvSkin(lv).to) return false;
+  try { Object.defineProperty(c, "fillStyle", { configurable: true, get() { return FILL.get.call(c); }, set(v) { FILL.set.call(c, tintCol(v, lv)); } }); return true; } catch (e) { return false; }
+}
+function tintOff(c) { try { delete c.fillStyle; } catch (e) {} }
+function drawLvBack(c, lv, h, s, t) {
+  c.save(); c.lineWidth = 2.2; c.strokeStyle = EDGE;
+  if (lv >= 10) { const g = c.createRadialGradient(0, 0, h * .4, 0, 0, h * 1.6); g.addColorStop(0, `hsla(${(t * 60) % 360},100%,75%,.45)`); g.addColorStop(1, "rgba(191,244,255,0)"); c.fillStyle = g; c.beginPath(); c.arc(0, 0, h * 1.6, 0, TAU); c.fill(); }
+  else if (lv >= 8) { c.globalAlpha = .35 + .15 * Math.sin(t * 3); c.fillStyle = lv >= 9 ? "#FF8FD0" : "#A97CFF"; c.beginPath(); c.arc(0, 0, h * 1.35, 0, TAU); c.fill(); c.globalAlpha = 1; }
+  if (lv >= 5) { // side wings
+    const col = lv >= 9 ? "#FFC6E8" : lv >= 7 ? "#FFD23F" : lv >= 6 ? "#FF7A5C" : "#7FE0A8", flap = reduce ? 0 : Math.sin(t * 4) * .12;
+    for (const sd of [-1, 1]) { c.save(); c.translate(sd * h * .8, -h * .1); c.rotate(sd * (.25 + flap)); c.beginPath(); c.moveTo(0, -h * .35); c.quadraticCurveTo(sd * h * .75, -h * .7, sd * h * .62, h * .05); c.quadraticCurveTo(sd * h * .4, -h * .02, sd * h * .45, h * .3); c.quadraticCurveTo(sd * h * .2, h * .15, 0, h * .3); c.closePath(); c.fillStyle = col; c.fill(); c.stroke(); c.restore(); }
+  }
+  c.restore();
+}
+function drawLvFront(c, lv, h, s, t) {
+  c.save(); c.lineWidth = 2; c.strokeStyle = EDGE; c.lineJoin = "round";
+  if (lv >= 2) { c.fillStyle = lv >= 7 ? "#FFE58A" : lv >= 4 ? "#D8DEEA" : "#FFB45A"; for (const sd of [-1, 1]) { c.beginPath(); c.arc(sd * (h - 1), h * .1, 3.2, 0, TAU); c.fill(); c.stroke(); } }
+  if (lv >= 3 && lv < 8) { // pennant on a little pole
+    const wv = reduce ? 0 : Math.sin(t * 6) * 2.5, fx = -h + 3, top = -h - 9;
+    c.beginPath(); c.moveTo(fx, -h + 4); c.lineTo(fx, top); c.stroke();
+    c.beginPath(); c.moveTo(fx, top); c.quadraticCurveTo(fx + 7, top + 1 + wv, fx + 13, top + 4 + wv); c.lineTo(fx, top + 8); c.closePath(); c.fillStyle = lv >= 7 ? "#FFD23F" : lv >= 6 ? "#FF5A4E" : lv >= 5 ? "#3FD98A" : lv >= 4 ? "#8D98AE" : "#4FB6FF"; c.fill(); c.stroke();
+  }
+  if (lv >= 6 && lv < 8) { c.fillStyle = lv >= 7 ? "#FFE58A" : "#FF8A6B"; for (const k of [-1, 0, 1]) { c.beginPath(); c.moveTo(k * h * .32 - 4, -h - 1); c.lineTo(k * h * .32, -h - (k ? 7 : 10)); c.lineTo(k * h * .32 + 4, -h - 1); c.closePath(); c.fill(); c.stroke(); } }
+  if (lv >= 8) { // crown
+    const cy = -h - 2; c.beginPath(); c.moveTo(-h * .42, cy); c.lineTo(-h * .48, cy - 10); c.lineTo(-h * .2, cy - 5); c.lineTo(0, cy - 13); c.lineTo(h * .2, cy - 5); c.lineTo(h * .48, cy - 10); c.lineTo(h * .42, cy); c.closePath();
+    c.fillStyle = lv >= 10 ? "#E8FBFF" : "#FFD23F"; c.fill(); c.stroke(); c.beginPath(); c.arc(0, cy - 4, 2.4, 0, TAU); c.fillStyle = lv >= 9 ? "#FF5AA8" : "#A97CFF"; c.fill();
+  }
+  if (lv >= 9 && !reduce) { // orbiting gems
+    const n = lv >= 10 ? 3 : 2;
+    for (let k = 0; k < n; k++) { const a = t * 1.6 + k * TAU / n, gx = Math.cos(a) * h * 1.12, gy = Math.sin(a) * h * .45 + h * .15, z = 4;
+      c.beginPath(); c.moveTo(gx, gy - z); c.lineTo(gx + z * .8, gy); c.lineTo(gx, gy + z); c.lineTo(gx - z * .8, gy); c.closePath(); c.fillStyle = ["#7FE7FF", "#FF8FD0", "#FFE26A"][k]; c.fill(); c.lineWidth = 1.5; c.stroke(); }
+  }
+  c.restore();
+}
 function drawBuilding(c, type, lv, x, y, s, st, t, icon) {
   const h = s / 2; c.save(); c.translate(x, y); c.lineJoin = "round"; c.lineCap = "round"; c.lineWidth = 2.5; c.strokeStyle = EDGE;
   // looks get fancier every 3 levels: steel plinth from Lv.4, glowing gold plinth from Lv.7
   const tier = lv >= 7 ? 3 : lv >= 4 ? 2 : 1;
   if (!icon && tier > 1) {
     if (tier === 3) { const gl = c.createRadialGradient(0, 0, h * .3, 0, 0, h * 1.55); gl.addColorStop(0, `rgba(255,210,63,${.3 + .15 * Math.sin(t * 3)})`); gl.addColorStop(1, "rgba(255,210,63,0)"); c.fillStyle = gl; c.beginPath(); c.arc(0, 0, h * 1.55, 0, TAU); c.fill(); }
-    rrPath(c, -h - 3, h * .45, s + 6, h * .62, 7); c.fillStyle = tier === 3 ? "#D9A333" : "#6E7BA6"; c.fill(); c.stroke();
+    rrPath(c, -h - 3, h * .45, s + 6, h * .62, 7); c.fillStyle = tintCol(tier === 3 ? "#D9A333" : "#6E7BA6", lv); c.fill(); c.stroke();
     c.fillStyle = tier === 3 ? "#FFE58A" : "#A9B6E0"; rrPath(c, -h + 2, h * .52, s - 4, 3, 2); c.fill();
   }
+  if (!icon && lv >= 5) drawLvBack(c, lv, h, s, t);
+  const tinted = !icon && tintOn(c, lv);
   const barrel = (len, w, col) => { c.save(); c.rotate(st.aim || 0); rrPath(c, 0, -w / 2, len, w, 3); c.fillStyle = col; c.fill(); c.stroke(); if (st.flash > 0) { c.beginPath(); c.arc(len + 5, 0, w * .7, 0, TAU); c.fillStyle = "#FFE26A"; c.fill(); } c.restore(); };
   switch (type) {
     case "turret":
@@ -3053,6 +3224,8 @@ function drawBuilding(c, type, lv, x, y, s, st, t, icon) {
   }
   if (BUILD[type] && BUILD[type].look) drawLook(c, BUILD[type].look, h, s, st, t, icon);
   if (BUILD[type] && BUILD[type].prop) drawProp(c, type, h, s, st, t, icon);
+  if (tinted) tintOff(c);
+  if (!icon && lv >= 2) drawLvFront(c, lv, h, s, t);
   if (!icon) {
     const trr = BUILD[type] && BUILD[type].tier;
     if (trr >= 1) { c.beginPath(); c.moveTo(-h + 2, h - 9); c.lineTo(-h + 8, h - 3); c.lineTo(-h + 2, h + 3); c.lineTo(-h - 4, h - 3); c.closePath(); c.fillStyle = TIERS[trr].c; c.fill(); c.lineWidth = 2; c.strokeStyle = EDGE; c.stroke(); }
@@ -3276,7 +3449,7 @@ function drawBed(r, t) {
   ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 2;
   for (let k = 1; k < 4; k++) { const xx = bx + bw * k / 4; ctx.beginPath(); ctx.moveTo(xx, b.y + 4); ctx.lineTo(xx, b.y + b.h - 4); ctx.stroke(); }
   if (occ && (occ.state === "bed" || occ.state === "dead")) {
-    const scared = occ.state === "bed" && phase === "night" && G.target === r && (G.state === "attack" || G.state === "enter");
+    const scared = occ.state === "bed" && phase === "night" && !!ghostAt(r);
     drawAvatar(ctx, r.headPt.x, r.headPt.y, 13, occ.av, occ.state === "dead" ? "dead" : scared ? "scared" : "sleep");
     if (occ.state === "bed" && !scared && !reduce) for (let k = 0; k < 3; k++) {
       const ph = (t * .6 + k / 3) % 1; ctx.globalAlpha = 1 - ph;
@@ -3326,7 +3499,7 @@ function drawPlaque(r, t) {
     rrPath(ctx, bx, by, 64, 8, 4); ctx.fillStyle = "#100D26"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = EDGE; ctx.stroke();
     rrPath(ctx, bx + 1.5, by + 1.5, 61 * ratio, 5, 3); ctx.fillStyle = ratio > .5 ? "#5CE08A" : ratio > .25 ? "#FFD23F" : "#FF4D6D"; ctx.fill();
     if (r.barrierMax > 0) { rrPath(ctx, bx + 1.5, by - 4, 61 * clamp(r.barrier / r.barrierMax, 0, 1), 3, 2); ctx.fillStyle = "#8FD3FF"; ctx.fill(); }
-    const hit = phase === "night" && G.target === r && (G.state === "attack" || G.state === "enter");
+    const hit = phase === "night" && !!ghostAt(r);
     if (hit) {
       ctx.save(); ctx.globalAlpha = .55 + .45 * Math.sin(t * 10); rrPath(ctx, bx - 3, by - 3, 70, 14, 6); ctx.lineWidth = 3; ctx.strokeStyle = "#FF4D6D"; ctx.stroke(); ctx.restore();
       label(ctx, "门 " + Math.ceil(ratio * 100) + "%", bx + 32, by - 11, 12, ratio > .5 ? "#A8F0C0" : ratio > .25 ? "#FFE26A" : "#FF8FA3", FONT_NUM, 800);
@@ -3345,6 +3518,7 @@ function drawWalker(ch, t) {
 }
 function drawGhost(t) {
   if ((G.state === "hidden" && phase !== "title" && phase !== "match") || G.state === "dead") return;
+  if (G.jiang) return drawJiang(t);
   const R = ghostR(G.lv), frozen = gt < G.frozenUntil, stunned = gt < G.stunUntil, ty = G.type;
   let x = G.x, y = G.y - 12 + (reduce || frozen ? 0 : Math.sin(t * 3) * 4), sc2 = 1, alpha = 1;
   if (G.state === "attack" && G.target) x += (G.target.left ? -1 : 1) * G.lunge * 14;
@@ -3398,9 +3572,58 @@ function drawGhost(t) {
     const bw = Math.max(64, R * 1.8), by = y - R * 1.35 - (G.lv >= 6 ? 24 : 8);
     rrPath(ctx, x - bw / 2, by, bw, 9, 5); ctx.fillStyle = "#100D26"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = EDGE; ctx.stroke();
     rrPath(ctx, x - bw / 2 + 1.5, by + 1.5, (bw - 3) * clamp(G.hp / G.max, 0, 1), 6, 3); ctx.fillStyle = "#FF4D6D"; ctx.fill();
-    label(ctx, `猛鬼 Lv.${G.lv}${G.kills ? ` · 吞噬 ${G.kills}` : ""}`, x, by - 10, 12, "#FF8FA3", FONT_CN, 800);
+    label(ctx, `${gName()} Lv.${G.lv}${G.kills ? ` · 吞噬 ${G.kills}` : ""}`, x, by - 10, 12, "#FF8FA3", FONT_CN, 800);
     if (G.tele > 0) label(ctx, "!", x + bw / 2 + 8, by - 4, 24, "#FF4D6D", FONT_NUM, 800);
     const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk && !stunned ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : G.slow > 0 ? ["减速", "#9FE8FF"] : enr ? ["狂暴", "#FF8FA3"] : null;
+    if (tag) label(ctx, tag[0], x, y + R + 14, 12, tag[1]);
+  }
+}
+// the jiangshi: Qing robe, round hat, pale green face, a yellow talisman, arms out, hopping
+function drawJiang(t) {
+  const R = ghostR(G.lv) * .9, frozen = gt < G.frozenUntil, stunned = gt < G.stunUntil;
+  const moving = G.state === "walk" || G.state === "retreat" || G.state === "enter";
+  const hop = moving && !frozen && !reduce ? Math.abs(Math.sin(t * 7)) * R * .45 : 0;
+  let x = G.x, y = G.y - 8 - hop, alpha = gt < G.invisUntil ? .2 : G.state === "heal" ? .75 : 1, sc = 1;
+  if (G.state === "attack" && G.target) x += (G.target.left ? -1 : 1) * G.lunge * 14;
+  if (G.state === "rise") { const k = clamp(G.rise / 1.6, 0, 1); sc = .4 + k * .6; alpha = Math.min(alpha, k * 1.5); }
+  if (G.kills) sc *= 1 + Math.min(.25, G.kills * .05);
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.beginPath(); ctx.ellipse(G.x, G.y + R * .9, R * .7, R * .2, 0, 0, TAU); ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fill();
+  const aura = ctx.createRadialGradient(x, y, R * .3, x, y, R * 2); aura.addColorStop(0, `rgba(80,255,140,${.18 + Math.min(.3, G.lv * .02)})`); aura.addColorStop(1, "rgba(80,255,140,0)");
+  ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(x, y, R * 2, 0, TAU); ctx.fill();
+  ctx.translate(x, y); ctx.scale(sc * (G.face || 1), sc); ctx.lineJoin = "round"; ctx.lineWidth = 3; ctx.strokeStyle = EDGE;
+  const robe = frozen ? "#9FD8F0" : gt < (G.armorUntil || 0) ? "#5A6B7A" : "#2E5A7A";
+  // robe
+  ctx.beginPath(); ctx.moveTo(-R * .55, -R * .05); ctx.lineTo(R * .55, -R * .05); ctx.lineTo(R * .7, R * .9); ctx.lineTo(-R * .7, R * .9); ctx.closePath(); ctx.fillStyle = robe; ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#E2B843"; ctx.fillRect(-R * .68, R * .72, R * 1.36, R * .1); ctx.strokeRect(-R * .68, R * .72, R * 1.36, R * .1);
+  rrPath(ctx, -R * .22, R * .1, R * .44, R * .44, 4); ctx.fillStyle = "#E2B843"; ctx.fill(); ctx.stroke();
+  // arms straight out with pale hands
+  const reach = G.state === "attack" ? G.lunge * R * .3 : 0;
+  rrPath(ctx, R * .2, R * .02, R * .95 + reach, R * .26, 6); ctx.fillStyle = robe; ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(R * 1.2 + reach, R * .15, R * .14, R * .12, 0, 0, TAU); ctx.fillStyle = "#BFE3B5"; ctx.fill(); ctx.stroke();
+  rrPath(ctx, R * .1, R * .3, R * .85 + reach * .8, R * .24, 6); ctx.fillStyle = robe; ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(R * 1 + reach * .8, R * .42, R * .13, R * .11, 0, 0, TAU); ctx.fillStyle = "#BFE3B5"; ctx.fill(); ctx.stroke();
+  // head
+  rrPath(ctx, -R * .45, -R * .82, R * .9, R * .82, R * .25); ctx.fillStyle = G.hurt > 0 ? "#FFFFFF" : "#BFE3B5"; ctx.fill(); ctx.stroke();
+  for (const sd of [-1, 1]) { ctx.beginPath(); ctx.ellipse(sd * R * .2, -R * .42, R * .1, R * .07, 0, 0, TAU); ctx.fillStyle = EDGE; ctx.fill(); ctx.beginPath(); ctx.arc(sd * R * .2 + R * .03, -R * .42, R * .035, 0, TAU); ctx.fillStyle = frozen ? "#4FE3FF" : "#FF3355"; ctx.fill(); }
+  ctx.fillStyle = "#FFFFFF"; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * R * .14, -R * .18); ctx.lineTo(sd * R * .08, -R * .06); ctx.lineTo(sd * R * .02, -R * .18); ctx.closePath(); ctx.fill(); }
+  ctx.beginPath(); ctx.moveTo(-R * .18, -R * .18); ctx.lineTo(R * .18, -R * .18); ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 3;
+  // Qing official hat with a red knob
+  ctx.beginPath(); ctx.ellipse(0, -R * .82, R * .62, R * .14, 0, 0, TAU); ctx.fillStyle = "#1A1A2A"; ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, -R * .86, R * .38, Math.PI, 0); ctx.closePath(); ctx.fillStyle = "#2A2A3E"; ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, -R * 1.26, R * .1, 0, TAU); ctx.fillStyle = "#E0483E"; ctx.fill(); ctx.stroke();
+  // talisman flapping over the face
+  ctx.save(); ctx.translate(0, -R * .8); ctx.rotate(reduce ? 0 : Math.sin(t * 6) * .15 + (moving ? .2 : 0));
+  rrPath(ctx, -R * .13, 0, R * .26, R * .62, 2); ctx.fillStyle = "#FFE26A"; ctx.fill(); ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = "#E0483E"; ctx.beginPath(); ctx.moveTo(-R * .07, R * .12); ctx.lineTo(R * .07, R * .12); ctx.moveTo(0, R * .12); ctx.lineTo(0, R * .5); ctx.moveTo(-R * .07, R * .3); ctx.lineTo(R * .07, R * .36); ctx.stroke(); ctx.restore();
+  ctx.restore();
+  if (stunned && !frozen) for (let k = 0; k < 3; k++) { const a = t * 6 + k * TAU / 3; label(ctx, "★", x + Math.cos(a) * R * .8, y - R * 1.4 + Math.sin(a) * 5, 12, "#FFE26A"); }
+  if (phase === "night" || phase === "end") {
+    const bw = Math.max(64, R * 1.8), by = y - R * 1.6 - 10;
+    rrPath(ctx, x - bw / 2, by, bw, 9, 5); ctx.fillStyle = "#100D26"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = EDGE; ctx.stroke();
+    rrPath(ctx, x - bw / 2 + 1.5, by + 1.5, (bw - 3) * clamp(G.hp / G.max, 0, 1), 6, 3); ctx.fillStyle = "#3DBE8B"; ctx.fill();
+    label(ctx, `僵尸 Lv.${G.lv}${G.kills ? ` · 吞噬 ${G.kills}` : ""}`, x, by - 10, 12, "#A8F0C0", FONT_CN, 800);
+    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : gt < (G.armorUntil || 0) ? ["铁甲", "#C9C4E0"] : gt < (G.frenzyUntil || 0) ? ["狂跳", "#FF8FA3"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : null;
     if (tag) label(ctx, tag[0], x, y + R + 14, 12, tag[1]);
   }
 }
@@ -3552,6 +3775,10 @@ function render(t) {
   ctx.beginPath(); ctx.arc(ALTAR.x, ALTAR.y, 32, 0, TAU); ctx.fillStyle = `rgba(255,40,80,${.25 + pulse * .3})`; ctx.fill();
   for (let k2 = 0; k2 < 6; k2++) { const a = k2 / 6 * TAU + .3, cx2 = ALTAR.x + Math.cos(a) * 92, cy2 = ALTAR.y + Math.sin(a) * 74; rrPath(ctx, cx2 - 3, cy2 - 8, 6, 12, 2); ctx.fillStyle = "#EDE8FF"; ctx.fill(); ctx.beginPath(); ctx.ellipse(cx2, cy2 - 12 + Math.sin(t * 9 + k2) * .8, 2.5, 4, 0, 0, TAU); ctx.fillStyle = "#FFB15A"; ctx.fill(); }
   label(ctx, "鬼井", ALTAR.x, ALTAR.y + 96, 15, "#FF8FA3");
+  if (ghostsAll.some(g => g.jiang) && (phase === "night" || phase === "select")) {
+    const tg = ctx.createRadialGradient(CX, 40, 4, CX, 40, 80); tg.addColorStop(0, `rgba(80,255,140,${.22 + .12 * Math.sin(t * 2)})`); tg.addColorStop(1, "rgba(80,255,140,0)");
+    ctx.fillStyle = tg; ctx.beginPath(); ctx.arc(CX, 40, 80, 0, TAU); ctx.fill();
+  }
 
   const mine = me && me.room, homeView = camMode === "focus" && !visit;
   const myTurn = mine && mine.alive && me.state === "bed" && inGame();
@@ -3610,14 +3837,14 @@ function render(t) {
     if (gt < mine.rageUntil) tags.push([`攻速↑ ${Math.ceil(mine.rageUntil - gt)}秒`, "#FF8A3C"]);
     tags.forEach(([txt, col], k) => label(ctx, txt, mine.x0 + RW / 2 + (tags.length > 1 ? (k ? 62 : -62) : 0), mine.y0 + 158, 13, col));
   }
-  drawGhost(t);
+  for (const g of ghostsAll) withGhost(g, () => drawGhost(t));
   for (const m of minions) drawMinion(m, t);
   for (const h of helpers) drawHelper(h, t);
   for (const r of rooms) drawPlaque(r, t);
   for (const [ax, ay] of arrows) upArrow(ax, ay, t);
   if (gift && phase === "night") drawGift(gift, t);
   for (const b of bullets) {
-    if (b.kind === "s") { const a = Math.atan2(G.y - 10 - b.y, G.x - b.x); ctx.save(); ctx.lineCap = "round"; for (const [w, col] of [[7, "rgba(160,240,255,.4)"], [3, "#FFFFFF"]]) { ctx.beginPath(); ctx.moveTo(b.x - Math.cos(a) * 26, b.y - Math.sin(a) * 26); ctx.lineTo(b.x, b.y); ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke(); } ctx.restore(); continue; }
+    if (b.kind === "s") { const bg = b.g || G, a = Math.atan2(bg.y - 10 - b.y, bg.x - b.x); ctx.save(); ctx.lineCap = "round"; for (const [w, col] of [[7, "rgba(160,240,255,.4)"], [3, "#FFFFFF"]]) { ctx.beginPath(); ctx.moveTo(b.x - Math.cos(a) * 26, b.y - Math.sin(a) * 26); ctx.lineTo(b.x, b.y); ctx.lineWidth = w; ctx.strokeStyle = col; ctx.stroke(); } ctx.restore(); continue; }
     if (b.kind === "g") { if (b.size > 7) { ctx.save(); ctx.globalAlpha = .35; ctx.beginPath(); ctx.arc(b.x, b.y, b.size * 1.8, 0, TAU); ctx.fillStyle = b.col; ctx.fill(); ctx.restore(); } ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, TAU); ctx.fillStyle = b.col; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = EDGE; ctx.stroke(); continue; }
     ctx.beginPath(); ctx.arc(b.x, b.y, b.kind === "c" ? 8 : 5, 0, TAU); ctx.fillStyle = b.kind === "c" ? "#2E2A36" : "#FFE26A"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = b.kind === "c" ? "#FF8A3C" : EDGE; ctx.stroke(); }
   for (const f of fx) {
@@ -3642,7 +3869,7 @@ function render(t) {
   const v = ctx.createRadialGradient(vw / 2, vh / 2, Math.min(vw, vh) * .35, vw / 2, vh / 2, Math.max(vw, vh) * .75);
   v.addColorStop(0, "rgba(8,6,24,0)"); v.addColorStop(1, "rgba(8,6,24,.55)");
   ctx.fillStyle = v; ctx.fillRect(0, 0, vw, vh);
-  if (phase === "night" && mine && G.target === mine && (G.state === "attack" || G.tele > 0)) { ctx.fillStyle = `rgba(255,40,80,${(G.tele > 0 ? .16 : .07) + .06 * Math.sin(t * 10)})`; ctx.fillRect(0, 0, vw, vh); }
+  if (phase === "night" && mine && ghostAt(mine)) { ctx.fillStyle = `rgba(255,40,80,${(G.tele > 0 ? .16 : .07) + .06 * Math.sin(t * 10)})`; ctx.fillRect(0, 0, vw, vh); }
   if (flash > 0) { ctx.fillStyle = `rgba(255,252,220,${flash * .7})`; ctx.fillRect(0, 0, vw, vh); }
 }
 
@@ -3673,8 +3900,17 @@ function updateHud(dt) {
   if (phase === "select") st = "马上出动";
   $("gstate").textContent = st;
   $("ghostbar").classList.toggle("alarm", phase === "night" && !!r && G.target === r && G.state === "attack");
+  { const J = ghostsAll.find(g => g.jiang), b2 = $("ghostbar2"); b2.hidden = !(J && phase === "night");
+    if (J && phase === "night") {
+      $("glv2").textContent = "Lv." + J.lv; $("ghp2").style.width = (J.state === "hidden" ? 100 : clamp(J.hp / J.max * 100, 0, 100)) + "%";
+      const gt2 = $("gtal2"); gt2.textContent = J.tal.name + (J.kills ? ` · 吞噬${J.kills}` : "");
+      let st2 = J.state === "hidden" ? `${Math.max(0, Math.ceil(J.spawnAt - nightT))} 秒后从 3 楼路口进来` : J.state === "dead" ? "被打死了" : gt < J.frozenUntil ? "被冻住了" : STATE_TXT[J.state] || "";
+      if (J.state === "attack" && J.target) st2 = "正在砸 " + (J.target === r ? "你的门！" : J.target.occupant.name);
+      if (J.state === "retreat") st2 = "残血逃回楼顶！"; if (J.state === "heal") st2 = "在楼顶回血";
+      $("gstate2").textContent = st2; b2.classList.toggle("alarm", !!r && J.target === r && J.state === "attack");
+    } }
   const mrA = r && r.alive && inBed && phase === "night";
-  const sb = $("sos"), showSos = mrA && G.target === r && (G.state === "attack" || G.tele > 0);
+  const sb = $("sos"), showSos = mrA && !!ghostAt(r);
   sb.hidden = !showSos; if (showSos) { const cd = Math.ceil(sosCd - gt); sb.disabled = cd > 0; const txt = cd > 0 ? `求救 ${cd}秒` : "求救", st = $("sos-t"); if (st.textContent !== txt) st.textContent = txt; }
   const vg = $("visit-give"), showGive = mrA && visit && visit.alive && visit.occupant && !visit.occupant.isPlayer;
   vg.hidden = !showGive; if (showGive) { vg.disabled = gt < giveCd || r.coins < 30; const txt = `送 ${fmt(nice(Math.max(30, r.coins * .15)))}`; if (vg.textContent !== txt) vg.textContent = txt; }
@@ -3719,6 +3955,7 @@ function demoScene() {
   resetRooms(true);
   makePlayers();
   G = { type: GHOSTS[1], x: CX, y: 300, lv: 4, xp: 0, hp: 1, max: 1, state: "idle", target: null, path: [], face: 1, lunge: 0, hurt: 0, slow: 0, vuln: 0, rise: 0, frozenUntil: 0, stunUntil: 0, tele: 0, enrageUntil: 0, berserk: false };
+  G0 = G; ghostsAll = [G];
   stats = { dmg: 0 }; camMode = "overview"; visit = null;
   const kits = [["turret", "arcade", "cat"], ["tesla", "repair", "speaker"], ["turret", "mirror", "frost"], ["cannon", "dynamo", "bell"], ["laser", "fence", "arcade"]];
   rooms.forEach((r, i) => {
@@ -3746,7 +3983,7 @@ function frame(ms) {
   musicTick();
   requestAnimationFrame(frame);
 }
-if (SPEED > 1) window.__dbg = { get me() { return me; }, get G() { return G; }, get phase() { return phase; }, get nightT() { return nightT; }, get players() { return players; }, get cam() { return { camMode, visit: visit && visit.i }; },
+if (SPEED > 1) window.__dbg = { get me() { return me; }, get G() { return G; }, get ghosts() { return ghostsAll; }, focusRoom, hitG: (i, d) => withGhost(ghostsAll[i], () => hitGhost(d)), get phase() { return phase; }, get nightT() { return nightT; }, get players() { return players; }, get cam() { return { camMode, visit: visit && visit.i }; },
   rooms, npcStep, PLAN, repairDoor, get minions() { return minions; }, get helpers() { return helpers; }, spawnHelper, uiIcon, ICONS, BUILD, TALENTS, randomAvatar, avatarURL, get stats() { return stats; }, get gt() { return gt; }, get avail() { return avail; }, get gift() { return gift; }, openGift: () => gift && openGift(), toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
 $("start").addEventListener("click", startMatch);
 $("again").addEventListener("click", startMatch);
