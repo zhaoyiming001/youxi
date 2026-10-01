@@ -753,8 +753,8 @@ const diffIdx = () => Math.max(0, rankIdx() - ((meta.life.streak || 0) <= -3 ? 1
 const gdiff = () => (G && G.diff) || 1;
 const berserkAt = () => (gtal("night") ? 540 : BERSERK_AT);
 const gtal = k => !!(G && G.tal && G.tal.id === k);
-const ghostMax = (lv, ty = G.type) => Math.round(720 * Math.pow(1.47, lv - 1) * ty.hp * (gtal("thick") ? 1.12 : 1) * (gtal("giant") ? 1.2 : 1) * gdiff() * (1 + .1 * ((G && G.kills) || 0)));
-const ghostDmg = lv => Math.round(14 * Math.pow(1.38, lv - 1) * G.type.dmg * (gtal("iron") ? 1.15 : 1) * (1 + (gdiff() - 1) * .8) * (1 + .12 * ((G && G.kills) || 0)) * (G.berserk ? 1.3 + .35 * (nightT - berserkAt()) / 60 : 1));
+const ghostMax = (lv, ty = G.type) => Math.round(720 * Math.pow(1.44, lv - 1) * ty.hp * (gtal("thick") ? 1.12 : 1) * (gtal("giant") ? 1.2 : 1) * gdiff() * (1 + .08 * ((G && G.kills) || 0)));
+const ghostDmg = lv => Math.round(14 * Math.pow(1.36, lv - 1) * G.type.dmg * (gtal("iron") ? 1.15 : 1) * (1 + (gdiff() - 1) * .8) * (1 + .1 * ((G && G.kills) || 0)) * (G.berserk ? 1.3 + .35 * (nightT - berserkAt()) / 60 : 1));
 const ghostNeed = lv => Math.round(Math.min(48, 15 + lv * 5) * G.type.xp);
 const ghostR = lv => Math.min(64, 24 + lv * 2.4) * (gtal("giant") ? 1.15 : 1);
 const doorMax = r => DOOR.hp(r.doorLv) * (1 + tl(r, "door") + (r.plankB || 0));
@@ -1147,7 +1147,7 @@ function startMatch() {
 }
 
 let talentTimer = null, talOpts = [], rerolls = 1;
-const TIPS = ["鬼残血逃跑时追着打，别让它回鬼井回满血", "夜里掉下来的礼盒 14 秒内要点开", "礼盒只掉给一直在花钱建设的人，光攒钱不花就不会来", "钱多了就点左下角的「天罚」，直接劈掉猛鬼 12% 血量", "猛鬼每逃回鬼井一次，能回的血就少一截", "游戏机同时产金币和电，前期先造它", "门快破时升级门，耐久会直接补满",
+const TIPS = ["鬼残血逃跑时追着打，别让它回鬼井回满血", "夜里掉下来的礼盒 14 秒内要点开", "礼盒只掉给一直在花钱建设的人，光攒钱不花就不会来", "猛鬼 Lv.4 以后，钱多了就点左下角的「天罚」，直接劈掉它 12% 血量", "猛鬼每逃回鬼井一次，能回的血就少一截", "游戏机同时产金币和电，前期先造它", "门快破时升级门，耐久会直接补满",
   "「本局限定」建筑每局都不一样，开局先看看", "鬼砸门越多升级越快，弱的室友要帮一把", "会放小鬼的猛鬼放出小鬼时，点一下就能拍散", "被打时点「求救」，室友会送你金币",
   "中后期猛鬼会叫帮手，炮塔射程够远才打得到", "狙击台射程最远，适合帮邻居打鬼", "存钱罐攒得越多，利息越多", "电力能买天雷台、冰冻塔这类只要电的建筑"];
 const randTip = () => pick(TIPS);
@@ -1701,8 +1701,8 @@ function openGift() {
 
 /* ================= 天罚: turn a big economy into damage ================= */
 const SMITE_CD = 25;
-const smiteCost = () => ({ c: nice(ghostMax(G.lv) * .5), e: nice(10 + G.lv * 8) });
-const smiteReady = r => phase === "night" && r && r.alive && G.hp > 0 && !["hidden", "rise", "dead"].includes(G.state) && gt >= (r.smiteCd || 0);
+const smiteCost = () => ({ c: nice(Math.max(1500, ghostMax(G.lv) * 1.2)), e: nice(30 + G.lv * 15) });
+const smiteReady = r => phase === "night" && r && r.alive && G.lv >= 4 && G.hp > 0 && !["hidden", "rise", "dead"].includes(G.state) && gt >= (r.smiteCd || 0);
 function smite(r) {
   const k = smiteCost(); if (!smiteReady(r) || !pay(r, k.c, k.e)) return false;
   r.smiteCd = gt + SMITE_CD;
@@ -1796,7 +1796,8 @@ function updateBot(p, dt) {
   if (!p.noRepair && G.target === r && G.state === "attack" && r.doorHp < doorMax(r) * .35) { if (repairDoor(r) || doorUp(r)) return; }
   if (Math.random() < p.lazy) return;
   // rich roommates also call down 天罚
-  { const k = smiteCost(), keep = p.kind === "神仙" || p.kind === "大佬" ? 1.4 : 3; if (smiteReady(r) && r.coins > k.c * keep && r.energy > k.e * 2 && Math.random() < .35 && smite(r)) return; }
+  { const k = smiteCost(), keep = p.kind === "神仙" || p.kind === "大佬" ? 2 : 3.5;
+    if (gt >= (G.botSmiteT || 0) && smiteReady(r) && r.coins > k.c * keep && r.energy > k.e * 2 && Math.random() < .25 && smite(r)) { G.botSmiteT = gt + 20; return; } }
   const i = p.pi < plan.length ? p.pi : LOOP_FROM + (p.pi - LOOP_FROM) % (plan.length - LOOP_FROM);
   if (npcStep(r, plan[i])) { p.pi++; p.stuck = 0; }
   else if ((p.stuck += 1) > 14) { p.pi++; p.stuck = 0; }
@@ -3631,7 +3632,7 @@ function updateHud(dt) {
   const mrA = r && r.alive && inBed && phase === "night";
   const sb = $("sos"), showSos = mrA && G.target === r && (G.state === "attack" || G.tele > 0);
   sb.hidden = !showSos; if (showSos) { const cd = Math.ceil(sosCd - gt); sb.disabled = cd > 0; const txt = cd > 0 ? `求救 ${cd}秒` : "求救", st = $("sos-t"); if (st.textContent !== txt) st.textContent = txt; }
-  const sm = $("smite"), showSm = mrA; sm.hidden = !showSm;
+  const sm = $("smite"), showSm = mrA && G.lv >= 4; sm.hidden = !showSm;
   if (showSm) { const k = smiteCost(), cd = Math.ceil((r.smiteCd || 0) - gt), ok = cd <= 0 && canPay(r, k.c, k.e) && G.state !== "hidden" && G.state !== "rise";
     sm.disabled = !ok; const html = cd > 0 ? `天罚 ${cd}秒` : `天罚<small>${fmt(k.c)}</small>`, st2 = $("smite-t"); if (st2.dataset.v !== html) { st2.innerHTML = html; st2.dataset.v = html; } }
   const vg = $("visit-give"), showGive = mrA && visit && visit.alive && visit.occupant && !visit.occupant.isPlayer;
