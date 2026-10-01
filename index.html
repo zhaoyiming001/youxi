@@ -269,8 +269,15 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .who b{display:block;font-family:var(--f-display);font-weight:400;font-size:1.05rem;letter-spacing:.04em}
 .who small{display:block;font-size:.72rem;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who:active{transform:translateY(2px)}
-.lobby-top .mcoin{margin-left:auto}
-.lobby-top .icon-btn{width:44px;height:44px}
+.lobby-top .mcoin{margin-left:auto;flex:none}
+.who{flex:1 1 0;overflow:hidden}
+.who > span{min-width:0;overflow:hidden}
+.who b,.who small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lobby-top .icon-btn{flex:none}
+.lobby-top .icon-btn{width:44px;height:44px;position:relative}
+.lobby-top .icon-btn img{width:30px;height:30px}
+.lobby-top .icon-btn .dot{position:absolute;top:-4px;right:-4px;width:13px;height:13px;border-radius:50%;background:var(--danger);border:2.5px solid var(--edge)}
+.lobby-top .mcoin{padding:3px 10px}
 .lobby-hero{flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:230px;padding-top:34px}
 .sign{position:relative;padding:20px 22px 16px;text-align:center;background:linear-gradient(#3B2E7A,#251C55);border:4px solid var(--edge);border-radius:28px 34px 26px 32px/32px 26px 34px 28px;box-shadow:var(--hi),var(--lo),0 8px 0 var(--edge),0 0 70px rgba(255,210,63,.2);animation:swing 4.5s ease-in-out infinite;transform-origin:50% -40px}
 .sign::before,.sign::after{content:"";position:absolute;top:-36px;width:5px;height:36px;border-radius:3px;background:#5A4636;border:2px solid var(--edge)}
@@ -280,11 +287,6 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .sign .tag{margin-top:8px;font-size:.92rem}
 .peek{position:absolute;right:-24px;top:-34px;width:68px;height:68px;animation:peek 3.2s ease-in-out infinite}
 @keyframes peek{0%,100%{transform:translateY(0) rotate(10deg)}50%{transform:translateY(-9px) rotate(-4deg)}}
-.lobby-stats{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.lstat{background:var(--panel);border:3px solid var(--edge);border-radius:var(--wob);box-shadow:var(--hi),0 4px 0 var(--edge);padding:8px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:1px}
-.lstat img{width:30px;height:30px}
-.lstat b{font-family:var(--f-num);font-weight:800;font-size:1.2rem;line-height:1.15}
-.lstat small{font-size:.7rem;color:var(--soft)}
 .tip{width:100%;margin:0;display:flex;align-items:center;gap:10px;background:rgba(11,9,29,.72);border:2.5px dashed #4A4380;border-radius:var(--wob);padding:8px 12px;font-size:.84rem;color:var(--soft);min-height:44px;text-align:left}
 .tip b{flex:none;font-family:var(--f-display);font-weight:400;color:#2A1A00;background:var(--coin);border:2px solid var(--edge);border-radius:8px;padding:0 6px;font-size:.82rem;letter-spacing:.04em}
 .tip span{animation:feedIn .35s ease}
@@ -292,7 +294,6 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .btn.start{width:100%;font-size:2rem;padding:.38em 0;animation:breathe 1.8s ease-in-out infinite}
 @keyframes breathe{50%{transform:scale(1.03)}}
 .lobby-cta .btn.alt{width:100%}
-.lobby-nav{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;background:var(--panel);border:3px solid var(--edge);border-radius:var(--wob);padding:8px;box-shadow:var(--hi),0 5px 0 var(--edge)}
 .stage-head{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:14px}
 .ribbon{position:relative;padding:0 26px}
 .ribbon::before,.ribbon::after{content:"";position:absolute;top:12px;bottom:-10px;width:44px;background:#C98A1A;border:3px solid var(--edge)}
@@ -341,6 +342,11 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex:none}
 .mcoin img.ui-i{width:1.35em;height:1.35em}
 
+@media (max-width:380px){
+  .who > span{display:none}
+  .who{flex:none;padding:4px}
+  .lobby-top{gap:6px}
+}
 @media (max-width:400px){
   .pill small{display:none}
   .pill{padding:3px 8px 3px 6px}
@@ -408,8 +414,10 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
 <div class="overlay lobby" id="title">
   <div class="lobby-wrap">
     <div class="lobby-top">
-      <button class="who" id="who" type="button" aria-label="换个造型"><img id="lobby-av" alt=""><span><b>我的宿舍</b><small id="lobby-sub">点头像换造型</small></span></button>
+      <button class="who" id="who" type="button" aria-label="换个造型"><img id="lobby-av" alt=""><span><b id="lobby-rank">新手</b><small id="lobby-sub">段位</small></span></button>
       <span class="mcoin"><img class="ui-i" data-ui="moon" alt=""><b id="meta-coins">0</b></span>
+      <button class="icon-btn" type="button" data-meta="tasks" aria-label="每日任务"><img data-ui="clipboard" alt=""><i class="dot" id="task-dot" hidden></i></button>
+      <button class="icon-btn" type="button" data-meta="wardrobe" aria-label="商城"><img data-ui="shop" alt=""><i class="dot" id="ach-dot" hidden></i></button>
       <button class="icon-btn" id="lobby-gear" type="button" aria-label="设置"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M10.3 3h3.4l.5 2.6 1.9.8 2.2-1.5 2.4 2.4-1.5 2.2.8 1.9 2.6.5v3.4l-2.6.5-.8 1.9 1.5 2.2-2.4 2.4-2.2-1.5-1.9.8-.5 2.6h-3.4l-.5-2.6-1.9-.8-2.2 1.5-2.4-2.4 1.5-2.2-.8-1.9L1.4 13.7v-3.4l2.6-.5.8-1.9-1.5-2.2 2.4-2.4 2.2 1.5 1.9-.8z"/><circle cx="12" cy="12" r="3.2"/></svg></button>
     </div>
     <div class="lobby-hero">
@@ -419,30 +427,20 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
         <p class="tag">躺下赚钱 · 造塔守门 · 把鬼打死</p>
       </div>
     </div>
-    <div class="lobby-stats">
-      <div class="lstat"><img data-ui="clock" alt=""><b id="ls-best">--</b><small>最久坚持</small></div>
-      <div class="lstat"><img data-ui="trophy" alt=""><b id="ls-wins">0</b><small>击杀猛鬼</small></div>
-      <div class="lstat"><img data-ui="flame" alt=""><b id="ls-fast">--</b><small>最快击杀</small></div>
-    </div>
     <p class="tip"><b>小贴士</b><span id="lobby-tip"></span></p>
     <div class="lobby-cta">
       <button class="btn big start" id="start" type="button">开始匹配</button>
       <button class="btn alt" id="install" type="button" hidden><img class="ui-i" data-ui="phone" alt=""> 添加到手机桌面</button>
       <p class="small" id="ios-tip" hidden>想像 App 一样打开？在 Safari 点「分享」→「添加到主屏幕」</p>
     </div>
-    <nav class="lobby-nav">
-      <button class="mbtn" type="button" data-meta="wardrobe"><img data-ui="shirt" alt="">衣柜</button>
-      <button class="mbtn" type="button" data-meta="tasks"><img data-ui="clipboard" alt="">每日任务<i class="dot" id="task-dot" hidden></i></button>
-      <button class="mbtn" type="button" data-meta="ach"><img data-ui="trophy" alt="">成就<i class="dot" id="ach-dot" hidden></i></button>
-    </nav>
   </div>
 </div>
 
 <div class="overlay" id="meta" hidden>
   <div class="meta-card">
-    <div class="sheet-head" style="margin:0"><h3 id="meta-title">衣柜</h3><span class="mcoin" style="margin-left:auto"><img class="ui-i" data-ui="moon" alt=""><b id="meta-coins2">0</b></span><button class="x" id="meta-close" type="button" aria-label="关闭"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
+    <div class="sheet-head" style="margin:0"><h3 id="meta-title">商城</h3><span class="mcoin" style="margin-left:auto"><img class="ui-i" data-ui="moon" alt=""><b id="meta-coins2">0</b></span><button class="x" id="meta-close" type="button" aria-label="关闭"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
     <div class="tabs" style="grid-template-columns:repeat(3,1fr);margin:0" id="meta-tabs">
-      <button type="button" data-mt="wardrobe">衣柜</button><button type="button" data-mt="tasks">每日任务</button><button type="button" data-mt="ach">成就</button>
+      <button type="button" data-mt="wardrobe">商城</button><button type="button" data-mt="tasks">每日任务</button><button type="button" data-mt="ach">成就</button>
     </div>
     <div class="meta-body" id="meta-body"></div>
   </div>
@@ -1046,7 +1044,7 @@ const CHORDS = [[220, 261.6, 329.6], [174.6, 220, 261.6], [261.6, 329.6, 392], [
 const ARP = [0, 1, 2, 1, 3, 1, 2, 1];
 function musicTick() {
   const c = AU.ctx; if (!c || !vol("music") || paused) return;
-  const danger = phase === "night" && me && me.room && G.target === me.room && (G.state === "attack" || G.state === "walk");
+  const danger = phase === "night" && me && me.room && G.target === me.room && G.state === "attack";
   const beat = danger ? .2 : .3;
   if (AU.next < c.currentTime) AU.next = c.currentTime + .05;
   while (AU.next < c.currentTime + .25) {
@@ -1368,10 +1366,13 @@ function pickTarget(exclude) {
   const score = r => (r.doorHp + r.barrier) / top * (gtal("sly") ? 2.2 : .8) + Math.random() * (gtal("sly") ? .2 : .6) + Math.abs(r.doorY - G.y) / MAP_H * .25;
   c.sort((a, b) => score(a) - score(b));
   const r = c[0]; G.target = r; G.state = "walk"; r.sosAsked = false;
+  G.attackT = 0; G.tele = 0; r.warned = false; route(G, { kind: "door", room: r });
+}
+// fired when the ghost reaches a door and starts smashing (no advance notice of where it's going)
+function onAttackStart(r) {
   { let av = 0; for (const sl of r.slots) if (sl.b && sl.b.type === "alarm" && sl.b.offUntil <= gt) { av += BUILD.alarm.val(sl.b.lv); sl.b.flash = .5; } if (av) { r.alarmUntil = gt + 8; r.alarmV = av / 100; if (isMine(r)) sfx("warn"); } }
-  if (tl(r, "nightwatch") && r.doorHp > 0) { r.doorHp = Math.min(doorMax(r), r.doorHp + doorMax(r) * tl(r, "nightwatch")); if (isMine(r)) floatText(r.wallX, r.doorY - 40, "守夜 +15%", "#A8F0C0", 14); } G.attackT = 0; G.tele = 0; r.warned = false; route(G, { kind: "door", room: r });
-  if (isMine(r)) { banner(`${gName()}朝你的门来了！`, "danger"); feed(`${gName()}盯上了你`, "bad"); sfx("alarm"); speak(`${gName()}朝你来了`, true); goHome(); }
-  else feed(`${gName()}盯上了 ${r.occupant.name}`);
+  if (tl(r, "nightwatch") && r.doorHp > 0) { r.doorHp = Math.min(doorMax(r), r.doorHp + doorMax(r) * tl(r, "nightwatch")); if (isMine(r)) floatText(r.wallX, r.doorY - 40, "守夜 +15%", "#A8F0C0", 14); }
+  if (isMine(r)) { lastAlarm = gt; banner(`${gName()}在砸你的门！`, "danger"); sfx("alarm"); speak(`${gName()}来砸门了`, true); goHome(); }
 }
 function hitGhost(dmg, mine, quiet) {
   if (phase !== "night" || G.hp <= 0) return;
@@ -1493,7 +1494,7 @@ function updateGhost(dt) {
     case "walk":
       if (!t.alive) { pickTarget(); break; }
       if (isMine(t) && Math.hypot(G.x - t.doorOuter.x, G.y - t.doorOuter.y) < 330) sfx("step");
-      if (moveAlong(G, dt, sp)) { G.state = "attack"; G.atk = .5; G.attackT = 0; G.face = t.left ? -1 : 1; }
+      if (moveAlong(G, dt, sp)) { G.state = "attack"; G.atk = .5; G.attackT = 0; G.face = t.left ? -1 : 1; onAttackStart(t); }
       break;
     case "attack": {
       if (!t.alive) { pickTarget(); break; }
@@ -2198,7 +2199,7 @@ function renderMeta() {
   $("meta-tabs").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mt === metaTab)));
   let h = "";
   if (metaTab === "wardrobe") {
-    $("meta-title").textContent = "衣柜";
+    $("meta-title").textContent = "商城";
     for (const [kind, label] of [["bed", "床单"], ["door", "门"], ["frame", "头像框"]]) {
       h += `<div class="meta-sec"><h4>${label}</h4><div class="skins">` + COSMETICS[kind].map(k => {
         const own = meta.owned[kind].includes(k.id), on = meta.equip[kind] === k.id;
@@ -2407,7 +2408,7 @@ function refreshStrip() {
     const r = p.room, dead = p.state === "dead";
     btn.classList.toggle("dead", dead);
     btn.classList.toggle("focus", !!r && r === focusR);
-    btn.classList.toggle("target", phase === "night" && !!r && G.target === r && (G.state === "attack" || G.state === "walk" || G.state === "enter"));
+    btn.classList.toggle("target", phase === "night" && !!r && G.target === r && (G.state === "attack" || G.state === "enter"));
     const ratio = r && r.occupant === p ? clamp(r.doorHp / doorMax(r), 0, 1) : (dead ? 0 : 1);
     const bar = btn.querySelector(".hpb i"); bar.style.width = ratio * 100 + "%"; bar.style.background = ratio > .5 ? "#5CE08A" : ratio > .25 ? "#FFD23F" : "#FF4D6D";
   });
@@ -2601,6 +2602,11 @@ function drawUi(c, name) {
     case "hammer":
       c.save(); c.translate(24, 24); c.rotate(-Math.PI / 5);
       rrPath(c, -3, -6, 6, 28, 2); F("#C98B52"); rrPath(c, -13, -18, 26, 12, 3); F("#8D98AE"); c.restore(); break;
+    case "shop":
+      rrPath(c, 8, 20, 32, 22, 3); F("#FFF1D6"); rrPath(c, 20, 28, 9, 14, 2); F("#C98B52");
+      rrPath(c, 31, 26, 6, 6, 1); F("#7FE7FF");
+      for (let k = 0; k < 4; k++) { c.beginPath(); c.moveTo(6 + k * 9, 10); c.lineTo(15 + k * 9, 10); c.lineTo(15 + k * 9, 20); c.quadraticCurveTo(10.5 + k * 9, 25, 6 + k * 9, 20); c.closePath(); F(k % 2 ? "#FFFFFF" : "#FF6B6B"); }
+      break;
     case "picture":
       rrPath(c, 5, 9, 38, 30, 4); F("#FFFFFF"); rrPath(c, 9, 13, 30, 22, 2); F("#7FE7FF");
       poly([[9, 35], [19, 23], [25, 29], [31, 23], [39, 33], [39, 35]]); F("#5CE08A");
@@ -3451,7 +3457,7 @@ function render(t) {
 }
 
 /* ================= HUD ================= */
-const STATE_TXT = { hidden: "还没出动", rise: "正在苏醒…", idle: "在走廊游荡", walk: "走向 ", attack: "正在砸 ", enter: "闯进房间了！", retreat: "残血逃跑中！", heal: "在鬼井回血", dead: "被打死了" };
+const STATE_TXT = { hidden: "还没出动", rise: "正在苏醒…", idle: "在走廊游荡", walk: "在走廊里游荡", attack: "正在砸 ", enter: "闯进房间了！", retreat: "残血逃跑中！", heal: "在鬼井回血", dead: "被打死了" };
 let hudT = 0;
 function updateHud(dt) {
   hudT -= dt; if (hudT > 0) return; hudT = .1;
@@ -3472,13 +3478,13 @@ function updateHud(dt) {
   $("gxp").style.width = phase === "night" ? clamp(G.xp / ghostNeed(G.lv) * 100, 0, 100) + "%" : "0%";
   const frozen = phase === "night" && gt < G.frozenUntil;
   let st = frozen ? "被冻住了" : STATE_TXT[G.state] || "";
-  if (!frozen && (G.state === "walk" || G.state === "attack") && G.target) st += G.target === r ? "你的门！" : G.target.occupant.name;
+  if (!frozen && G.state === "attack" && G.target) st += G.target === r ? "你的门！" : G.target.occupant.name;
   if (G.tele > 0) st = "蓄力重击！";
   if (phase === "select") st = "马上出动";
   $("gstate").textContent = st;
-  $("ghostbar").classList.toggle("alarm", phase === "night" && !!r && G.target === r && (G.state === "attack" || G.state === "walk"));
+  $("ghostbar").classList.toggle("alarm", phase === "night" && !!r && G.target === r && G.state === "attack");
   const mrA = r && r.alive && inBed && phase === "night";
-  const sb = $("sos"), showSos = mrA && G.target === r && (G.state === "attack" || G.state === "walk" || G.tele > 0);
+  const sb = $("sos"), showSos = mrA && G.target === r && (G.state === "attack" || G.tele > 0);
   sb.hidden = !showSos; if (showSos) { const cd = Math.ceil(sosCd - gt); sb.disabled = cd > 0; const txt = cd > 0 ? `求救 ${cd}秒` : "求救", st = $("sos-t"); if (st.textContent !== txt) st.textContent = txt; }
   const vg = $("visit-give"), showGive = mrA && visit && visit.alive && visit.occupant && !visit.occupant.isPlayer;
   vg.hidden = !showGive; if (showGive) { vg.disabled = gt < giveCd || r.coins < 30; const txt = `送 ${fmt(nice(Math.max(30, r.coins * .15)))}`; if (vg.textContent !== txt) vg.textContent = txt; }
@@ -3502,12 +3508,9 @@ function updateHud(dt) {
 
 /* ================= title & loop ================= */
 function renderBest() {
-  const rec = store.get("tpfy-rec", null) || {};
-  $("ls-best").textContent = rec.best ? mmss(rec.best) : "--";
-  $("ls-wins").textContent = rec.wins || 0;
-  $("ls-fast").textContent = rec.fastest ? mmss(rec.fastest) : "--";
   const L = meta.life;
-  $("lobby-sub").textContent = `段位 ${RANKS[rankIdx()].n}${L.games ? ` · 睡过 ${L.games} 晚` : " · 点头像换造型"}`;
+  $("lobby-rank").textContent = RANKS[rankIdx()].n;
+  $("lobby-sub").textContent = L.games ? `段位 · ${L.games} 局` : "段位 · 点头像换装";
   $("lobby-av").src = me.url; $("lobby-av").className = frameCls(me.frame).trim();
 }
 let tipTimer = null;
