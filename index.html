@@ -797,8 +797,8 @@ const DOOR_COLORS = ["#B98450", "#94653A", "#A9927A", "#8D98AE", "#6B7894", "#5E
 const BLANKETS = ["#7D86B5", "#6E9BC4", "#E08A7A", "#D9A84E", "#9C7BE0", "#4FB6C9", "#F5A0C8", "#7BD389", "#8FD3FF", "#3B3170", "#FFD23F", "#FF6B6B"];
 // candidate build spots; every match each room opens a random number of them (some rooms are roomy, some are cramped)
 const SLOT_LOCAL = [[148, 50], [198, 50], [248, 50], [40, 186], [92, 186], [144, 186], [196, 186], [248, 186], [40, 238], [92, 238], [144, 238], [196, 238], [248, 238], [40, 134], [92, 140]];
-// some rooms are cramped (as few as 3 spots), most are roomy; cramped rooms always keep one spot by the door
-const SLOT_COUNTS = [3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 12, 13, 13, 13, 14, 14, 15];
+// every room rolls anywhere from 3 to 15 spots, evenly; cramped rooms always keep one spot by the door
+const SLOT_COUNTS = Array.from({ length: 13 }, (_, k) => k + 3);
 const DOOR_SLOTS = [2, 7, 12];
 const rooms = Array.from({ length: ROWS * 2 }, (_, i) => {
   const row = Math.floor(i / 2), left = i % 2 === 0;
