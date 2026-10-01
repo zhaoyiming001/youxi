@@ -261,7 +261,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 
 /* ---------- lobby & pre-match stage (full-height game screens) ---------- */
 .overlay.lobby,.overlay.stage{display:block;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px calc(env(safe-area-inset-bottom,0px) + 14px)}
-#title.lobby{background:radial-gradient(ellipse at 50% 35%,rgba(43,30,90,.35),rgba(10,8,24,.86) 70%)}
+#title.lobby{background:linear-gradient(rgba(10,8,24,.35),rgba(10,8,24,0) 24%,rgba(10,8,24,0) 72%,rgba(10,8,24,.5))}
 .lobby-wrap,.stage-wrap{width:min(480px,100%);min-height:100%;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:12px}
 .lobby-top{width:100%;display:flex;align-items:center;gap:8px}
 .who{display:flex;align-items:center;gap:8px;text-align:left;background:var(--panel);border:3px solid var(--edge);border-radius:var(--wob);padding:4px 12px 4px 4px;box-shadow:var(--hi),0 3px 0 var(--edge);min-width:0;cursor:pointer}
@@ -278,7 +278,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 .lobby-top .icon-btn img{width:30px;height:30px}
 .lobby-top .icon-btn .dot{position:absolute;top:-4px;right:-4px;width:13px;height:13px;border-radius:50%;background:var(--danger);border:2.5px solid var(--edge)}
 .lobby-top .mcoin{padding:3px 10px}
-.lobby-hero{flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:230px;padding-top:34px}
+.lobby-hero{flex:1;display:flex;align-items:flex-start;justify-content:center;width:100%;min-height:200px;padding-top:44px}
 .sign{position:relative;padding:20px 22px 16px;text-align:center;background:linear-gradient(#3B2E7A,#251C55);border:4px solid var(--edge);border-radius:28px 34px 26px 32px/32px 26px 34px 28px;box-shadow:var(--hi),var(--lo),0 8px 0 var(--edge),0 0 70px rgba(255,210,63,.2);animation:swing 4.5s ease-in-out infinite;transform-origin:50% -40px}
 .sign::before,.sign::after{content:"";position:absolute;top:-36px;width:5px;height:36px;border-radius:3px;background:#5A4636;border:2px solid var(--edge)}
 .sign::before{left:20%}.sign::after{right:20%}
@@ -420,6 +420,7 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
       <button class="icon-btn" type="button" data-meta="wardrobe" aria-label="商城"><img data-ui="shop" alt=""><i class="dot" id="ach-dot" hidden></i></button>
       <button class="icon-btn" id="lobby-gear" type="button" aria-label="设置"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M10.3 3h3.4l.5 2.6 1.9.8 2.2-1.5 2.4 2.4-1.5 2.2.8 1.9 2.6.5v3.4l-2.6.5-.8 1.9 1.5 2.2-2.4 2.4-2.2-1.5-1.9.8-.5 2.6h-3.4l-.5-2.6-1.9-.8-2.2 1.5-2.4-2.4 1.5-2.2-.8-1.9L1.4 13.7v-3.4l2.6-.5.8-1.9-1.5-2.2 2.4-2.4 2.2 1.5 1.9-.8z"/><circle cx="12" cy="12" r="3.2"/></svg></button>
     </div>
+    <p class="tip"><b>小贴士</b><span id="lobby-tip"></span></p>
     <div class="lobby-hero">
       <div class="sign">
         <img class="peek" data-ui="ghost" alt="">
@@ -427,7 +428,6 @@ img.ui-i{width:1.3em;height:1.3em;display:inline-block;vertical-align:-.3em;flex
         <p class="tag">躺下赚钱 · 造塔守门 · 把鬼打死</p>
       </div>
     </div>
-    <p class="tip"><b>小贴士</b><span id="lobby-tip"></span></p>
     <div class="lobby-cta">
       <button class="btn big start" id="start" type="button">开始匹配</button>
       <button class="btn alt" id="install" type="button" hidden><img class="ui-i" data-ui="phone" alt=""> 添加到手机桌面</button>
@@ -3340,7 +3340,86 @@ function jagged(x1, y1, x2, y2, segs, amp) {
 }
 
 let lastDt = .016, slowmo = 0, celebrate = 0;
+// lobby backdrop: night sky, a cartoon dorm with lit windows and sleepers, the ghost drifting around it
+const LOBBY_STARS = Array.from({ length: 70 }, (_, i) => ({ x: (i * 0.6180339 * 977) % 1, y: ((i * 0.4142 * 613) % 1) * .55, r: .8 + (i % 4) * .5, p: i * 1.7 }));
+const LOBBY_FLIES = Array.from({ length: 14 }, (_, i) => ({ x: (i * 0.37 * 211) % 1, y: .7 + ((i * 0.53 * 97) % 1) * .25, p: i * 2.3 }));
+function lobbyGhost(c, x, y, R, t, face) {
+  c.save(); c.translate(x, y); c.scale(face, 1); c.lineJoin = "round"; c.lineWidth = 3; c.strokeStyle = EDGE;
+  const g = c.createRadialGradient(0, 0, R * .3, 0, 0, R * 2.2); g.addColorStop(0, "rgba(255,60,100,.28)"); g.addColorStop(1, "rgba(255,60,100,0)"); c.fillStyle = g; c.beginPath(); c.arc(0, 0, R * 2.2, 0, TAU); c.fill();
+  c.beginPath(); c.arc(0, -R * .15, R, Math.PI, 0); c.lineTo(R, R * .75);
+  for (let k = 0; k < 4; k++) { const xa = R - k * R / 2, xb = xa - R / 2; c.quadraticCurveTo((xa + xb) / 2, R * .45 + Math.sin(t * 7 + k) * R * .07, xb, R * .75 + (k % 2 ? 0 : R * .08)); }
+  c.closePath(); c.fillStyle = "#F1EEFF"; c.fill(); c.stroke();
+  for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(sd * R * 1.02, R * .15 + Math.sin(t * 4 + sd) * 3, R * .22, R * .14, sd * .6, 0, TAU); c.fill(); c.stroke(); }
+  for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(sd * R * .36, -R * .28, R * .2, R * .27, sd * -.2, 0, TAU); c.fillStyle = EDGE; c.fill(); c.beginPath(); c.arc(sd * R * .34 + R * .05, -R * .26, R * .08, 0, TAU); c.fillStyle = "#FF3355"; c.fill(); }
+  c.beginPath(); c.moveTo(-R * .25, R * .15); for (let k = 1; k <= 4; k++) c.lineTo(-R * .25 + k * R * .125, R * .15 + (k % 2 ? R * .08 : 0)); c.stroke();
+  c.restore();
+}
+function drawLobby(t) {
+  const c = ctx, Wv = vw, Hv = vh;
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const sky = c.createLinearGradient(0, 0, 0, Hv); sky.addColorStop(0, "#130E38"); sky.addColorStop(.55, "#33256E"); sky.addColorStop(1, "#5B3F8E");
+  c.fillStyle = sky; c.fillRect(0, 0, Wv, Hv);
+  for (const s2 of LOBBY_STARS) { c.globalAlpha = reduce ? .7 : .35 + .65 * Math.abs(Math.sin(t * 1.3 + s2.p)); c.fillStyle = "#FFF6D8"; c.beginPath(); c.arc(s2.x * Wv, s2.y * Hv, s2.r, 0, TAU); c.fill(); }
+  c.globalAlpha = 1;
+  // moon
+  const mr = Math.min(Wv, Hv) * .085, mx = Wv * .84, my = Hv * .2;
+  const mg = c.createRadialGradient(mx, my, mr * .6, mx, my, mr * 3); mg.addColorStop(0, "rgba(255,240,180,.35)"); mg.addColorStop(1, "rgba(255,240,180,0)"); c.fillStyle = mg; c.beginPath(); c.arc(mx, my, mr * 3, 0, TAU); c.fill();
+  c.beginPath(); c.arc(mx, my, mr, 0, TAU); c.fillStyle = "#FFE9A8"; c.fill(); c.lineWidth = 3; c.strokeStyle = EDGE; c.stroke();
+  c.fillStyle = "rgba(220,190,120,.6)"; for (const [dx, dy, rr] of [[-.3, -.2, .18], [.25, .1, .14], [-.05, .35, .1]]) { c.beginPath(); c.arc(mx + dx * mr, my + dy * mr, rr * mr, 0, TAU); c.fill(); }
+  // drifting clouds
+  for (let k = 0; k < 3; k++) {
+    const cw = 90 + k * 30, cx = ((t * (6 + k * 3) + k * 260) % (Wv + cw * 2)) - cw, cy = Hv * (.14 + k * .09);
+    c.globalAlpha = .18 + k * .05; c.fillStyle = "#D8D0FF";
+    for (const [dx, dy, rr] of [[0, 0, .28], [.25, -.08, .22], [-.25, -.02, .2], [.45, .04, .16]]) { c.beginPath(); c.arc(cx + dx * cw, cy + dy * cw, rr * cw, 0, TAU); c.fill(); }
+  }
+  c.globalAlpha = 1;
+  // hills
+  const base = Hv * .86;
+  c.fillStyle = "#2B1F5C"; c.beginPath(); c.moveTo(0, base - 30); c.quadraticCurveTo(Wv * .25, base - 90, Wv * .5, base - 50); c.quadraticCurveTo(Wv * .78, base - 10, Wv, base - 70); c.lineTo(Wv, Hv); c.lineTo(0, Hv); c.closePath(); c.fill();
+  // the dorm building
+  const bw = Math.min(Wv * .72, 330), bh = Math.min(Hv * .4, 360), bx = Wv / 2 - bw / 2, by = base - bh;
+  c.lineJoin = "round"; c.strokeStyle = EDGE; c.lineWidth = 4;
+  rrPath(c, bx - 10, by - 18, bw + 20, 26, 6); c.fillStyle = "#5A2440"; c.fill(); c.stroke();
+  rrPath(c, bx, by, bw, bh, 10); c.fillStyle = "#3B2E7A"; c.fill(); c.stroke();
+  c.fillStyle = "rgba(255,255,255,.05)"; for (let yy = by + 14; yy < base - 8; yy += 18) c.fillRect(bx + 6, yy, bw - 12, 3);
+  const rows = 3, cols = 3, ww = bw * .2, wh = bh * .17, gapX = (bw - cols * ww) / (cols + 1);
+  let n = 0;
+  for (let rI = 0; rI < rows; rI++) for (let cI = 0; cI < cols; cI++, n++) {
+    const wx = bx + gapX + cI * (ww + gapX), wy = by + bh * .1 + rI * (wh + bh * .1);
+    if (rI === rows - 1 && cI === 1) continue;   // the door goes here
+    const lit = (n * 7 + 3) % 5 !== 0, flick = n === 4 && Math.sin(t * 9) > .9;
+    rrPath(c, wx, wy, ww, wh, 6); c.fillStyle = lit && !flick ? "#FFD27A" : "#1B1640"; c.fill(); c.lineWidth = 3; c.stroke();
+    if (lit) {
+      const g2 = c.createRadialGradient(wx + ww / 2, wy + wh / 2, 2, wx + ww / 2, wy + wh / 2, ww); g2.addColorStop(0, "rgba(255,210,120,.25)"); g2.addColorStop(1, "rgba(255,210,120,0)"); c.fillStyle = g2; c.fillRect(wx - ww * .5, wy - wh * .5, ww * 2, wh * 2);
+      const p = players[(n % Math.max(1, players.length))];
+      if (p && p.img) { c.save(); c.beginPath(); rrPath(c, wx, wy, ww, wh, 6); c.clip(); c.drawImage(p.img, wx + ww / 2 - wh * .42, wy + wh * .18, wh * .84, wh * .84); c.restore(); rrPath(c, wx, wy, ww, wh, 6); c.lineWidth = 3; c.stroke(); }
+      if (!reduce) { const ph = (t * .5 + n * .3) % 1; c.globalAlpha = 1 - ph; label(c, "z", wx + ww * .8 + ph * 8, wy - ph * 18, 10 + ph * 6, "#FFFFFF", FONT_NUM, 800); c.globalAlpha = 1; }
+    }
+    c.fillStyle = "#94653A"; c.fillRect(wx - 4, wy + wh, ww + 8, 5);
+  }
+  // door
+  const dw = ww * .9, dh = wh * 1.35, dx = Wv / 2 - dw / 2, dy = base - dh;
+  c.beginPath(); c.moveTo(dx, base); c.lineTo(dx, dy + dw / 2); c.arc(dx + dw / 2, dy + dw / 2, dw / 2, Math.PI, 0); c.lineTo(dx + dw, base); c.closePath(); c.fillStyle = "#B98450"; c.fill(); c.lineWidth = 3.5; c.stroke();
+  c.beginPath(); c.arc(dx + dw * .78, dy + dh * .6, 3, 0, TAU); c.fillStyle = "#FFD23F"; c.fill();
+  // lamp post and a tree
+  const lx = bx - 26, ly = base - 6;
+  c.lineWidth = 4; c.strokeStyle = EDGE; c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx, ly - bh * .45); c.stroke();
+  const lg = c.createRadialGradient(lx, ly - bh * .45, 4, lx, ly - bh * .45, 70); lg.addColorStop(0, "rgba(255,226,140,.55)"); lg.addColorStop(1, "rgba(255,226,140,0)"); c.fillStyle = lg; c.beginPath(); c.arc(lx, ly - bh * .45, 70, 0, TAU); c.fill();
+  c.beginPath(); c.arc(lx, ly - bh * .45, 9, 0, TAU); c.fillStyle = "#FFE9A8"; c.fill(); c.lineWidth = 3; c.stroke();
+  const tx = bx + bw + 30;
+  c.fillStyle = "#5A3E2A"; c.fillRect(tx - 5, base - 50, 10, 46); c.strokeRect(tx - 5, base - 50, 10, 46);
+  for (const [ox, oy, rr] of [[0, -70, 30], [-20, -55, 22], [20, -52, 22]]) { c.beginPath(); c.arc(tx + ox, base + oy, rr, 0, TAU); c.fillStyle = "#2E7A4A"; c.fill(); c.lineWidth = 3; c.stroke(); }
+  // front grass
+  c.fillStyle = "#1E1648"; c.beginPath(); c.moveTo(0, base); c.quadraticCurveTo(Wv / 2, base - 18, Wv, base); c.lineTo(Wv, Hv); c.lineTo(0, Hv); c.closePath(); c.fill();
+  // fireflies
+  for (const f of LOBBY_FLIES) { const fx2 = (f.x * Wv + Math.sin(t * .7 + f.p) * 20), fy = f.y * Hv + Math.cos(t * .9 + f.p) * 10; c.globalAlpha = reduce ? .6 : .3 + .7 * Math.abs(Math.sin(t * 2 + f.p)); c.fillStyle = "#E8FF8A"; c.beginPath(); c.arc(fx2, fy, 2.4, 0, TAU); c.fill(); }
+  c.globalAlpha = 1;
+  // the ghost drifts around the dorm
+  const gx = Wv / 2 + Math.sin(t * .45) * bw * .62, gy = by + bh * .45 + Math.sin(t * .9) * bh * .22, face = Math.cos(t * .45) > 0 ? 1 : -1;
+  lobbyGhost(c, gx, gy, Math.min(34, Wv * .08), t, face);
+}
 function render(t) {
+  if (phase === "title" || phase === "match") { drawLobby(t); return; }
   const tgt = camTarget(), k = Math.min(1, lastDt * 7);
   if (!(drag && drag.moved)) { cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
   cam.s += (tgt.s - cam.s) * k; cam.cy += (tgt.cy - cam.cy) * k;
