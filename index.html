@@ -715,8 +715,8 @@ const TALENTS = [
 const TAL_CAT = { eco: ["经济", "#FFD23F"], atk: ["输出", "#FF7A7A"], def: ["防守", "#6CB8FF"], aux: ["特殊", "#C9A0FF"] };
 const tl = (r, k) => (r && r.tal && r.tal.id === k ? r.tal.v : 0);
 const SELECT_LEN = 20, START_COINS = 40, REPAIR_CD = 12, STUN_IMMUNE = 1.5, BERSERK_AT = 720;
-// a ghost may only run home to heal a few times, each time healing less; after that it fights to the death
-const MAX_RETREATS = 3, RETREAT_CAP = [.85, .6, .4];
+// each ghost plays like a person of some skill: good ones bail out in time, sloppy ones get greedy and misjudge
+const ghostSkill = () => rand(.3, .95);
 // each match draws a ghost breed: some nights are a quick win, some are a long fight
 // hidden per-match temperament (never shown to players, every ghost looks the same and is called 猛鬼).
 // Most nights lean tough; how strong it really gets is decided by how many door hits the dorm lets it land.
@@ -1126,17 +1126,17 @@ function newGame() {
   const type = (SPEED > 1 && window.__forceGhost != null && GHOSTS[+window.__forceGhost]) || weighted(GHOSTS);
   G = { type, x: ALTAR.x, y: ALTAR.y, lv: 1, xp: 0, hp: ghostMax(1, type), max: ghostMax(1, type), state: "hidden", target: null, path: [], atk: 1, rise: 0, lunge: 0, hurt: 0,
     slow: 0, vuln: 0, attackT: 0, wait: 0, face: 1, frozenUntil: 0, stunUntil: 0, stunImmune: 0, smashT: 14, tele: 0, disruptT: 18, enrageUntil: 0, enraged: false, berserk: false, variant: (SPEED > 1 && window.__forceVariant != null && VARIANTS[+window.__forceVariant]) || pick(VARIANTS), invisUntil: 0, skillT: 16, helperT: 22, tal: (SPEED > 1 && window.__forceGTal != null && GHOST_TALENTS[+window.__forceGTal]) || pick(GHOST_TALENTS), poisonDps: 0, poisonUntil: 0, poisonMine: false, poisonAcc: 0 };
-  G.diff = RANKS[diffIdx()].mul * luck.g; G.rank = RANKS[diffIdx()].n; G.hpMul = 1; G.dmgMul = .9;
+  G.skill = ghostSkill(); G.diff = RANKS[diffIdx()].mul * luck.g; G.rank = RANKS[diffIdx()].n; G.hpMul = 1; G.dmgMul = .9;
   G.max = G.hp = ghostMax(1); helpers = []; G0 = G;
   // the second ghost: a hopping jiangshi that comes in through the 3F corridor at the top
   const jt = weighted(GHOSTS), J = Object.assign({}, G, { type: jt, jiang: true, x: CX, y: -40, home: { x: CX, y: 40 }, state: "hidden", spawnAt: rand(25, 40), path: [], target: null,
-    variant: VARIANTS[0], tal: pick(GHOST_TALENTS), lv: 1, xp: 0, kills: 0, retreats: 0, hpMul: .9, dmgMul: .82, skillT: 999, helperT: 30,
+    variant: VARIANTS[0], tal: pick(GHOST_TALENTS), lv: 1, xp: 0, kills: 0, retreats: 0, skill: ghostSkill(), thr: 0, greedy: false, greedUntil: 0, hpMul: .9, dmgMul: .82, skillT: 999, helperT: 30,
     jskills: shuffle(JSKILLS).slice(0, 4).map(k => ({ id: k.id, cd: rand(6, 14) })) });
   J.max = J.hp = withGhost(J, () => ghostMax(1));
   ghostsAll = [G, J];
   gift = null; giftT = rand(45, 90);
   const special = rollPool(); matchItems = [pick(ITEMS)];
-  minions = []; sosCd = 0; giveCd = 0; helpQ = [];
+  minions = []; sosCd = 0; giveCd = 0; helpQ = []; resetWaves();
   stats = { dmg: 0, gifts: 0, helps: 0, pops: 0, builds: 0, limited: 0, maxCoins: 0 }; gt = 0; selT = SELECT_LEN; nightT = 0; deaths = 0; bullets = []; parts = []; floats = []; rings = []; fx = [];
   camMode = "overview"; visit = null; shake = 0; flash = 0; ended = false; paused = false; celebrate = 0; slowmo = 0;
   closeSheet(); $("settings").hidden = true; $("feed").innerHTML = ""; $("top").hidden = false;
@@ -1426,7 +1426,7 @@ function gainXp(n) {
     G.xp -= ghostNeed(G.lv);
     const ratio = G.hp / G.max; G.lv++; G.max = ghostMax(G.lv); G.hp = Math.max(1, G.max * ratio);
     sfx("levelup"); floatText(G.x, G.y - ghostR(G.lv) - 30, `升到 Lv.${G.lv}`, "#FF9A3C", 16);
-    feed(`${gName()}砸门涨经验，升到 Lv.${G.lv}`, "bad");
+    feed(`${gName()}又变强了，升到 Lv.${G.lv}`, "bad");
     if (G.lv === 3) { feed(`${gName()}学会了「重击」：蓄力后打出 3 倍伤害`, "bad"); speak(`${gName()}学会了重击`); }
     if (G.lv === 5) { feed(`${gName()}学会了「干扰」：让建筑停摆几秒`, "bad"); speak(`${gName()}学会了干扰`); }
     if (G.lv === 8) { feed(`${gName()}学会了「狂暴」：血少时砸门更快`, "bad"); speak(`${gName()}学会了狂暴`); }
@@ -1555,10 +1555,15 @@ function updateGhost(dt) {
   if (G.jiang && (G.state === "walk" || G.state === "attack") && G.tele <= 0) for (const sk of G.jskills) { sk.cd -= dt * (1 - (G.skillSlow || 0)); if (sk.cd <= 0) { sk.cd = JSKILLS.find(x => x.id === sk.id).cd + rand(0, 4); if (useJSkill(sk.id)) break; sk.cd = 2; } }
   if (gtal("regen") && G.state !== "heal" && G.state !== "rise") G.hp = Math.min(G.max, G.hp + G.max * .004 * dt);
   if (!G.berserk && nightT > berserkAt()) { G.berserk = true; banner(`${gName()}暴走了！不再逃跑`, "danger"); sfx("roar"); speak(`${gName()}暴走了，不会再逃跑`, true); feed("暴走：不会再逃回鬼井，伤害每分钟变高", "bad"); }
-  if (!G.berserk && !G.desperate && (G.state === "walk" || G.state === "attack") && G.hp < G.max * .25 && (G.retreats || 0) >= MAX_RETREATS) {
-    G.desperate = true; banner(`${gName()}逃不动了！`, "good"); feed(`${gName()}已经逃了 ${MAX_RETREATS} 次，再也回不去了，打死它！`, "good"); speak(`${gName()}逃不动了，打死它`, true);
+  // passive growth: the longer the night runs, the faster the ghost levels up on its own
+  if (G.state !== "heal") gainXp(dt * (.12 + nightT / 1000) * (G.jiang ? .85 : 1));
+  const sk = G.skill || .6, thr = G.thr || (G.thr = .12 + .2 * sk + rand(-.04, .04));
+  if (!G.berserk && (G.state === "walk" || G.state === "attack") && G.hp < G.max * thr && gt >= (G.greedUntil || 0)) {
+    // a sloppy ghost sometimes misreads the fight and keeps swinging a few more seconds
+    if (!G.greedy && Math.random() < clamp((1 - sk) * .55 + .05 * (G.retreats || 0), .04, .6)) { G.greedy = true; G.greedUntil = gt + rand(2.5, 7); }
   }
-  if (!G.berserk && !G.desperate && (G.state === "walk" || G.state === "attack") && G.hp < G.max * .25) {
+  if (!G.berserk && (G.state === "walk" || G.state === "attack") && G.hp < G.max * thr && gt >= (G.greedUntil || 0)) {
+    G.greedy = false; G.thr = 0;
     if (isMine(t)) {
       const bonus = nice(25 * Math.pow(1.5, G.lv - 1) * (1 + tl(t, "bounty")));
       t.coins += bonus; banner(`击退${gName()}！+${fmt(bonus)} 金币`, "good"); sfx("repel"); speak("击退成功，快追着打");
@@ -1567,7 +1572,7 @@ function updateGhost(dt) {
     if (G.variant && G.variant.id === "split" && G.lv >= 2) { spawnHelper("imp"); spawnHelper("imp"); }
     G.retreats = (G.retreats || 0) + 1;
     G.state = "retreat"; route(G, { kind: "altar" }); G.target = null; G.tele = 0; G.enraged = false;
-    feed(`${gName()}残血了，正逃回${G.jiang ? "楼顶" : "鬼井"}！快追着打${G.retreats >= MAX_RETREATS ? "（这是它最后一次逃跑）" : `（还能逃 ${MAX_RETREATS - G.retreats} 次）`}`, "good");
+    feed(`${gName()}残血了，正逃回${G.jiang ? "楼顶" : "鬼井"}！快追着打`, "good");
     return;
   }
   if (G.lv >= 2 && (G.state === "walk" || G.state === "attack") && G.tele <= 0) { G.skillT -= dt * (1 - (G.skillSlow || 0)); if (G.skillT <= 0) variantSkill(); }
@@ -1617,7 +1622,7 @@ function updateGhost(dt) {
     case "enter": if (moveAlong(G, dt, sp * .8)) killRoom(t); break;
     case "retreat": if (moveAlong(G, dt, sp * 1.25)) G.state = "heal"; break;
     case "heal":
-      { const cap = G.sealed ? G.hp : G.max * RETREAT_CAP[clamp(G.retreats || 1, 1, MAX_RETREATS) - 1];   // every escape heals less; a seal blocks it
+      { const cap = G.sealed ? G.hp : G.max * Math.max(.55, 1 - .09 * (G.retreats || 1));   // every escape heals a bit less; a seal blocks it
         G.hp = Math.min(cap, G.hp + G.max * .12 * dt);
         if (Math.random() < dt * 8) parts.push({ x: G.x + rand(-30, 30), y: G.y + 20, vx: 0, vy: -60, life: .8, t: 0, color: "#FF4D6D", size: 3 });
         if (G.hp >= cap - 1) { if (G.sealed) { G.sealed = false; feed(`封印符生效：${gName()}回不了血`, "good"); } pickTarget(); } }
@@ -1749,6 +1754,122 @@ function popMinion(i) {
   const c = nice(Math.max(10, BED.inc(me.room.bedLv) * 5)); me.room.coins += c; stats.pops++;
   burst(m.x, m.y, "#E9DAFF", 18, 170); sfx("pop"); vibrate(15); track("pop");
   floatText(m.x, m.y - 16, "+" + fmt(c), "#FFD23F", 14, "coin");
+}
+
+/* ================= ghost waves: swarms of little ghosts pour out of the well, more every time ================= */
+const MOB_SKILLS = [
+  { id: "fast", n: "快腿", col: "#FFE26A", hp: .7, sp: 1.8 }, { id: "tank", n: "铁皮", col: "#A9B4CC", hp: 2.4, sp: .7 },
+  { id: "bomb", n: "自爆", col: "#FF9A3C", hp: .8, sp: 1.15 }, { id: "split", n: "分裂", col: "#FF8FD0", hp: 1 },
+  { id: "regen", n: "回血", col: "#8CFF7A", hp: 1 }, { id: "shade", n: "隐身", col: "#B9A6FF", hp: .9 },
+  { id: "jam", n: "干扰", col: "#C27BFF", hp: 1 }, { id: "thief", n: "偷钱", col: "#FFD23F", hp: .9, sp: 1.2 },
+  { id: "frost", n: "冰冻", col: "#9FE8FF", hp: 1 }, { id: "healer", n: "治疗", col: "#F4F0FF", hp: 1.1 },
+  { id: "rage", n: "狂暴", col: "#FF5A6E", hp: 1 }, { id: "shield", n: "护盾", col: "#7FB8FF", hp: 1 },
+];
+const WAVE_FIRST = 55, WAVE_GAP = 40;
+let mobs = [], wave = 0, waveT = WAVE_FIRST, waveQ = [], mobShots = [], mobSfxT = 0;
+const mobsAt = r => mobs.some(m => m.room === r && m.arrived);
+const mobTargetable = m => !(m.sk === "shade" && !m.arrived);
+const liveRooms = () => rooms.filter(r => r.alive && r.occupant);
+function resetWaves() { mobs = []; wave = 0; waveT = WAVE_FIRST; waveQ = []; mobShots = []; }
+function startWave() {
+  wave++;
+  const n = Math.min(32, 3 + wave * 2), skills = shuffle(MOB_SKILLS).slice(0, wave < 3 ? 2 : wave < 6 ? 3 : 4);
+  const diff = (G0 && G0.diff) || 1, hp = 70 * Math.pow(1.3, wave - 1) * diff, dmg = 5 * Math.pow(1.22, wave - 1) * diff;
+  for (let k = 0; k < n; k++) waveQ.push({ at: gt + k * .2, sk: Math.random() < .25 ? null : pick(skills), hp, dmg });
+  banner(`第 ${wave} 波小鬼来了！一共 ${n} 只`, "danger"); sfx("summon"); speak(`第${wave}波小鬼来了`, true);
+  feed(`第 ${wave} 波小鬼从鬼井涌出来（${n} 只），这波会：${skills.map(q => q.n).join("、")}`, "bad");
+}
+function spawnMob(q, x, y, room) {
+  const live = liveRooms(); if (!live.length) return;
+  const S = q.sk, max = q.hp * (S ? S.hp || 1 : 1);
+  mobs.push({ x: x != null ? x : ALTAR.x + rand(-40, 40), y: y != null ? y : ALTAR.y - rand(0, 20), room: room || pick(live), sk: S ? S.id : null, col: S ? S.col : "#D9CCFF",
+    hp: max, max, dmg: q.dmg, sp: rand(70, 95) * (S && S.sp || 1), atk: rand(.3, 1), t: rand(0, 6), hurt: 0, lunge: 0, shield: S && S.id === "shield" ? max * .6 : 0,
+    ox: rand(-16, 16), oy: rand(-24, 24), arrived: false, small: !!q.small, killer: null });
+}
+function hurtMob(m, d, by) { if (m.shield > 0) { const a = Math.min(m.shield, d); m.shield -= a; d -= a; } m.hp -= d; m.hurt = .08; if (by) m.killer = by; }
+function mobHitDoor(r, dmg) {
+  if (gt < r.shieldUntil) return;
+  if (r.barrier > 0) { const a = Math.min(r.barrier, dmg); r.barrier -= a; dmg -= a; }
+  if (dmg <= 0) return;
+  r.doorHp = Math.max(1, r.doorHp - dmg); r.doorShake = .2; r.mobAcc = (r.mobAcc || 0) + dmg;
+  if (gt > (r.mobTxtT || 0)) { r.mobTxtT = gt + .6; floatText(r.wallX + (r.left ? 30 : -30), r.doorY + rand(-10, 10), "-" + fmt(r.mobAcc), "#E0A0FF", 12); r.mobAcc = 0; }
+  if (isMine(r) && gt > mobSfxT) { mobSfxT = gt + .3; sfx("hit"); shake = Math.min(6, shake + 2); }
+}
+function killMob(i) {
+  const m = mobs[i]; mobs.splice(i, 1);
+  burst(m.x, m.y - 6, m.col, 10, 130);
+  const r = m.killer && m.killer.alive ? m.killer : m.room;
+  if (r && r.alive) { const c = nice(Math.max(4, BED.inc(r.bedLv) * (m.small ? .6 : 1.5))); r.coins += c; if (isMine(r)) { floatText(m.x, m.y - 18, "+" + fmt(c), "#FFD23F", 12, "coin"); if (gt > mobSfxT) { mobSfxT = gt + .12; sfx("pop"); } } }
+  if (m.sk === "split" && !m.small) for (let k = 0; k < 2; k++) spawnMob({ hp: m.max * .35, dmg: m.dmg * .5, sk: null, small: true }, m.x + rand(-10, 10), m.y + rand(-10, 10), m.room);
+}
+function tapMob(i) {
+  const m = mobs[i]; hurtMob(m, m.max * .34, me.room);
+  floatText(m.x, m.y - 22, "-" + fmt(m.max * .34), "#FFE26A", 13); sfx("pop"); vibrate(10);
+}
+function updateMobs(dt) {
+  for (let i = mobShots.length - 1; i >= 0; i--) if ((mobShots[i].life -= dt) <= 0) mobShots.splice(i, 1);
+  if (phase !== "night") return;
+  waveT -= dt;
+  if (waveT <= 6 && waveT + dt > 6) feed(`第 ${wave + 1} 波小鬼马上要从鬼井出来了`, "");
+  if (waveT <= 0) { waveT = WAVE_GAP; startWave(); }
+  while (waveQ.length && waveQ[0].at <= gt) spawnMob(waveQ.shift());
+  if (!mobs.length) return;
+  // every weapon that isn't busy with a ghost shoots the nearest little ghost in range
+  for (const o of rooms) {
+    if (!o.alive || !o.occupant) continue;
+    for (const sl of o.slots) {
+      const b = sl.b; if (!b || b.offUntil > gt || !ATTACKERS.includes(b.type) || b.type === "thunder") continue;
+      const rg = rangeOf(o, b);
+      if (ghostsAll.some(g => withGhost(g, ghostTargetable) && Math.hypot(g.x - sl.x, g.y - 10 - sl.y) <= rg)) continue;
+      let best = null, bd = rg;
+      for (const m of mobs) { if (!mobTargetable(m)) continue; const d = Math.hypot(m.x - sl.x, m.y - sl.y); if (d <= bd) { bd = d; best = m; } }
+      if (!best) continue;
+      hurtMob(best, BUILD[b.type].val(b.lv) * .6 * (tl(o, "radar") ? 1.5 : 1) * (gt < o.rageUntil ? 1.5 : 1) * dt, o);
+      b.mobShotT = (b.mobShotT || 0) - dt;
+      if (b.mobShotT <= 0) { b.mobShotT = rand(.35, .55); b.aim = Math.atan2(best.y - sl.y, best.x - sl.x); mobShots.push({ x1: sl.x, y1: sl.y, x2: best.x, y2: best.y - 6, life: .12 }); }
+    }
+  }
+  for (let i = mobs.length - 1; i >= 0; i--) {
+    const m = mobs[i]; m.t += dt; m.hurt = Math.max(0, m.hurt - dt); m.lunge = Math.max(0, m.lunge - dt * 5);
+    if (m.hp <= 0) { killMob(i); continue; }
+    let r = m.room;
+    if (!r.alive) { const live = liveRooms(); if (!live.length) { mobs.splice(i, 1); continue; } r = m.room = pick(live); m.arrived = false; }
+    if (m.sk === "regen") m.hp = Math.min(m.max, m.hp + m.max * .04 * dt);
+    if (m.sk === "healer") for (const o of mobs) if (o !== m && Math.hypot(o.x - m.x, o.y - m.y) < 70) o.hp = Math.min(o.max, o.hp + o.max * .03 * dt);
+    const tx = r.doorOuter.x + (r.left ? 1 : -1) * (26 + Math.abs(m.ox)), ty = r.doorOuter.y + m.oy, dx = tx - m.x, dy = ty - m.y, L = Math.hypot(dx, dy);
+    if (L > 4) { const st = Math.min(L, m.sp * dt); m.x += dx / L * st; m.y += dy / L * st; continue; }
+    if (!m.arrived) {
+      m.arrived = true;
+      if (isMine(r) && r.mobWave !== wave) { r.mobWave = wave; banner("小鬼在砸你的门！", "danger"); }
+      if (m.sk === "bomb") { mobHitDoor(r, m.dmg * 6); burst(m.x, m.y, "#FFB15A", 24, 220); if (isMine(r)) { sfx("cannon"); shake = Math.max(shake, 8); } mobs.splice(i, 1); continue; }
+      if (m.sk === "jam" || m.sk === "frost") { const sl = pick(r.slots.filter(q => q.b && q.b.offUntil <= gt)); if (sl) { sl.b.offUntil = gt + (m.sk === "jam" ? 5 : 4); burst(sl.x, sl.y, m.col, 8, 90); } }
+    }
+    m.atk -= dt * (m.sk === "rage" && m.hp < m.max * .5 ? 2 : 1);
+    if (m.atk <= 0) {
+      m.atk = 1.1; m.lunge = 1;
+      if (m.sk === "thief" && r.coins > 0) { const c = Math.min(r.coins, nice(m.dmg * 2)); r.coins -= c; if (isMine(r) && gt > (r.thiefTxtT || 0)) { r.thiefTxtT = gt + .8; floatText(r.headPt.x, r.headPt.y - 24, "被偷 -" + fmt(c), "#FFD23F", 12); } }
+      mobHitDoor(r, m.dmg);
+    }
+  }
+}
+function drawMob(m, t) {
+  const R = m.small ? 7 : m.sk === "tank" ? 12.5 : 10, x = m.x + (m.room.left ? -1 : 1) * m.lunge * 5, y = m.y - 6 + Math.sin(t * 9 + m.t) * 2.5;
+  ctx.save(); ctx.translate(x, y); ctx.lineJoin = "round"; ctx.lineWidth = 2; ctx.strokeStyle = EDGE;
+  if (m.sk === "shade" && !m.arrived) ctx.globalAlpha = .35;
+  if (m.sk === "fast" && !m.arrived) { ctx.strokeStyle = "rgba(255,255,255,.5)"; for (const k of [-3, 3]) { ctx.beginPath(); ctx.moveTo(-R * .6, k + R * .9); ctx.lineTo(-R * .6, k + R * 1.8); ctx.stroke(); } ctx.strokeStyle = EDGE; }
+  ctx.beginPath(); ctx.arc(0, -1, R, Math.PI, 0); ctx.lineTo(R, R * .7);
+  for (let k = 0; k < 3; k++) ctx.lineTo(R - (k + .5) * 2 * R / 3, R * (k % 2 ? .7 : .3)); ctx.lineTo(-R, R * .7); ctx.closePath();
+  ctx.fillStyle = m.hurt > 0 ? "#FFFFFF" : m.col; ctx.fill(); ctx.stroke();
+  ctx.fillStyle = EDGE; for (const sd of [-1, 1]) { ctx.beginPath(); ctx.arc(sd * R * .35, -R * .2, R * .16, 0, TAU); ctx.fill(); }
+  if (m.sk === "rage") { ctx.beginPath(); ctx.moveTo(-R * .6, -R * .62); ctx.lineTo(-R * .15, -R * .4); ctx.moveTo(R * .6, -R * .62); ctx.lineTo(R * .15, -R * .4); ctx.stroke(); }
+  if (m.sk === "tank") { ctx.beginPath(); ctx.arc(0, -R * .55, R * .75, Math.PI, 0); ctx.closePath(); ctx.fillStyle = "#6E7BA6"; ctx.fill(); ctx.stroke(); }
+  if (m.sk === "bomb") { ctx.beginPath(); ctx.arc(0, -R - 3, 3, 0, TAU); ctx.fillStyle = Math.sin(t * 14 + m.t) > 0 ? "#FF3355" : "#2A1A1A"; ctx.fill(); ctx.stroke(); }
+  if (m.sk === "healer") { ctx.fillStyle = "#5CE08A"; ctx.fillRect(-1.6, R * .05, 3.2, R * .55); ctx.fillRect(-R * .27, R * .25, R * .55, 3.2); }
+  if (m.sk === "thief") { ctx.beginPath(); ctx.arc(R * .85, R * .2, 3.5, 0, TAU); ctx.fillStyle = "#FFD23F"; ctx.fill(); ctx.stroke(); }
+  if (m.sk === "frost") { ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.6; for (let k = 0; k < 3; k++) { const a = k * Math.PI / 3; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 3.5, R * .35 + Math.sin(a) * 3.5); ctx.lineTo(-Math.cos(a) * 3.5, R * .35 - Math.sin(a) * 3.5); ctx.stroke(); } }
+  if (m.shield > 0) { ctx.globalAlpha = .55; ctx.beginPath(); ctx.arc(0, 0, R + 4, 0, TAU); ctx.strokeStyle = "#8FD3FF"; ctx.lineWidth = 2.5; ctx.stroke(); }
+  ctx.restore();
+  if (m.hp < m.max) { rrPath(ctx, x - 10, y - R - 8, 20, 4, 2); ctx.fillStyle = "#100D26"; ctx.fill(); rrPath(ctx, x - 10, y - R - 8, 20 * clamp(m.hp / m.max, 0, 1), 4, 2); ctx.fillStyle = "#FF8FB8"; ctx.fill(); }
 }
 
 /* ================= gift boxes (random items) ================= */
@@ -1926,7 +2047,7 @@ function updateBot(p, dt) {
   p.think -= dt; if (p.think > 0) return;
   p.think = rand(1.1, 2.2) * (p.thinkMul || 1);
   const r = p.room, plan = p.plan;
-  if (!p.noRepair && ghostAt(r) && r.doorHp < doorMax(r) * .35) { if (repairDoor(r) || doorUp(r)) return; }
+  if (!p.noRepair && (ghostAt(r) || mobsAt(r)) && r.doorHp < doorMax(r) * .35) { if (repairDoor(r) || doorUp(r)) return; }
   if (Math.random() < p.lazy) return;
   // rich roommates also call down 天罚
   if (gt >= (G.botSmiteT || 0) && itemsLive() && Math.random() < .25) {
@@ -2149,7 +2270,7 @@ function update(dt) {
         if (G.poisonAcc > G.poisonDps) { floatText(G.x + rand(-12, 12), G.y - ghostR(G.lv) - 8, "-" + fmt(G.poisonAcc), "#8CFF7A", 12); G.poisonAcc = 0; if (G.poisonMine) sfx("poison"); }
       }
     });
-    if (phase === "night") { for (const g of ghostsAll) withGhost(g, () => { updateGhost(dt); updateItems(); }); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); updateMinions(dt); updateHelpers(dt); updateHelp(); }
+    if (phase === "night") { for (const g of ghostsAll) withGhost(g, () => { updateGhost(dt); updateItems(); }); for (const p of players) if (!p.isPlayer) updateBot(p, dt); updateGifts(dt); updateMinions(dt); updateHelpers(dt); updateMobs(dt); updateHelp(); }
   }
   if (phase === "title" || phase === "match") { G.x = CX + Math.sin(gt * .5) * 40; G.y = MAP_H * .5 + Math.sin(gt * .3) * MAP_H * .4; G.face = Math.cos(gt * .5) > 0 ? 1 : -1; }
   for (let i = bullets.length - 1; i >= 0; i--) {
@@ -2184,7 +2305,7 @@ function update(dt) {
 /* ================= end ================= */
 const mmss = T => `${Math.floor(T / 60)}:${String(Math.floor(T % 60)).padStart(2, "0")}`;
 function endGame(win) {
-  if (ended) return; ended = true;
+  if (ended) return; ended = true; mobs = []; waveQ = [];
   const survived = nightT, rank = win ? 1 : players.length - deaths + 1;
   phase = "end"; closeSheet(); if (win) celebrate = 5;
   const rec = store.get("tpfy-rec", { best: 0, wins: 0, fastest: 0 });
@@ -2557,6 +2678,7 @@ function tap(sx, sy) {
   if (phase === "night" && me.room && me.room.alive) {
     const mi = minions.findIndex(m => Math.hypot(p.x - m.x, p.y - m.y) < 26); if (mi >= 0) return popMinion(mi);
     const hi = helpers.findIndex(h => Math.hypot(p.x - h.x, p.y - h.y) < 30); if (hi >= 0) return hitHelper(hi);
+    const mo = mobs.findIndex(m => mobTargetable(m) && Math.hypot(p.x - m.x, p.y - m.y + 6) < 22); if (mo >= 0) return tapMob(mo);
   }
   if (me.state !== "bed") { if (r && phase === "select") choose(r); return; }
   const mine = me.room;
@@ -3573,7 +3695,7 @@ function drawGhost(t) {
     rrPath(ctx, x - bw / 2 + 1.5, by + 1.5, (bw - 3) * clamp(G.hp / G.max, 0, 1), 6, 3); ctx.fillStyle = "#FF4D6D"; ctx.fill();
     label(ctx, `${gName()} Lv.${G.lv}${G.kills ? ` · 吞噬 ${G.kills}` : ""}`, x, by - 10, 12, "#FF8FA3", FONT_CN, 800);
     if (G.tele > 0) label(ctx, "!", x + bw / 2 + 8, by - 4, 24, "#FF4D6D", FONT_NUM, 800);
-    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk && !stunned ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : G.desperate ? ["逃不动了", "#FF8FA3"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : G.slow > 0 ? ["减速", "#9FE8FF"] : enr ? ["狂暴", "#FF8FA3"] : null;
+    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk && !stunned ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : G.greedy && G.hp < G.max * .3 ? ["杀红眼", "#FF8FA3"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : G.slow > 0 ? ["减速", "#9FE8FF"] : enr ? ["狂暴", "#FF8FA3"] : null;
     if (tag) label(ctx, tag[0], x, y + R + 14, 12, tag[1]);
   }
 }
@@ -3622,7 +3744,7 @@ function drawJiang(t) {
     rrPath(ctx, x - bw / 2, by, bw, 9, 5); ctx.fillStyle = "#100D26"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = EDGE; ctx.stroke();
     rrPath(ctx, x - bw / 2 + 1.5, by + 1.5, (bw - 3) * clamp(G.hp / G.max, 0, 1), 6, 3); ctx.fillStyle = "#3DBE8B"; ctx.fill();
     label(ctx, `僵尸 Lv.${G.lv}${G.kills ? ` · 吞噬 ${G.kills}` : ""}`, x, by - 10, 12, "#A8F0C0", FONT_CN, 800);
-    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : G.desperate ? ["逃不动了", "#FF8FA3"] : gt < (G.armorUntil || 0) ? ["铁甲", "#C9C4E0"] : gt < (G.frenzyUntil || 0) ? ["狂跳", "#FF8FA3"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : null;
+    const tag = frozen ? ["冻住了", "#9FE8FF"] : G.berserk ? ["暴走", "#FF4D6D"] : stunned ? ["晕了", "#FFE26A"] : G.state === "retreat" ? ["逃跑中", "#A8F0C0"] : G.greedy && G.hp < G.max * .3 ? ["杀红眼", "#FF8FA3"] : gt < (G.armorUntil || 0) ? ["铁甲", "#C9C4E0"] : gt < (G.frenzyUntil || 0) ? ["狂跳", "#FF8FA3"] : gt < G.poisonUntil ? ["中毒", "#8CFF7A"] : null;
     if (tag) label(ctx, tag[0], x, y + R + 14, 12, tag[1]);
   }
 }
@@ -3839,6 +3961,8 @@ function render(t) {
   for (const g of ghostsAll) withGhost(g, () => drawGhost(t));
   for (const m of minions) drawMinion(m, t);
   for (const h of helpers) drawHelper(h, t);
+  for (const m of mobs) drawMob(m, t);
+  if (mobShots.length) { ctx.lineWidth = 2; ctx.strokeStyle = "rgba(255,226,106,.85)"; ctx.beginPath(); for (const q of mobShots) { ctx.moveTo(q.x1, q.y1); ctx.lineTo(q.x2, q.y2); } ctx.stroke(); }
   for (const r of rooms) drawPlaque(r, t);
   for (const [ax, ay] of arrows) upArrow(ax, ay, t);
   if (gift && phase === "night") drawGift(gift, t);
@@ -3974,7 +4098,7 @@ function frame(ms) {
   requestAnimationFrame(frame);
 }
 if (SPEED > 1) window.__dbg = { get me() { return me; }, get G() { return G; }, get ghosts() { return ghostsAll; }, focusRoom, hitG: (i, d) => withGhost(ghostsAll[i], () => hitGhost(d)), get phase() { return phase; }, get nightT() { return nightT; }, get players() { return players; }, get cam() { return { camMode, visit: visit && visit.i }; },
-  rooms, npcStep, PLAN, repairDoor, get minions() { return minions; }, get helpers() { return helpers; }, spawnHelper, uiIcon, ICONS, BUILD, TALENTS, randomAvatar, avatarURL, get stats() { return stats; }, get gt() { return gt; }, get avail() { return avail; }, get gift() { return gift; }, openGift: () => gift && openGift(), toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
+  rooms, npcStep, PLAN, repairDoor, get minions() { return minions; }, get helpers() { return helpers; }, get mobs() { return mobs; }, get wave() { return wave; }, skipWave: () => { waveT = 0; }, spawnHelper, uiIcon, ICONS, BUILD, TALENTS, randomAvatar, avatarURL, get stats() { return stats; }, get gt() { return gt; }, get avail() { return avail; }, get gift() { return gift; }, openGift: () => gift && openGift(), toScreen: (x, y) => ({ x: (x - cam.x) * cam.s + vw / 2, y: (y - cam.y) * cam.s + cam.cy }) };
 $("start").addEventListener("click", startMatch);
 $("again").addEventListener("click", startMatch);
 $("home").addEventListener("click", () => { sfx("click"); showTitle(); });
